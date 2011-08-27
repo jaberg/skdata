@@ -1,9 +1,18 @@
 """ Functions related to the datasets used in Larochelle et al. 2007 (incl. modified MNIST). 
+
+These datasets were introduced in
+"An Empirical Evaluation of Deep Architectures on Problems with Many Factors of Variation"
+Hugo Larochelle, Dumitru Erhan, Aaron Courville, James Bergstra and Yoshua Bengio. In Proc of 
+International Conference on Machine Learning (2007).
+
+url:
+http://www.iro.umontreal.ca/~lisa/twiki/pub/Public/DeepVsShallowComparisonICML2007/icml-2007-camera-ready.pdf
+
 """
 import os, sys
 import numpy
 
-from pylearn.io.amat import AMat
+from data_cache import get_cache_dir
 
 class DatasetLoader(object):
     """
