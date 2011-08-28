@@ -2,8 +2,8 @@ import os
 import shutil
 import tempfile
 
-from scikits.learn.datasets import get_data_home
-from scikits.learn.datasets import clear_data_home
+from datasets import get_data_home
+from datasets import clear_data_home
 
 from nose.tools import assert_false
 from nose.tools import assert_true
