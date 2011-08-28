@@ -9,7 +9,7 @@ Generate samples of synthetic data sets.
 import numpy as np
 from scipy import linalg
 
-from ..utils import check_random_state
+from .utils import check_random_state
 
 
 def make_classification(n_samples=100, n_features=20, n_informative=2,

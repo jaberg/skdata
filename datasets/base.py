@@ -21,7 +21,7 @@ from os import makedirs
 
 import numpy as np
 
-from ..utils import check_random_state
+from .utils import check_random_state
 
 class Bunch(dict):
     """Container object for datasets: dictionary-like object that
@@ -53,6 +53,13 @@ def get_data_home(data_home=None):
     if not exists(data_home):
         makedirs(data_home)
     return data_home
+
+def get_data_subdir(relpath):
+    """Create a subdirectory within `get_data_home`."""
+    rval = os.path.join(get_data_home(), relpath)
+    if not exists(rval):
+        makedirs(rval)
+    return rval
 
 def clear_data_home(data_home=None):
     """Delete all the content of the data home cache."""
