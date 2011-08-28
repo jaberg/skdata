@@ -429,3 +429,15 @@ def gen_even_slices(n, n_packs):
             yield slice(start, end, None)
             start = end
 
+
+def qr_economic(A, **kwargs):
+    """Compat function for the QR-decomposition in economic mode
+
+    Scipy 0.9 changed the keyword econ=True to mode='economic'
+    """
+    import scipy.linalg
+    # trick: triangular solve has introduced in 0.9
+    if hasattr(scipy.linalg, 'solve_triangular'):
+        return scipy.linalg.qr(A, mode='economic', **kwargs)
+    else:
+        return scipy.linalg.qr(A, econ=True, **kwargs)

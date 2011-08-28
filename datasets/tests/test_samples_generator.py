@@ -2,18 +2,19 @@ import numpy as np
 from numpy.testing import assert_equal, assert_approx_equal, \
                           assert_array_almost_equal, assert_array_less
 
-from .. import make_classification
-from .. import make_regression
-from .. import make_blobs
-from .. import make_friedman1
-from .. import make_friedman2
-from .. import make_friedman3
-from .. import make_low_rank_matrix
-from .. import make_sparse_coded_signal
-from .. import make_sparse_uncorrelated
-from .. import make_spd_matrix
-from .. import make_swiss_roll
-from .. import make_s_curve
+from datasets.samples_generator import (
+        make_classification,
+        make_regression,
+        make_blobs,
+        make_friedman1,
+        make_friedman2,
+        make_friedman3,
+        make_low_rank_matrix,
+        make_sparse_coded_signal,
+        make_sparse_uncorrelated,
+        make_spd_matrix,
+        make_swiss_roll,
+        make_s_curve)
 
 
 def test_make_classification():
