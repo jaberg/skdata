@@ -23,6 +23,68 @@ if 0:
         raise KeyError('PYTHOR_DATA is not defined')
 
 
+def download_and_untar(url, tarName, dirName):
+    """
+    **Description**
+        open a url, expecting a tar file and downloads it
+        to 'tarName'. Then untar the file inside 'dirName'
+
+    **Parameters**
+        url:
+            valid URL link
+        tarName:
+            name of the tar file on the local machine to
+            store the archive (full path)
+        dirName:
+            name of the directory into which one wants to
+            untar the archive (full path)
+
+    **Returns**
+        nothing
+    """
+    #-- download part
+    page = urlopen(url)
+    tar_file = open(tarName, "wb")
+    # size of the download unit (here 2**15 = 32768 Bytes)
+    block_size = 32768
+    dl_size = 0
+    file_size = -1
+    try:
+        file_size = int(page.info()['content-length'])
+    except:
+        print "could not determine size of tarball so"
+        print "no progress bar  on download displayed"
+    if file_size > 0:
+        while True:
+            Buffer = page.read(block_size)
+            if not Buffer:
+                break
+            dl_size += block_size
+            tar_file.write(Buffer)
+            status = r"Downloaded : %20d Bytes [%4.1f%%]" % (dl_size,
+                     dl_size * 100. / file_size)
+            status = status + chr(8) * (len(status) + 1)
+            print status,
+        print ''
+    else:
+        tar_file.write(page.read())
+    tar_file.close()
+    #-- untar part
+    tar = taropen(tarName)
+    file_list = tar.getmembers()
+    untar_size = 0
+    tar_size = len(file_list)
+    for item in file_list:
+        tar.extract(item, path=dirName)
+        untar_size += 1
+        status = r"Untared    : %20i Files [%4.1f%%]" % (untar_size,
+                 untar_size * 100. / tar_size)
+        status = status + chr(8) * (len(status) + 1)
+        print status,
+    print ''
+    tar.close()
+
+
 class PascalVOC2007(object):
     # by default, the 'temp' directory where the dataset is
     # being stored is the default 'PYTHOR3_DATA' environment
