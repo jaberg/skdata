@@ -1,0 +1,6 @@
+#!/usr/bin/env python
+import logging
+import sys
+logging.basicConfig(stream=sys.stderr)
+import datasets.fetch
+datasets.fetch.main()
