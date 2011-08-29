@@ -31,7 +31,6 @@ import numpy as np
 import urllib
 
 from .base import get_data_home, Bunch
-from ..externals.joblib import Memory
 
 
 logger = logging.getLogger(__name__)
@@ -61,7 +60,11 @@ def scale_face(face):
 
 
 def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
-    """Helper function to download any missing LFW data"""
+    """Helper function to download any missing LFW data.
+
+    Call this function with no arguments to download the funneled LFW dataset to the standard
+    location. This downloads about 200MB.
+    """
     data_home = get_data_home(data_home=data_home)
     lfw_home = join(data_home, "lfw_home")
 
@@ -82,7 +85,8 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
         if not exists(target_filepath):
             if download_if_missing:
                 url = BASE_URL + target_filename
-                logger.warn("Downloading LFW metadata: %s", url)
+                logger.warn("Downloading LFW metadata: %s => %s" % (
+                    url, target_filepath))
                 downloader = urllib.urlopen(BASE_URL + target_filename)
                 data = downloader.read()
                 open(target_filepath, 'wb').write(data)
@@ -93,7 +97,8 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
 
         if not exists(archive_path):
             if download_if_missing:
-                logger.warn("Downloading LFW data (~200MB): %s", archive_url)
+                logger.warn("Downloading LFW data (~200MB): %s => %s" %(
+                        archive_url, archive_path))
                 downloader = urllib.urlopen(archive_url)
                 data = downloader.read()
                 # don't open file until download is complete
@@ -109,62 +114,94 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
     return lfw_home, data_folder_path
 
 
-def _load_imgs(file_paths, slice_, color, resize):
-    """Internally used to load images"""
+def names_paths(data_folder_path, min_faces_per_person=0):
+    """Return two corresponding lists of names and image paths.
 
-    # Try to import imread and imresize from PIL. We do this here to prevent
-    # the whole scikits.learn.datasets module from depending on PIL.
-    try:
+    This routine walks the data_folder_path to build these lists.
+    """
+    person_names, file_paths = [], []
+    for person_name in sorted(listdir(data_folder_path)):
+        folder_path = join(data_folder_path, person_name)
+        if not isdir(folder_path):
+            continue
+        paths = [join(folder_path, f) for f in listdir(folder_path)]
+        n_pictures = len(paths)
+        if n_pictures >= min_faces_per_person:
+            person_name = person_name.replace('_', ' ')
+            person_names.extend([person_name] * n_pictures)
+            file_paths.extend(paths)
+    return person_names, file_paths
+
+
+class img_loader(object):
+    """This class is an image-loading filter for use with larray.map"""
+
+    def __init__(self, slice_, color, resize):
+        self.color = color
+        self.resize = resize
+
+        # compute the portion of the images to load to respect the slice_ parameter
+        # given by the caller
+        default_slice = (slice(0, 250), slice(0, 250))
+        if slice_ is None:
+            self.slice_ = default_slice
+        else:
+            self.slice_ = tuple(s or ds for s, ds in zip(slice_, default_slice))
+        del slice_
+
+        h_slice, w_slice = self.slice_
+        self.h = (h_slice.stop - h_slice.start) / (h_slice.step or 1)
+        self.w = (w_slice.stop - w_slice.start) / (w_slice.step or 1)
+
+        if self.resize is not None:
+            self.resize = float(self.resize)
+            self.h = int(self.resize * self.h)
+            self.w = int(self.resize * self.w)
+
+        self.import_pil()
+
+    def import_pil(self):
+        # Try to import imread and imresize from PIL. We do this here to prevent
+        # the whole scikits.learn.datasets module from depending on PIL.
         try:
-            from scipy.misc import imread
+            try:
+                from scipy.misc import imread
+            except ImportError:
+                from scipy.misc.pilutil import imread
+            from scipy.misc import imresize
         except ImportError:
-            from scipy.misc.pilutil import imread
-        from scipy.misc import imresize
-    except ImportError:
-        raise ImportError("The Python Imaging Library (PIL)"
-                          "is required to load data from jpeg files")
+            raise ImportError("The Python Imaging Library (PIL)"
+                              "is required to load data from jpeg files")
 
-    # compute the portion of the images to load to respect the slice_ parameter
-    # given by the caller
-    default_slice = (slice(0, 250), slice(0, 250))
-    if slice_ is None:
-        slice_ = default_slice
-    else:
-        slice_ = tuple(s or ds for s, ds in zip(slice_, default_slice))
+    def __call__(self, file_path):
+        return self.call_batch([file_path])[0]
 
-    h_slice, w_slice = slice_
-    h = (h_slice.stop - h_slice.start) / (h_slice.step or 1)
-    w = (w_slice.stop - w_slice.start) / (w_slice.step or 1)
+    def call_batch(self, file_paths):
+        # allocate some contiguous memory to host the decoded image slices
+        n_faces = len(file_paths)
+        if not self.color:
+            faces = np.zeros((n_faces, self.h, self.w), dtype=np.float32)
+        else:
+            faces = np.zeros((n_faces, self.h, self.w, 3), dtype=np.float32)
 
-    if resize is not None:
-        resize = float(resize)
-        h = int(resize * h)
-        w = int(resize * w)
+        # iterate over the collected file path to load the jpeg files as numpy
+        # arrays
+        for i, file_path in enumerate(file_paths):
+            if i % 1000 == 0:
+                logger.info("Loading face #%05d / %05d", i + 1, n_faces)
+            face = np.asarray(imread(file_path)[self.slice_], dtype=np.float32)
+            face /= 255.0  # scale uint8 coded colors to the [0.0, 1.0] floats
+            if self.resize is not None:
+                face = imresize(face, self.resize)
+            if not self.color:
+                # average the color channels to compute a gray levels
+                # representaion
+                # XXX: there are some standard constants for doing this
+                #      that weight channels differently
+                face = face.mean(axis=2)
+            faces[i, ...] = face
+        return faces
 
-    # allocate some contiguous memory to host the decoded image slices
-    n_faces = len(file_paths)
-    if not color:
-        faces = np.zeros((n_faces, h, w), dtype=np.float32)
-    else:
-        faces = np.zeros((n_faces, h, w, 3), dtype=np.float32)
-
-    # iterate over the collected file path to load the jpeg files as numpy
-    # arrays
-    for i, file_path in enumerate(file_paths):
-        if i % 1000 == 0:
-            logger.info("Loading face #%05d / %05d", i + 1, n_faces)
-        face = np.asarray(imread(file_path)[slice_], dtype=np.float32)
-        face /= 255.0  # scale uint8 coded colors to the [0.0, 1.0] floats
-        if resize is not None:
-            face = imresize(face, resize)
-        if not color:
-            # average the color channels to compute a gray levels
-            # representaion
-            face = face.mean(axis=2)
-
-        faces[i, ...] = face
-
-    return faces
 
 
 #
@@ -179,17 +216,7 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
     """
     # scan the data folder content to retain people with more that
     # `min_faces_per_person` face pictures
-    person_names, file_paths = [], []
-    for person_name in sorted(listdir(data_folder_path)):
-        folder_path = join(data_folder_path, person_name)
-        if not isdir(folder_path):
-            continue
-        paths = [join(folder_path, f) for f in listdir(folder_path)]
-        n_pictures = len(paths)
-        if n_pictures >= min_faces_per_person:
-            person_name = person_name.replace('_', ' ')
-            person_names.extend([person_name] * n_pictures)
-            file_paths.extend(paths)
+    person_names, file_paths = names_paths(data_folder_path, min_faces_per_person)
 
     n_faces = len(file_paths)
     if n_faces == 0:
@@ -199,7 +226,7 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
     target_names = np.unique(person_names)
     target = np.searchsorted(target_names, person_names)
 
-    faces = _load_imgs(file_paths, slice_, color, resize)
+    faces = larray.lmap(img_loader(slice_, color, resize), file_paths)
 
     # shuffle the faces with a deterministic RNG scheme to avoid having
     # all faces of the same person in a row, as it would break some
@@ -208,7 +235,8 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
 
     indices = np.arange(n_faces)
     np.random.RandomState(42).shuffle(indices)
-    faces, target = faces[indices], target[indices]
+    faces = larray.reindex(faces, indices)
+    target = target[indices]
     return faces, target, target_names
 
 
@@ -436,3 +464,8 @@ def load_lfw_pairs(download_if_missing=False, **kwargs):
     Check fetch_lfw_pairs.__doc__ for the documentation and parameter list.
     """
     return fetch_lfw_pairs(download_if_missing=download_if_missing, **kwargs)
+
+def main_fetch():
+    """compatibility with bin/datasets_fetch"""
+    #TODO: check sys.argv to set funneled=True/False
+    check_fetch_lfw()
