@@ -66,27 +66,35 @@ def quit(state):
     sys.exit()
 
 
-def glumpy_viewer(imgcol,
-        other_cols_to_print = [],
-        commands=None
+def glumpy_viewer(img_array,
+        arrays_to_print = [],
+        commands=None,
+        cmap=glumpy.colormap.IceAndFire,
+        window_shape=(512, 512),
         ):
     """
-    Setup and start glumpy main loop to visualize Image Column `imgcol`.
+    Setup and start glumpy main loop to visualize Image array `img_array`.
 
-    imgcol - a Column whose elements are float32 or uint8 ndarrays that glumpy
-             can show.
+    img_array - an array-like object whose elements are float32 or uint8
+                ndarrays that glumpy can show.  larray objects work here.
 
-    other_cols_to_print - other Columns whose elements will be printed to stdout
-                          after a keypress changes the current position.
+    arrays_to_print - arrays whose elements will be printed to stdout
+                      after a keypress changes the current position.
 
     """
 
-    state=dict(
-            window=glumpy.Window(512,512),
+    try:
+        n_imgs = len(img_array)
+    except TypeError:
+        n_imgs = None
+
+    state = dict(
+            window=glumpy.Window(*window_shape),
             pos=0,
-            I=glumpy.Image(imgcol[0]),
-            len=len(imgcol),
+            I=glumpy.Image(img_array[0], cmap=cmap),
+            len=n_imgs
             )
+
     window = state['window']  # put in scope of handlers for convenience
     if commands is None:
         commands = _commands
@@ -107,8 +115,13 @@ def glumpy_viewer(imgcol,
         if pos == state['pos']:
             return
         else:
-            state['I'] = glumpy.Image(imgcol[state['pos']])
-            print state['pos'], [o[state['pos']] for o in other_cols_to_print]
+            img_i = img_array[state['pos']]
+            #print img_i.shape
+            #print img_i.dtype
+            #print img_i.max()
+            #print img_i.min()
+            state['I'] = glumpy.Image(img_array[state['pos']], cmap=cmap)
+            print state['pos'], [o[state['pos']] for o in arrays_to_print]
             window.draw()
 
 

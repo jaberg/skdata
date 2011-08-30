@@ -25,15 +25,26 @@ detector from various online websites.
 
 from os import listdir, makedirs, remove
 from os.path import join, exists, isdir
+import sys
 
 import logging
 import numpy as np
 import urllib
 
 from .base import get_data_home, Bunch
-
+import larray
 
 logger = logging.getLogger(__name__)
+
+try:
+    try:
+        from scipy.misc import imread
+    except ImportError:
+        from scipy.misc.pilutil import imread
+    from scipy.misc import imresize
+except ImportError:
+    logger.warn("The Python Imaging Library (PIL)"
+            " is required to load data from jpeg files.")
 
 
 BASE_URL = "http://vis-www.cs.umass.edu/lfw/"
@@ -57,6 +68,21 @@ def scale_face(face):
 # Common private utilities for data fetching from the original LFW website
 # local disk caching, and image decoding.
 #
+
+def memoize(f):
+    """Simple decorator hashes *args to f, stores rvals in dict.
+
+    This simple decorator works in memory only, does not persist between
+    processes.
+    """
+    cache = {}
+    def cache_f(*args):
+        if args in cache:
+            return cache[args]
+        rval = f(*args)
+        cache[args] = rval
+        return rval
+    return cache_f
 
 
 def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
@@ -114,7 +140,8 @@ def check_fetch_lfw(data_home=None, funneled=True, download_if_missing=True):
     return lfw_home, data_folder_path
 
 
-def names_paths(data_folder_path, min_faces_per_person=0):
+@memoize
+def names_paths(data_folder_path, min_faces_per_person):
     """Return two corresponding lists of names and image paths.
 
     This routine walks the data_folder_path to build these lists.
@@ -135,6 +162,8 @@ def names_paths(data_folder_path, min_faces_per_person=0):
 
 class img_loader(object):
     """This class is an image-loading filter for use with larray.map"""
+
+    #TODO: Consider factoring this out of lfw - it works for general image files
 
     def __init__(self, slice_, color, resize):
         self.color = color
@@ -158,21 +187,6 @@ class img_loader(object):
             self.h = int(self.resize * self.h)
             self.w = int(self.resize * self.w)
 
-        self.import_pil()
-
-    def import_pil(self):
-        # Try to import imread and imresize from PIL. We do this here to prevent
-        # the whole scikits.learn.datasets module from depending on PIL.
-        try:
-            try:
-                from scipy.misc import imread
-            except ImportError:
-                from scipy.misc.pilutil import imread
-            from scipy.misc import imresize
-        except ImportError:
-            raise ImportError("The Python Imaging Library (PIL)"
-                              "is required to load data from jpeg files")
-
     def __call__(self, file_path):
         return self.call_batch([file_path])[0]
 
@@ -191,7 +205,7 @@ class img_loader(object):
                 logger.info("Loading face #%05d / %05d", i + 1, n_faces)
             face = np.asarray(imread(file_path)[self.slice_], dtype=np.float32)
             face /= 255.0  # scale uint8 coded colors to the [0.0, 1.0] floats
-            if self.resize is not None:
+            if self.resize is not None and self.resize != 1.0:
                 face = imresize(face, self.resize)
             if not self.color:
                 # average the color channels to compute a gray levels
@@ -203,47 +217,14 @@ class img_loader(object):
         return faces
 
 
-
 #
 # Task #1:  Face Identification on picture with names
 #
 
-def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
-                     min_faces_per_person=0):
-    """Perform the actual data loading for the lfw people dataset
-
-    This operation is meant to be cached by a joblib wrapper.
-    """
-    # scan the data folder content to retain people with more that
-    # `min_faces_per_person` face pictures
-    person_names, file_paths = names_paths(data_folder_path, min_faces_per_person)
-
-    n_faces = len(file_paths)
-    if n_faces == 0:
-        raise ValueError("min_faces_per_person=%d is too restrictive" %
-                         min_faces_per_person)
-
-    target_names = np.unique(person_names)
-    target = np.searchsorted(target_names, person_names)
-
-    faces = larray.lmap(img_loader(slice_, color, resize), file_paths)
-
-    # shuffle the faces with a deterministic RNG scheme to avoid having
-    # all faces of the same person in a row, as it would break some
-    # cross validation and learning algorithms such as SGD and online
-    # k-means that make an IID assumption
-
-    indices = np.arange(n_faces)
-    np.random.RandomState(42).shuffle(indices)
-    faces = larray.reindex(faces, indices)
-    target = target[indices]
-    return faces, target, target_names
-
-
-def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
+def load_lfw_people(data_home=None, funneled=True, resize=0.5,
                     min_faces_per_person=None, color=False,
                     slice_=(slice(70, 195), slice(78, 172)),
-                    download_if_missing=True):
+                    download_if_missing=False):
     """Loader for the Labeled Faces in the Wild (LFW) people dataset
 
     This dataset is a collection of JPEG pictures of famous people
@@ -289,39 +270,72 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
     """
+
     lfw_home, data_folder_path = check_fetch_lfw(
         data_home=data_home, funneled=funneled,
         download_if_missing=download_if_missing)
     logger.info('Loading LFW people faces from %s', lfw_home)
+    # postcondition: data is downloaded to lfw_home
 
-    # wrap the loader in a memoizing function that will return memmaped data
-    # arrays for optimal memory usage
-    m = Memory(cachedir=lfw_home, mmap_mode='c', verbose=0)
-    load_func = m.cache(_fetch_lfw_people)
+    # scan the data folder content to retain people with more that
+    # `min_faces_per_person` face pictures
+    person_names, file_paths = names_paths(data_folder_path, min_faces_per_person)
+    n_faces = len(file_paths)
+    if n_faces == 0:
+        raise ValueError("min_faces_per_person=%d is too restrictive" %
+                         min_faces_per_person)
 
-    # load and memoize the pairs as np arrays
-    faces, target, target_names = load_func(
-        data_folder_path, resize=resize,
-        min_faces_per_person=min_faces_per_person, color=color, slice_=slice_)
+    target_names = np.unique(person_names)
+    target = np.searchsorted(target_names, person_names)
+    faces = larray.lmap(img_loader(slice_, color, resize), file_paths)
+
+    # shuffle the faces with a deterministic RNG scheme to avoid having
+    # all faces of the same person in a row, as it would break some
+    # cross validation and learning algorithms such as SGD and online
+    # k-means that make an IID assumption
+
+    indices = np.arange(n_faces)
+    np.random.RandomState(42).shuffle(indices)
+    print indices
+    faces = larray.reindex(faces, indices)
+    target = target[indices]
 
     # pack the results as a Bunch instance
-    return Bunch(data=faces, target=target, target_names=target_names,
-                 DESCR="LFW faces dataset")
+    return Bunch(
+            imgs=faces,
+            target=target,
+            target_names=target_names,
+            names=larray.reindex(target_names, target),
+            DESCR="LFW faces dataset")
+
+def load_lfw_people_fullres(data_home=None, funneled=True,
+        download_if_missing=False):
+    return load_lfw_people(
+            data_home=data_home,
+            funneled=funneled,
+            resize=None,
+            color=True,
+            slice_=None,
+            download_if_missing=download_if_missing)
 
 
 #
 # Task #2:  Face Verification on pairs of face pictures
 #
 
-
-def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
-                    color=False, resize=None):
-    """Perform the actual data loading for the LFW pairs dataset
-
-    This operation is meant to be cached by a joblib wrapper.
+@memoize
+def img_pairs(index_file_path, data_folder_path):
     """
-    # parse the index file to find the number of pairs to be able to allocate
-    # the right amount of memory before starting to decode the jpeg files
+    index_file is a text file whose rows are one of
+        name1 I name2 J   # non-matching pair    (name1, I), (name2, J)
+        name I J          # matching image pair  (name, I), (name, J)
+        N M               # not sure about these ones
+
+    This function returns three lists:
+    - left image paths
+    - right image paths
+    - binary ndarray: targets match?
+    """
     splitted_lines = [l.strip().split('\t')
                       for l in open(index_file_path, 'rb').readlines()]
     pair_specs = [sl for sl in splitted_lines if len(sl) > 2]
@@ -330,49 +344,32 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     # interating over the metadata lines for each pair to find the filename to
     # decode and load in memory
     target = np.zeros(n_pairs, dtype=np.int)
-    file_paths = list()
+    left_paths = []
+    right_paths = []
+    person_names, file_paths = names_paths(data_folder_path, 0)
+
     for i, components in enumerate(pair_specs):
         if len(components) == 3:
             target[i] = 1
-            pair = (
-                (components[0], int(components[1]) - 1),
-                (components[0], int(components[2]) - 1),
-            )
+            left = (components[0].replace('_', ' '), int(components[1]) - 1)
+            right = (components[0].replace('_', ' '), int(components[2]) - 1)
         elif len(components) == 4:
             target[i] = 0
-            pair = (
-                (components[0], int(components[1]) - 1),
-                (components[2], int(components[3]) - 1),
-            )
+            left = (components[0].replace('_', ' '), int(components[1]) - 1)
+            right = (components[2].replace('_', ' '), int(components[3]) - 1)
         else:
             raise ValueError("invalid line %d: %r" % (i + 1, components))
-        for j, (name, idx) in enumerate(pair):
-            person_folder = join(data_folder_path, name)
-            filenames = list(sorted(listdir(person_folder)))
-            file_path = join(person_folder, filenames[idx])
-            file_paths.append(file_path)
 
-    pairs = _load_imgs(file_paths, slice_, color, resize)
-    shape = list(pairs.shape)
-    n_faces = shape.pop(0)
-    shape.insert(0, 2)
-    shape.insert(0, n_faces // 2)
-    pairs.shape = shape
+        # a dictionary would make this more readable.
+        left_paths.append(file_paths[person_names.index(left[0]) + left[1]])
+        right_paths.append(file_paths[person_names.index(right[0]) + right[1]])
 
-    return pairs, target, np.array(['Different persons', 'Same person'])
+    return left_paths, right_paths, target
 
 
-def load_lfw_people(download_if_missing=False, **kwargs):
-    """Alias for fetch_lfw_people(download_if_missing=False)
-
-    Check fetch_lfw_people.__doc__ for the documentation and parameter list.
-    """
-    return fetch_lfw_people(download_if_missing=download_if_missing, **kwargs)
-
-
-def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
+def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
                    color=False, slice_=(slice(70, 195), slice(78, 172)),
-                    download_if_missing=True):
+                   download_if_missing=False):
     """Loader for the Labeled Faces in the Wild (LFW) pairs dataset
 
     This dataset is a collection of JPEG pictures of famous people
@@ -389,8 +386,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
     the same person.
 
     In the official `README.txt`_ this task is described as the
-    "Restricted" task.  As I am not sure as to implement the
-    "Unrestricted" variant correctly, I left it as unsupported for now.
+    "Restricted" task.  The "Unrestricted" variant is not currently supported.
 
       .. _`README.txt`: http://vis-www.cs.umass.edu/lfw/README.txt
 
@@ -431,11 +427,7 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
         data_home=data_home, funneled=funneled,
         download_if_missing=download_if_missing)
     logger.info('Loading %s LFW pairs from %s', subset, lfw_home)
-
-    # wrap the loader in a memoizing function that will return memmaped data
-    # arrays for optimal memory usage
-    m = Memory(cachedir=lfw_home, mmap_mode='c', verbose=0)
-    load_func = m.cache(_fetch_lfw_pairs)
+    # postcondition: data is downloaded to lfw_home
 
     # select the right metadata file according to the requested subset
     label_filenames = {
@@ -448,24 +440,95 @@ def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
             subset, list(sorted(label_filenames.keys()))))
     index_file_path = join(lfw_home, label_filenames[subset])
 
-    # load and memoize the pairs as np arrays
-    pairs, target, target_names = load_func(
-        index_file_path, data_folder_path, resize=resize, color=color,
-        slice_=slice_)
+    lpaths, rpaths, target = img_pairs(index_file_path, data_folder_path)
+    left_imgs = larray.lmap(img_loader(slice_, color, resize), lpaths)
+    right_imgs = larray.lmap(img_loader(slice_, color, resize), rpaths)
+    pairs = larray.lzip(left_imgs, right_imgs)
+
+    target_names = np.array(['Different persons', 'Same person'])
 
     # pack the results as a Bunch instance
-    return Bunch(data=pairs, target=target, target_names=target_names,
-                 DESCR="'%s' segment of the LFW pairs dataset" % subset)
+    return Bunch(
+            pairs=pairs,
+            target=target,
+            target_names=target_names,
+            names=larray.reindex(target_names, target),
+            left_imgs=left_imgs,
+            right_imgs=right_imgs,
+            left_right_imgs=larray.lmap(np.hstack, pairs),
+            left_filename=lpaths,
+            right_filename=rpaths,
+            DESCR="'%s' segment of the LFW pairs dataset" % subset)
 
 
-def load_lfw_pairs(download_if_missing=False, **kwargs):
-    """Alias for fetch_lfw_pairs(download_if_missing=False)
-
-    Check fetch_lfw_pairs.__doc__ for the documentation and parameter list.
-    """
-    return fetch_lfw_pairs(download_if_missing=download_if_missing, **kwargs)
+#
+# Drivers for scikits.data/bin executables
+#
 
 def main_fetch():
     """compatibility with bin/datasets_fetch"""
     #TODO: check sys.argv to set funneled=True/False
     check_fetch_lfw()
+
+def main_show():
+    from glviewer import glumpy_viewer, command, glumpy
+    try:
+        import argparse   # new in Python 2.7
+        assert sys.argv[1] == 'lfw'
+        sys.argv[1:2] = []
+
+        parser = argparse.ArgumentParser(
+                description='Show the Labeled Faces in the Wild (lfw) dataset')
+        # task
+        parser.add_argument('task',
+                type=str,
+                default='people',
+                help='task: "pairs" or "people"')
+        # color
+        parser.add_argument('--color', action='store_true', dest='color',
+                help='load the images in color (default)')
+        parser.add_argument('--no-color', action='store_false', dest='color')
+        # resize
+        parser.add_argument('--resize', type=float, default=1.0,
+                help="fraction of original image size")
+        # subset
+        parser.add_argument('--subset', type=str, default='train',
+                help='for "pairs", which subset to load (train/test/10_folds)')
+
+        args = parser.parse_args()
+        if args.task == 'people':
+            people = load_lfw_people(
+                    resize=args.resize,
+                    color=args.color,
+                    slice_=None)
+            n_rows = len(people.imgs)
+            print 'n. rows', n_rows
+            glumpy_viewer(
+                    img_array=people.imgs,
+                    arrays_to_print=[people.target, people.names],
+                    cmap=glumpy.colormap.Grey)
+        elif args.task == 'pairs':
+            pairs = load_lfw_pairs(
+                    subset=args.subset,
+                    resize=args.resize,
+                    color=args.color,
+                    slice_=None)
+            n_rows = len(pairs.left_imgs)
+            print 'n. rows', n_rows
+            glumpy_viewer(
+                    img_array=pairs.left_right_imgs,
+                    arrays_to_print=[pairs.target, pairs.names],
+                    cmap=glumpy.colormap.Grey,
+                    window_shape=(512, 256))
+
+        else:
+            raise NotImplementedError(args.task)
+    except ImportError:
+        logger.warn('no argparse - ignoring arguments')
+        # argparse isn't installed, so just show something
+        people = load_lfw_people_fullres()
+        n_rows = len(people.imgs)
+        print 'n. rows', n_rows
+        glumpy_viewer(
+                img_array=people.imgs,
+                arrays_to_print=[people.target, people.names])

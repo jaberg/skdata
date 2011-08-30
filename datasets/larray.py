@@ -21,6 +21,7 @@ def given_get(given, thing):
     except TypeError:
         return thing
 
+
 class lazy(object):
     def __str__(self):
         return pprint_str(self)
@@ -39,9 +40,9 @@ class lazy(object):
 
 
 class larray(lazy):
-
     def loop(self):
         return loop(self)
+
 
 class lmap(larray):
     """
@@ -65,7 +66,10 @@ class lmap(larray):
                     raise ValueError('objects have different length')
 
     def __len__(self):
-        return min(*[len(o) for o in self.objs])
+        if len(self.objs)>1:
+            return min(*[len(o) for o in self.objs])
+        else:
+            return len(self.objs[0])
 
     def __getitem__(self, idx):
         if is_int_idx(idx):
@@ -98,6 +102,12 @@ class lmap(larray):
     def inputs(self):
         return list(self.objs)
 
+def lzip(*arrays):
+    # XXX: make a version of this method that supports call_batch
+    print arrays
+    return lmap((lambda *args: args), *arrays)
+
+
 class loop(larray):
     def __init__(self, obj):
         self.obj = obj
@@ -118,6 +128,7 @@ class loop(larray):
     def inputs(self):
         return [self.obj]
 
+
 class reindex(larray):
     def __init__(self, obj, imap):
         self.obj = obj
@@ -130,11 +141,11 @@ class reindex(larray):
         return len(self.imap)
 
     def __getitem__(self, idx):
-        #XXX: fallback if obj does not support advanced indexing
         mapped_idx = self.imap[idx]
         try:
             return self.obj[mapped_idx]
-        except:
+        except TypeError:
+            # XXX: try this, and restore original exception on failure
             return [self.obj[ii] for ii in mapped_idx]
 
     def clone(self, given):
@@ -146,6 +157,7 @@ class reindex(larray):
     def inputs(self):
         return [self.obj, self.imap]
 
+
 def clone_helper(thing, given):
     if thing in given:
         return
@@ -153,10 +165,12 @@ def clone_helper(thing, given):
         clone_helper(ii, given)
     given[thing] = thing.clone(given)
 
+
 def clone(thing, given):
     _given = dict(given)
     clone_helper(thing, _given)
     return _given[thing]
+
 
 def pprint(thing, prefix='', buf=None):
     if buf is None:
@@ -168,6 +182,7 @@ def pprint(thing, prefix='', buf=None):
     if is_larray(thing):
         for ii in thing.inputs():
             pprint(ii, prefix+'    ', buf)
+
 
 def pprint_str(thing):
     sio = StringIO.StringIO()
