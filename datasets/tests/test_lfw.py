@@ -21,9 +21,9 @@ try:
 except ImportError:
     imsave = None
 
-from scikits.learn.datasets import load_lfw_pairs
-from scikits.learn.datasets import load_lfw_people
-from scikits.learn.datasets import get_data_home
+from datasets.lfw import load_lfw_pairs
+from datasets.lfw import load_lfw_people
+from datasets.lfw import get_data_home
 
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_equal
@@ -126,7 +126,7 @@ def test_load_fake_lfw_people():
 
     # The data is croped around the center as a rectangular bounding box
     # arounthe the face. Colors are converted to gray levels:
-    assert_equal(lfw_people.data.shape, (10, 62, 47))
+    assert_equal(lfw_people.imgs.shape, (10, 62, 47))
 
     # the target is array of person integer ids
     assert_array_equal(lfw_people.target, [2, 0, 1, 0, 2, 0, 2, 1, 1, 2])
@@ -139,7 +139,7 @@ def test_load_fake_lfw_people():
     # conversion and not limit on the number of picture per person
     lfw_people = load_lfw_people(data_home=SCIKIT_LEARN_DATA,
                                  resize=None, slice_=None, color=True)
-    assert_equal(lfw_people.data.shape, (17, 250, 250, 3))
+    assert_equal(lfw_people.imgs.shape, (17, 250, 250, 3))
 
     # the ids and class names are the same as previously
     assert_array_equal(lfw_people.target,
@@ -164,7 +164,10 @@ def test_load_fake_lfw_pairs():
 
     # The data is croped around the center as a rectangular bounding box
     # arounthe the face. Colors are converted to gray levels:
-    assert_equal(lfw_pairs_train.data.shape, (10, 2, 62, 47))
+    shape = lfw_pairs_train.pairs.shape
+    ndim = lfw_pairs_train.pairs.ndim
+    dtype = lfw_pairs_train.pairs.dtype
+    assert_equal(lfw_pairs_train.pairs.shape, (10, 2, 62, 47))
 
     # the target is whether the person is the same or not
     assert_array_equal(lfw_pairs_train.target, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
@@ -177,7 +180,7 @@ def test_load_fake_lfw_pairs():
     # conversion
     lfw_pairs_train = load_lfw_pairs(data_home=SCIKIT_LEARN_DATA,
                                      resize=None, slice_=None, color=True)
-    assert_equal(lfw_pairs_train.data.shape, (10, 2, 250, 250, 3))
+    assert_equal(lfw_pairs_train.pairs.shape, (10, 2, 250, 250, 3))
 
     # the ids and class names are the same as previously
     assert_array_equal(lfw_pairs_train.target, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])

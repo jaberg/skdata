@@ -190,6 +190,18 @@ class img_loader(object):
     def __call__(self, file_path):
         return self.call_batch([file_path])[0]
 
+    def rval_getattr(self, attr, objs):
+        if attr == 'shape':
+            if self.color:
+                return (self.h, self.w, 3)
+            else:
+                return (self.h, self.w)
+        if attr == 'dtype':
+            return np.float32
+        if attr == 'ndim':
+            return 3 if self.color else 2
+        raise AttributeError(attr)
+
     def call_batch(self, file_paths):
         # allocate some contiguous memory to host the decoded image slices
         n_faces = len(file_paths)
@@ -220,6 +232,10 @@ class img_loader(object):
 #
 # Task #1:  Face Identification on picture with names
 #
+
+#XXX take the post-processing out of the dataset API.
+#    Implement resizing, greyscaling, cropping
+#    as generic post-processing steps.
 
 def load_lfw_people(data_home=None, funneled=True, resize=0.5,
                     min_faces_per_person=None, color=False,
@@ -270,7 +286,6 @@ def load_lfw_people(data_home=None, funneled=True, resize=0.5,
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
     """
-
     lfw_home, data_folder_path = check_fetch_lfw(
         data_home=data_home, funneled=funneled,
         download_if_missing=download_if_missing)
@@ -296,7 +311,6 @@ def load_lfw_people(data_home=None, funneled=True, resize=0.5,
 
     indices = np.arange(n_faces)
     np.random.RandomState(42).shuffle(indices)
-    print indices
     faces = larray.reindex(faces, indices)
     target = target[indices]
 
@@ -307,16 +321,6 @@ def load_lfw_people(data_home=None, funneled=True, resize=0.5,
             target_names=target_names,
             names=larray.reindex(target_names, target),
             DESCR="LFW faces dataset")
-
-def load_lfw_people_fullres(data_home=None, funneled=True,
-        download_if_missing=False):
-    return load_lfw_people(
-            data_home=data_home,
-            funneled=funneled,
-            resize=None,
-            color=True,
-            slice_=None,
-            download_if_missing=download_if_missing)
 
 
 #
@@ -526,7 +530,7 @@ def main_show():
     except ImportError:
         logger.warn('no argparse - ignoring arguments')
         # argparse isn't installed, so just show something
-        people = load_lfw_people_fullres()
+        people = load_lfw_people()
         n_rows = len(people.imgs)
         print 'n. rows', n_rows
         glumpy_viewer(

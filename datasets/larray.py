@@ -5,6 +5,9 @@ import sys
 import StringIO
 import numpy as np
 
+class InferenceError(Exception):
+    """Information about a lazily-evaluated quantity could not be inferred"""
+
 def is_int_idx(idx):
     #XXX: add numpy int types
     return isinstance(idx,
@@ -47,6 +50,15 @@ class larray(lazy):
 class lmap(larray):
     """
     Return a lazily-evaluated mapping.
+
+    fn can be a normal lambda expression, but it can also respond to the
+    following attributes:
+
+    - call_batch
+
+    - rval_getattr
+        `fn.rval_getattr(name)` if it returns, must return the same thing as
+        `getattr(fn(*args), name)` would return.
     """
     #TODO: add kwarg to specify f_map implementation
     #      that is drop-in for map(f, *args)
@@ -70,6 +82,20 @@ class lmap(larray):
             return min(*[len(o) for o in self.objs])
         else:
             return len(self.objs[0])
+
+    def __get_shape(self):
+        shape_0 = len(self)
+        shape_rest = self.fn.rval_getattr('shape', objs=self.objs)
+        return (shape_0,) + shape_rest
+    shape = property(__get_shape)
+
+    def __get_dtype(self):
+        return self.fn.rval_getattr('dtype', objs=self.objs)
+    dtype = property(__get_dtype)
+
+    def __get_ndim(self):
+        return 1 + self.fn.rval_getattr('ndim', objs=self.objs)
+    ndim = property(__get_ndim)
 
     def __getitem__(self, idx):
         if is_int_idx(idx):
@@ -104,8 +130,41 @@ class lmap(larray):
 
 def lzip(*arrays):
     # XXX: make a version of this method that supports call_batch
-    print arrays
-    return lmap((lambda *args: args), *arrays)
+    class fn(object):
+        def __call__(self, *args):
+            return numpy.asarray(args)
+        def rval_getattr(self, name, objs=None):
+            if name == 'shape':
+                shps = [o.shape for o in objs]
+                shp1 = len(objs)
+                # if all the rest of the shapes are equal
+                # then we have something to say,
+                # otherwise no idea.
+                if all(shps[0][1:] == s[1:] for s in shps):
+                    return (shp1,) + shps[0][1:]
+                else:
+                    raise InferenceError('dont know shape')
+                raise NotImplementedError()
+            if name == 'dtype':
+                # if a shape cannot be inferred, then the
+                # zip result might be ragged, in which case the dtype would be
+                # `object`.
+                shape = self.rval_getattr('shape', objs)
+                # postcondition: result is ndarray-like
+
+                if all(o.dtype == objs[0].dtype for o in objs[1:]):
+                    return objs[0].dtype
+                else:
+                    # XXX upcasting rules
+                    raise NotImplementedError()
+            if name == 'ndim':
+                # if a shape cannot be inferred, then the
+                # zip result might be ragged, in which case the dtype would be
+                # `object`.
+                shape = self.rval_getattr('shape', objs)
+                return len(shape)
+            raise AttributeError(name)
+    return lmap(fn(), *arrays)
 
 
 class loop(larray):
@@ -147,6 +206,18 @@ class reindex(larray):
         except TypeError:
             # XXX: try this, and restore original exception on failure
             return [self.obj[ii] for ii in mapped_idx]
+
+    def __get_shape(self):
+        return (len(self),) + self.obj.shape[1:]
+    shape = property(__get_shape)
+
+    def __get_dtype(self):
+        return self.obj.dtype
+    dtype = property(__get_dtype)
+
+    def __get_ndim(self):
+        return self.obj.ndim
+    ndim = property(__get_ndim)
 
     def clone(self, given):
         return reindex(
