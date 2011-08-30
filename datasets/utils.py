@@ -441,3 +441,19 @@ def qr_economic(A, **kwargs):
         return scipy.linalg.qr(A, mode='economic', **kwargs)
     else:
         return scipy.linalg.qr(A, econ=True, **kwargs)
+
+
+def memoize(f):
+    """Simple decorator hashes *args to f, stores rvals in dict.
+
+    This simple decorator works in memory only, does not persist between
+    processes.
+    """
+    cache = {}
+    def cache_f(*args):
+        if args in cache:
+            return cache[args]
+        rval = f(*args)
+        cache[args] = rval
+        return rval
+    return cache_f

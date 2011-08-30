@@ -4,6 +4,8 @@ LazyArray
 import sys
 import StringIO
 import numpy as np
+import logging
+logger = logging.getLogger(__name__)
 
 class InferenceError(Exception):
     """Information about a lazily-evaluated quantity could not be inferred"""
@@ -260,79 +262,30 @@ def pprint_str(thing):
     pprint(thing, '', sio)
     return sio.getvalue()
 
+#
+# Stuff to consider factoring out somewhere because of the imread dependency
+#
 
-if 0:
-    class AdvIndexable1D(object):
-        """
-        Suitable base for finite array.
-        """
-        def __getitem__(self, idx):
-            if isinstance(idx, int):  # does this catch e.g. np.uint8?
-                return self.get_int(idx)
-            elif isinstance(idx, slice):
-                return self.get_slice(idx)
-            else:
-                return self.get_array(idx)
+try:
+    try:
+        from scipy.misc import imread
+    except ImportError:
+        from scipy.misc.pilutil import imread
+    from scipy.misc import imresize
+except ImportError:
+    logger.warn("The Python Imaging Library (PIL)"
+            " is required to load data from jpeg files.")
 
-        def get_int(self, int_idx):
-            raise NotImplementedError('override-me')
+class img_loader(object):
+    """This class is an image-loading filter for use with larray.map"""
+    def __init__(self, slice_, color, resize):
+        pass
 
-        def get_slice(self, slice_idx):
-            start, stop, step = slice_idx.indices(len(self))
-            return SlicedAdvIdx1D(self, start, stop, step)
+    def __call__(self, file_path):
+        return np.asarray(imread(file_path)/255.0, dtype=np.float32)
 
-        def get_array(self, array_idx):
-            rval = [self.get_int(i) for i in array_idx]
-            return rval
-
-        def __array__(self):
-            return np.array(self.src[range(len(self))])
-
-
-    class SlicedAdvIdx1D(AdvIndexable1D):
-        def __init__(self, src, start, stop, step):
-            self.src = src
-            self.start = start
-            self.stop = stop
-            self.step = step
-
-        def get_int(self, int_idx):
-            if int_idx >= 0:
-                idx = self.start + self.step * int_idx
-                if idx < self.stop:
-                    return self.src[idx]
-                else:
-                    raise IndexError()
-            else:
-                idx = self.stop - 1 + self.step * int_idx
-                if idx >= 0:
-                    return self.src[idx]
-                else:
-                    raise IndexError()
-
-    class Map(AdvIndexable1D):
-        def __init__(self, src, f, f_batch=None):
-            self.src = src
-            self.f = f
-            self.f_batch = f_batch
-
-        def get_int(self, int_idx):
-            return self.f_int(self.src[int_idx])
-
-        def get_slice(self, slice_idx):
-            tmp = self.__getitem__(slice_idx)
-            if self.f_batch is None:
-                rval = [self.f(t) for t in tmp]
-            else:
-                rval = self.f_batch(tmp)
-            return numpy.asarray(rval)
-        
-        def get_array(self, array_idx):
-            tmp = self.src[array_idx]
-            if self.f_batch is None:
-                rval = [self.f(t) for t in tmp]
-            else:
-                rval = self.f_batch(tmp)
-            return numpy.asarray(rval)
-
+def img_load(pathlist, slice_=None, color=None, resize=None):
+    return lmap(
+            img_loader(slice_=slice_, color=color, resize=resize),
+            pathlist)
 
