@@ -266,26 +266,23 @@ def pprint_str(thing):
 # Stuff to consider factoring out somewhere because of the imread dependency
 #
 
-try:
-    try:
-        from scipy.misc import imread
-    except ImportError:
-        from scipy.misc.pilutil import imread
-    from scipy.misc import imresize
-except ImportError:
-    logger.warn("The Python Imaging Library (PIL)"
-            " is required to load data from jpeg files.")
+def Flatten(object):
+    def rval_getattr(self, attr, objs):
+        if attr == 'shape':
+            shp = objs[0].shape[1:]
+            if None in shp:
+                return (None,)
+            else:
+                return (numpy.prod(shp),)
+        if attr == 'ndim':
+            return 1
+        if attr == 'dtype':
+            return objs[0].dtype
+        raise AttributeError(attr)
+    def __call__(self, thing):
+        return numpy.flatten(thing)
 
-class img_loader(object):
-    """This class is an image-loading filter for use with larray.map"""
-    def __init__(self, slice_, color, resize):
-        pass
+def flatten_elements(seq):
+    return lmap(Flatten(), seq)
 
-    def __call__(self, file_path):
-        return np.asarray(imread(file_path)/255.0, dtype=np.float32)
-
-def img_load(pathlist, slice_=None, color=None, resize=None):
-    return lmap(
-            img_loader(slice_=slice_, color=color, resize=resize),
-            pathlist)
 

@@ -14,14 +14,20 @@ genders = ['M', 'M', 'F', 'F', 'M', 'F', 'M', 'M', 'F', 'M', 'F', 'F', 'F', 'F',
 'F', 'F', 'M', 'F', 'F', 'M', 'M', 'F', 'F', 'M', 'F', 'F', 'M', 'M', 'M', 'M',
 'F', 'F', 'M', 'M', 'M']
 
+
 def pubfig83_join(*names):
     return os.path.join(get_data_home(), 'pubfig83', *names)
 
+
 def fetch():
+    """Download and extract the dataset."""
     dataset_dir = pubfig83_join()
     if not os.path.exists(dataset_dir):
         os.makedirs(dataset_dir)
+    # XXX: use urllib instead of wget
     os.system('wget http://www.eecs.harvard.edu/~zak/pubfig83/pubfig83_first_draft.tgz -P ' + dataset_dir)
+    # XXX: use python's tar wrapper instead of this command which
+    #      will (I think) not work on windows
     os.system('cd ' + dataset_dir + '; tar -xzf pubfig83_first_draft.tgz')
 
 @memoize

@@ -1,11 +1,21 @@
 import sys
 def main(cmd):
-    if 'fetch' == cmd:
-        exec "import datasets.%s; sys.exit(datasets.%s.main_fetch())" % (
-                sys.argv[1], sys.argv[1])
-    if 'show' == cmd:
-        exec "import datasets.%s; sys.exit(datasets.%s.main_show())" % (
-                sys.argv[1], sys.argv[1])
-    print >> sys.stderr, "Command not recognized:", cmd
-    # XXX: Usage message
-    sys.exit(1)
+    try:
+        runner = dict(
+                fetch='main_fetch',
+                show='main_show')[cmd]
+    except KeyError:
+        print >> sys.stderr, "Command not recognized:", cmd
+        # XXX: Usage message
+        sys.exit(1)
+
+    module_tokens = ['datasets'] + sys.argv[1].split('.')
+    # import as many as we can
+    for i in range(len(module_tokens)):
+        modname = '.'.join(module_tokens[:i+1])
+        try:
+            exec "import %s" % modname
+        except ImportError:
+            break
+    # hail mary...
+    exec "sys.exit(datasets.%s.%s())" % (sys.argv[1], runner)
