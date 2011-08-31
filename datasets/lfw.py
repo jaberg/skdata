@@ -48,8 +48,7 @@ img_loader_f32 = img_utils.ImgLoader(shape=(250, 250, 3), dtype='float32')
 
 
 class BaseLFW(object):
-    """
-    This base class handles both the original and funneled datasets.
+    """This base class handles both the original and funneled datasets.
 
     The lfw subdirectory in the datasets cache has the following structure, when
     it has been populated by calling `funneled.fetch()` and `original.fetch()`.
@@ -82,25 +81,47 @@ class BaseLFW(object):
         datasets-fetch lfw.original  # downloads and untars original dataset
         datasets-fetch lfw.funneled  # downloads and untars funneled dataset
 
+    The meta attribute of this class is a list of dictionaries.
+    Each dictionary describes one image in the dataset, with the following keys:
+        name: string (e.g. Adam_Sandler)
+        number: int (4 means filename is Adam_Sandler_0004.jpg)
+        pairs: dict
+            split_name: list of ints
+
+    The list of ints associated with a set_name is the pair_id numbers in which
+    this image is an element.
+
     """
-    BASE_URL = "http://vis-www.cs.umass.edu/lfw/"
-    TARGET_FILENAMES = [
-        'pairsDevTrain.txt',
-        'pairsDevTest.txt',
-        'pairs.txt',
-    ]
+    DOWNLOAD_IF_MISSING = True
 
-    def home(cls, *names):
-        return join(get_data_home(), 'lfw', cls.NAME, *names)
+    def load(self):
+        """Build the .meta attribute
+        """
+        self.fetch()
+        pairs = {}
+        pairs['DevTrain'] = self._parse_pairs('pairsDevTrain.txt')[0]
+        pairs['DevTest'] = self._parse_pairs('pairsDevTest.txt')[0]
+        for i, fold_i in self._parse_pairs('pairs.txt'):
+            pairs['fold_%i'%i] = fold_i
+        assert i == getattr(self, 'N_PAIRS_SPLITS', i)
+        meta = self.meta = []
+        for name in sorted(listdir(self.home(self.IMAGEDIR))):
+            for filename in sorted(listdir(self.home(self.IMAGEDIR, name))):
+                number = int(filename[-8:-4])
+                assert filename = '%s_%04i.jpg'%(name, number)
+                dct = dict(name=name, number=number, pairs={})
+                for set_name, set_dct in pairs.items():
+                    dct['pairs'][set_name] = set_dct.get((name, number), [])
+                meta.append(dct)
 
-    def erase(cls):
-        if isdir(cls.home()):
-            shutil.rmtree(cls.home())
+    def home(self, *names):
+        return join(get_data_home(), 'lfw', self.NAME, *names)
 
-    def disksize(cls):
-        raise NotImplementedError()
+    def erase(self):
+        if isdir(self.home()):
+            shutil.rmtree(self.home())
 
-    def fetch(cls, download_if_missing=True):
+    def fetch(self, download_if_missing=True):
         """Download the funneled or non-funneled dataset, if necessary.
 
         Call this function with no arguments to download the funneled LFW dataset to the standard
@@ -111,22 +132,22 @@ class BaseLFW(object):
 
         """
 
-        archive_path = cls.home(cls.ARCHIVE_NAME)
-        images_root = cls.home('images')
-        archive_url = cls.BASE_URL + cls.ARCHIVE_NAME
+        archive_path = self.home(self.ARCHIVE_NAME)
+        images_root = self.home('images')
+        archive_url = self.BASE_URL + self.ARCHIVE_NAME
 
-        if not exists(cls.home()):
-            makedirs(cls.home())
+        if not exists(self.home()):
+            makedirs(self.home())
 
         # download the little metadata .txt files
-        for target_filename in cls.TARGET_FILENAMES:
-            target_filepath = join(cls.home(), target_filename)
+        for target_filename in self.TARGET_FILENAMES:
+            target_filepath = join(self.home(), target_filename)
             if not exists(target_filepath):
                 if download_if_missing:
-                    url = cls.BASE_URL + target_filename
+                    url = self.BASE_URL + target_filename
                     logger.warn("Downloading LFW metadata: %s => %s" % (
                         url, target_filepath))
-                    downloader = urllib.urlopen(cls.BASE_URL + target_filename)
+                    downloader = urllib.urlopen(self.BASE_URL + target_filename)
                     data = downloader.read()
                     open(target_filepath, 'wb').write(data)
                 else:
@@ -149,20 +170,7 @@ class BaseLFW(object):
             tarfile.open(archive_path, "r:gz").extractall(path=images_root)
             remove(archive_path)
 
-    def image_lists(cls):
-        """Return a dictionary mapping names (w underscores) to a list of
-        filenames of images of that person.
-
-        This routine walks the data_folder_path to build these lists.
-        """
-        rval = {}
-        for person_name in listdir(cls.home(cls.IMAGEDIR)):
-            rval[person_name] = [cls.home(cls.IMAGEDIR, person_name, filename)
-                    for filename in sorted(listdir(
-                        cls.home(cls.IMAGEDIR, person_name)))]
-        return rval
-
-    def image_pairs(cls, txt_relpath):
+    def _parse_pairs(self, txt_relpath):
         """
         index_file is a text file whose rows are one of
             name1 I name2 J   # non-matching pair    (name1, I), (name2, J)
@@ -172,97 +180,71 @@ class BaseLFW(object):
             N M               # line will be followed by N matching pairs and
                               # then N non-matching pairs... M times
 
-        This function returns three lists:
-        - left image paths
-        - right image paths
-        - binary ndarray: targets match?
+        This function returns a list of dictionaries mapping (name, I) pairs to
+        the ids of image pairs in which (name, I) appears.
+        There is one dictionary for each fold in the file.
         """
-        txtfile = open(cls.home(txt_relpath), 'rb')
-        splitted_lines = [l.strip().split('\t') for l in txtfile.readlines()]
-        pair_specs = [sl for sl in splitted_lines if len(sl) > 2]
-        n_pairs = len(pair_specs)
+        txtfile = open(self.home(txt_relpath), 'rb')
+        header = txtfile.readline().strip().split('\t')
+        lines = iter([l.strip().split('\t') for l in txtfile.readlines()])
+        n_match_per_split = int(header[0])
+        if len(header) == 1:
+            n_splits = 1
+        else:
+            n_splits = int(header[1])
+        rval = []
+        for split_idx in range(n_splits):
+            dct = {}
+            for i in xrange(n_match_per_split):
+                name, I, J = lines.next()
+                dct.setdefault((name, I), []).append(i)
+                dct.setdefault((name, J), []).append(i)
+            for i in xrange(n_match_per_split, 2*n_match_per_split):
+                name1, I, name2, J = lines.next()
+                dct.setdefault((name1, I), []).append(i)
+                dct.setdefault((name2, J), []).append(i)
+            rval.append(dct)
+        return rval
 
-        # interating over the metadata lines for each pair to find the filename to
-        # decode and load in memory
-        target = np.zeros(n_pairs, dtype=np.int)
-        left_paths = []
-        right_paths = []
-        person_names, file_paths = names_paths(data_folder_path, 0)
-        img_lists = cls.image_lists()
+    def image_path(self, dct):
+        return self.home(
+                self.IMAGEDIR,
+                dct['name'],
+                '%s_%04i.jpg'%(dct['name'], dct['number']))
 
-        for i, components in enumerate(pair_specs):
-            if len(components) == 3:
-                target[i] = 1
-                left = (components[0], int(components[1]) - 1)
-                right = (components[0], int(components[2]) - 1)
-            elif len(components) == 4:
-                target[i] = 0
-                left = (components[0], int(components[1]) - 1)
-                right = (components[2], int(components[3]) - 1)
-            else:
-                raise ValueError("invalid line %d: %r" % (i + 1, components))
+    def recognition_task(self):
+        """Return image_paths, labels"""
+        image_paths = [self.image_path(m) for m in self.meta]
+        names = np.asarray([m['name'] for m in self.meta])
+        unique_names = np.unique(names)
+        labels = np.searchsorted(unique_names, names)
+        return image_paths, names
 
-            # a dictionary would make this more readable.
-            left_paths.append(img_lists[left[0]][left[1]])
-            right_paths.append(img_lists[right[0]][right[1]])
+    def verification_task(self, split='DevTrain'):
+        """Return left_image_paths, right_image_paths, labels"""
+        paths = {}
+        for m in self.meta:
+            for pid in m['pairs'][split]:
+                paths.setdefault(pid, []).append(m)
+        ids = range(max(paths.keys()) + 1)
+        # begin sanity checking
+        for mlist in paths.values():
+            assert len(mlist) == 2
+        assert len(ids) == len(paths)
+        # end sanity checking
+        left_image_paths = [self.image_path(paths[i][0]) for i in ids]
+        right_image_paths = [self.image_path(paths[i][1]) for i in ids]
+        labels = [paths[i][0]['name'] == paths[i][1]['name'] for i in ids]
+        return (np.asarray(left_image_paths),
+                np.asarray(right_image_paths),
+                np.asarray(labels))
 
-        return left_paths, right_paths, target
 
-    def load_people(cls, download_if_missing=True):
-        """
-        Return Bunch with keys:
-            names: 1-d ndarray of names of people
-            img_fullpath: 1-d ndarray of paths to pictures of them
-            labels: like names, but integers instead of strings
-            DESCR: "LFW faces dataset"
-        """
-        cls.fetch(download_if_missing)
-        img_lists = cls.image_lists()
-        names, filenames = [], []
-        for name in sorted(img_lists):
-            for fname in img_lists[name]:
-                names.append(name)
-                filenames.append(fname)
-        names = np.asarray(names)
-        filenames = np.asarray(filenames)
-        labels = np.searchsorted(sorted(img_lists), names)
-        assert len(names) == len(labels) == len(filenames)
-        return Bunch(
-                names=names,
-                images=larray.lmap(img_loader_u8, filenames),
-                images_f32=larray.lmap(img_loader_f32, filenames),
-                img_fullpath=filenames,
-                labels=labels,
-                DESCR="LFW faces dataset")
-
-    def load_pairs_train(cls, download_if_missing=True):
-        return cls._load_pairs('pairsDevTrain.txt', 'train',
-                download_if_missing)
-
-    def load_pairs_test(cls, download_if_missing=True):
-        return cls._load_pairs('pairsDevTest.txt', 'test',
-                download_if_missing)
-
-    def load_pairs_10folds(cls, download_if_missing=True):
-        return cls._load_pairs('pairs.txt', '10folds',
-                download_if_missing)
-
-    def _load_pairs(cls, txt_relpath, subset_name, download_if_missing):
-        cls.fetch(download_if_missing)
-        lnames, rnames, lpaths, rpaths, labels = image_pairs(txt_relpath)
-        return Bunch(
-                lnames=lnames,
-                rnames=rnames,
-                lpaths=lpaths,
-                rpaths=rpaths,
-                labels=labels,
-                DESCR="'%s' segment of the LFW pairs dataset" % subset_name)
-
-    def main_fetch(cls):
+    def main_fetch(self):
         """compatibility with bin/datasets_fetch"""
-        cls.fetch(download_if_missing=True)
+        self.fetch(download_if_missing=True)
 
-    def main_show(cls):
+    def main_show(self):
         # Usage one of:
         # <driver> people
         # <driver> pairs
@@ -271,7 +253,7 @@ class BaseLFW(object):
         import img_utils
         print 'ARGV', sys.argv
         if sys.argv[2] == 'people':
-            bunch = cls.load_people()
+            bunch = self.load_people()
             glumpy_viewer(
                     img_array=larray.lmap(
                         img_utils.read_rgb_float32,
@@ -291,11 +273,25 @@ class BaseLFW(object):
 
 
 class Original(BaseLFW):
+    BASE_URL = "http://vis-www.cs.umass.edu/lfw/"
+    TARGET_FILENAMES = [
+        'pairsDevTrain.txt',
+        'pairsDevTest.txt',
+        'pairs.txt',
+    ]
+
     NAME = 'original'
     ARCHIVE_NAME = "lfw.tgz"
 
 
 class Funneled(BaseLFW):
+    BASE_URL = "http://vis-www.cs.umass.edu/lfw/"
+    TARGET_FILENAMES = [
+        'pairsDevTrain.txt',
+        'pairsDevTest.txt',
+        'pairs.txt',
+    ]
+
     NAME = 'funneled'
     ARCHIVE_NAME = "lfw-funneled.tgz"
 
