@@ -1,3 +1,7 @@
+"""
+Several small non-synthetic datasets that do not require any downloading.
+
+"""
 import csv
 import os
 
@@ -7,7 +11,7 @@ import utils
 import utils.image
 
 class BuildOnInit(object):
-    """
+    """Base class that calls build_meta and build_all
     """
     def __init__(self):
         try:
@@ -36,7 +40,7 @@ class BuildOnInit(object):
 
 
 class Iris(BuildOnInit):
-    """Load and return the iris dataset (classification).
+    """Dataset of flower properties (classification)
 
     self.meta has elements with following structure:
 
@@ -78,7 +82,8 @@ class Iris(BuildOnInit):
 
 
 class Digits(BuildOnInit):
-    """
+    """Dataset of small digit images (classification)
+
     meta[i] is dict with
         img: an 8x8 ndarray
         label: int 0 <= label < 10
@@ -104,7 +109,7 @@ class Digits(BuildOnInit):
 
 
 class Diabetes(BuildOnInit):
-    """
+    """Dataset of diabetes results (classification)
 
     meta[i] is dict with
         data: ?
@@ -128,7 +133,8 @@ class Diabetes(BuildOnInit):
 
 
 class Linnerud(BuildOnInit):
-    """
+    """Dataset of exercise and physiological measurements (regression).
+
     meta[i] is dict of
         weight: float
         waist: float
@@ -162,7 +168,8 @@ class Linnerud(BuildOnInit):
 
 
 class Boston(BuildOnInit):
-    """
+    """Dataset of real estate features (regression)
+
     meta[i] is dict of
         CRIM: float
         ZN: float
@@ -211,7 +218,8 @@ class Boston(BuildOnInit):
 
 
 class SampleImages(BuildOnInit):
-    """
+    """Dataset of 2 sample jpg images (no specific task)
+
     meta[i] is dict of:
         filename: str (relative to self.imgdir)
     """
