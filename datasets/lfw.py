@@ -29,6 +29,8 @@ detector from various online websites.
 # - Extra pairs.txt files in the funneled dataset.  The lfw-funneled.tgz dataset
 #   has, in the same dir as the names, a bunch of pairs_0N.txt files and a
 #   pairs.txt file. Why are they there?  Should we be using them?
+# - self.descr should be used
+# - self.meta_const should be used to store the image shapes
 
 import os
 from os import listdir, makedirs, remove

@@ -10,13 +10,28 @@ class BuildOnInit(object):
     """
     def __init__(self):
         try:
-            self.meta
+            self.meta, self.descr, self.meta_const
         except AttributeError:
-            self.meta = self.build_meta()
+            meta, descr, meta_const = self.build_all()
+            self.meta = meta
+            self.descr = descr
+            self.meta_const = meta_const
 
-    def cache(self):
+
+    def memoize(self):
         # cause future __init__ not to build_meta()
         self.__class__.meta = self.meta
+        self.__class__.descr = self.descr
+        self.__class__.meta_const = self.meta_const
+
+    def build_all(self):
+        return self.build_meta(), self.build_descr(), self.build_meta_const()
+
+    def build_descr(self):
+        return {}
+
+    def build_meta_const(self):
+        return {}
 
 
 class Iris(BuildOnInit):
@@ -64,27 +79,18 @@ class Iris(BuildOnInit):
 class Digits(BuildOnInit):
     """
     """
-    def build_meta(self):
+    def build_all(self):
         module_path = os.path.dirname(__file__)
         data = np.loadtxt(os.path.join(module_path, 'data', 'digits.csv.gz'),
                           delimiter=',')
         descr = open(os.path.join(module_path, 'descr', 'digits.rst')).read()
-        print data
-        print descr
-        return []
         target = data[:, -1]
-        flat_data = data[:, :-1]
-        images = flat_data.view()
-        images.shape = (-1, 8, 8)
+        images = np.reshape(data[:, :-1], (-1, 8, 8))
+        assert len(images) == len(target)
+        meta = [dict(img=i, label=t) for i, t in zip(images, target)]
+        return meta, descr, {}
 
-        if n_class < 10:
-            idx = target < n_class
-            flat_data, target = flat_data[idx], target[idx]
-            images = images[idx]
-
-        return Bunch(data=flat_data,
-                     target=target.astype(np.int),
-                     target_names=np.arange(10),
-                     images=images,
-                     DESCR=descr)
-
+    def classification_task(self):
+        X = np.asarray([m['img'].flatten() for m in self.meta])
+        y = np.asarray([m['label'] for m in self.meta])
+        return X, y
