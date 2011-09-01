@@ -24,8 +24,9 @@ detector from various online websites.
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simplified BSD
 
+import os
 from os import listdir, makedirs, remove
-from os.path import join, exists, isdir
+from os.path import exists, isdir
 import shutil
 import sys
 
@@ -87,6 +88,13 @@ class BaseLFW(object):
 
     """
 
+    PAIRS_BASE_URL = "http://vis-www.cs.umass.edu/lfw/"
+    PAIRS_FILENAMES = [
+        'pairsDevTrain.txt',
+        'pairsDevTest.txt',
+        'pairs.txt',
+    ]
+
     def __init__(self, meta=None):
         if meta is not None:
             self._meta = meta
@@ -118,13 +126,14 @@ class BaseLFW(object):
         assert i == getattr(self, 'N_PAIRS_SPLITS', i)
         meta = []
         for name in sorted(listdir(self.home(self.IMAGEDIR))):
-            for filename in sorted(listdir(self.home(self.IMAGEDIR, name))):
-                number = int(filename[-8:-4])
-                assert filename == '%s_%04i.jpg'%(name, number)
-                dct = dict(name=name, number=number, pairs={})
-                for set_name, set_dct in pairs.items():
-                    dct['pairs'][set_name] = set_dct.get((name, number), [])
-                meta.append(dct)
+            if isdir(self.home(self.IMAGEDIR, name)):
+                for filename in sorted(listdir(self.home(self.IMAGEDIR, name))):
+                    number = int(filename[-8:-4])
+                    assert filename == '%s_%04i.jpg'%(name, number)
+                    dct = dict(name=name, number=number, pairs={})
+                    for set_name, set_dct in pairs.items():
+                        dct['pairs'][set_name] = set_dct.get((name, number), [])
+                    meta.append(dct)
         return meta
 
     def parse_pairs(self, txt_relpath):
@@ -145,22 +154,27 @@ class BaseLFW(object):
         header = txtfile.readline().strip().split('\t')
         lines = [l.strip().split('\t') for l in txtfile.readlines()]
         lines_iter = iter(lines)
-        n_match_per_split = int(header[0])
-        if len(header) == 1:
-            n_splits = 1
-        else:
-            n_splits = int(header[1])
+        try:
+            n_splits, n_match_per_split = [int(h) for h in header]
+        except ValueError:
+            n_splits, n_match_per_split = [1] + [int(h) for h in header]
         rval = []
         for split_idx in range(n_splits):
             dct = {}
-            for i in xrange(n_match_per_split):
-                name, I, J = lines_iter.next()
-                dct.setdefault((name, int(I)), []).append(i)
-                dct.setdefault((name, int(J)), []).append(i)
-            for i in xrange(n_match_per_split, 2*n_match_per_split):
-                name1, I, name2, J = lines_iter.next()
-                dct.setdefault((name1, int(I)), []).append(i)
-                dct.setdefault((name2, int(J)), []).append(i)
+            try:
+                for i in xrange(n_match_per_split):
+                    tmp = lines_iter.next()
+                    name, I, J = tmp
+                    dct.setdefault((name, int(I)), []).append(i)
+                    dct.setdefault((name, int(J)), []).append(i)
+                for i in xrange(n_match_per_split, 2*n_match_per_split):
+                    tmp = lines_iter.next()
+                    name1, I, name2, J = tmp
+                    dct.setdefault((name1, int(I)), []).append(i)
+                    dct.setdefault((name2, int(J)), []).append(i)
+            except ValueError:
+                print "Parse error on line:", tmp
+                raise
             rval.append(dct)
         return rval
 
@@ -176,7 +190,7 @@ class BaseLFW(object):
     #
 
     def home(self, *names):
-        return join(get_data_home(), 'lfw', self.NAME, *names)
+        return os.path.join(get_data_home(), 'lfw', self.NAME, *names)
 
     def erase(self):
         if isdir(self.home()):
@@ -193,72 +207,83 @@ class BaseLFW(object):
 
         """
 
-        archive_path = self.home(self.ARCHIVE_NAME)
-        images_root = self.home('images')
-        archive_url = self.BASE_URL + self.ARCHIVE_NAME
-
         if not exists(self.home()):
             makedirs(self.home())
 
         # download the little metadata .txt files
-        for target_filename in self.TARGET_FILENAMES:
-            target_filepath = join(self.home(), target_filename)
+        for target_filename in self.PAIRS_FILENAMES:
+            target_filepath = self.home(target_filename)
             if not exists(target_filepath):
                 if download_if_missing:
-                    url = self.BASE_URL + target_filename
+                    url = self.PAIRS_BASE_URL + target_filename
                     logger.warn("Downloading LFW metadata: %s => %s" % (
                         url, target_filepath))
-                    downloader = urllib.urlopen(self.BASE_URL + target_filename)
+                    downloader = urllib.urlopen(url)
                     data = downloader.read()
                     open(target_filepath, 'wb').write(data)
                 else:
                     raise IOError("%s is missing" % target_filepath)
 
-        if not exists(images_root):
+        if not exists(self.home(self.IMAGEDIR)):
+            archive_path = self.home('images.tgz')
             # download the tgz
             if not exists(archive_path):
                 if download_if_missing:
                     logger.warn("Downloading LFW data (~200MB): %s => %s" %(
-                            archive_url, archive_path))
-                    downloader = urllib.urlopen(archive_url)
+                            self.URL, archive_path))
+                    downloader = urllib.urlopen(self.URL)
                     data = downloader.read()
                     # don't open file until download is complete
                     open(archive_path, 'wb').write(data)
                 else:
                     raise IOError("%s is missing" % target_filepath)
 
-            logger.info("Decompressing the data archive to %s", images_root)
-            tarfile.open(archive_path, "r:gz").extractall(path=images_root)
+            logger.info("Decompressing the data archive to %s", self.home())
+            tarfile.open(archive_path, "r:gz").extractall(path=self.home())
             remove(archive_path)
 
 
     #
     # Driver routines to be called by datasets.main
     #
-
-    def main_fetch(self):
+    @classmethod
+    def main_fetch(cls):
         """compatibility with bin/datasets_fetch"""
         self.fetch(download_if_missing=True)
 
-    def main_show(self):
+    @classmethod
+    def main_show(cls):
         # Usage one of:
         # <driver> people
         # <driver> pairs
-        from glviewer import glumpy_viewer, command, glumpy
+        from utils.glviewer import glumpy_viewer, command, glumpy
         import larray
-        print 'ARGV', sys.argv
-        if sys.argv[2] == 'people':
-            bunch = self.load_people()
+        #print 'ARGV', sys.argv
+        try:
+            task = sys.argv[2]
+        except IndexError:
+            print >> sys.stderr, "Usage one of"
+            print >> sys.stderr, "    <driver> lfw.<imgset> people"
+            print >> sys.stderr, "    <driver> lfw.<imgset> pairs"
+            print >> sys.stderr, "    <driver> lfw.<imgset> pairs_train"
+            print >> sys.stderr, "    <driver> lfw.<imgset> pairs_test"
+            print >> sys.stderr, "    <driver> lfw.<imgset> pairs_10folds"
+            return 1
+
+        if task == 'people':
+            self = cls()
+            image_paths = [self.image_path(m) for m in self.meta]
+            names = np.asarray([m['name'] for m in self.meta])
             glumpy_viewer(
                     img_array=larray.lmap(
-                        utils.image.read_rgb_float32,
-                        bunch.img_fullpath),
-                    arrays_to_print=[bunch.names])
-        elif sys.argv[2] == 'pairs' or sys.argv[2] == 'pairs_train':
+                        utils.image.load_rgb_f32,
+                        image_paths),
+                    arrays_to_print=[names])
+        elif task == 'pairs' or sys.argv[2] == 'pairs_train':
             raise NotImplementedError()
-        elif sys.argv[2] == 'pairs_test':
+        elif task == 'pairs_test':
             raise NotImplementedError()
-        elif sys.argv[2] == 'pairs_10folds':
+        elif task == 'pairs_10folds':
             fold_num = int(sys.argv[3])
             raise NotImplementedError()
         if 0:
@@ -319,27 +344,15 @@ class BaseLFW(object):
 
 
 class Original(BaseLFW):
-    BASE_URL = "http://vis-www.cs.umass.edu/lfw/"
-    TARGET_FILENAMES = [
-        'pairsDevTrain.txt',
-        'pairsDevTest.txt',
-        'pairs.txt',
-    ]
-
-    NAME = 'original'
-    ARCHIVE_NAME = "lfw.tgz"
+    URL = "http://vis-www.cs.umass.edu/lfw/lfw.tgz"
+    NAME = 'original'  # self.home() is <CACHE>/lfw/<NAME>
+    IMAGEDIR = 'lfw'   # this matches what comes out of the tgz
 
 
 class Funneled(BaseLFW):
-    BASE_URL = "http://vis-www.cs.umass.edu/lfw/"
-    TARGET_FILENAMES = [
-        'pairsDevTrain.txt',
-        'pairsDevTest.txt',
-        'pairs.txt',
-    ]
-
-    NAME = 'funneled'
-    ARCHIVE_NAME = "lfw-funneled.tgz"
+    URL = "http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz"
+    NAME = 'funneled'          # self.home() is <CACHE>/lfw/<NAME>
+    IMAGEDIR = 'lfw_funneled'  # this matches what comes out of the tgz
 
 
 def main_fetch():
