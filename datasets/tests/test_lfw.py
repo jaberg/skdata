@@ -55,7 +55,7 @@ class EmptyLFW(lfw.BaseLFW):
     def home(self, *names):
         return os.path.join(SCIKIT_LEARN_DATA_EMPTY, 'lfw', self.NAME, *names)
 
-    def fetch(self):
+    def fetch(self, download_if_missing=True):
         return
 
 
@@ -138,16 +138,11 @@ def teardown_module():
 
 @raises(IOError)
 def test_empty_load():
-    EmptyLFW().load()
+    EmptyLFW().meta
 
 
 def test_fake_load():
     fake = FakeLFW()
-    fake.load()
-    if 0:
-        for m in fake.meta:
-            print m
-
     counts_copy = dict(FakeLFW.counts)
     for m in fake.meta:
         counts_copy[m['name']] -= 1

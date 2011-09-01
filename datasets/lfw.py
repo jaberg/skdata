@@ -36,10 +36,9 @@ import tarfile
 
 from .base import get_data_home, Bunch
 import larray
-import img_utils
+import utils.image
 
 logger = logging.getLogger(__name__)
-
 
 class BaseLFW(object):
     """This base class handles both the original and funneled datasets.
@@ -86,24 +85,30 @@ class BaseLFW(object):
     this image is an element.
 
     """
-    DOWNLOAD_IF_MISSING = True
+
+    #
+    # Standard dataset object interface
+    #
 
     def __get_meta(self):
         try:
             return self._meta
         except AttributeError:
-            self.load()
+            self.fetch(download_if_missing=True)
+            self._meta = self.build_meta()
             return self._meta
     meta = property(__get_meta)
 
-    def load(self):
-        """return self.meta attribute
-        """
-        self.fetch()
+
+    #
+    # Helper routines
+    #
+
+    def build_meta(self):
         pairs = {}
-        pairs['DevTrain'] = self._parse_pairs('pairsDevTrain.txt')[0]
-        pairs['DevTest'] = self._parse_pairs('pairsDevTest.txt')[0]
-        for i, fold_i in enumerate(self._parse_pairs('pairs.txt')):
+        pairs['DevTrain'] = self.parse_pairs('pairsDevTrain.txt')[0]
+        pairs['DevTest'] = self.parse_pairs('pairsDevTest.txt')[0]
+        for i, fold_i in enumerate(self.parse_pairs('pairs.txt')):
             pairs['fold_%i'%i] = fold_i
         assert i == getattr(self, 'N_PAIRS_SPLITS', i)
         meta = []
@@ -115,10 +120,9 @@ class BaseLFW(object):
                 for set_name, set_dct in pairs.items():
                     dct['pairs'][set_name] = set_dct.get((name, number), [])
                 meta.append(dct)
-        # only assign to self now that all has gone well
-        self._meta = meta
+        return meta
 
-    def _parse_pairs(self, txt_relpath):
+    def parse_pairs(self, txt_relpath):
         """
         index_file is a text file whose rows are one of
             name1 I name2 J   # non-matching pair    (name1, I), (name2, J)
@@ -155,6 +159,17 @@ class BaseLFW(object):
             rval.append(dct)
         return rval
 
+    def image_path(self, dct):
+        return self.home(
+                self.IMAGEDIR,
+                dct['name'],
+                '%s_%04i.jpg'%(dct['name'], dct['number']))
+
+
+    #
+    # Fetch interface (XXX is this a general interface?)
+    #
+
     def home(self, *names):
         return join(get_data_home(), 'lfw', self.NAME, *names)
 
@@ -162,7 +177,7 @@ class BaseLFW(object):
         if isdir(self.home()):
             shutil.rmtree(self.home())
 
-    def fetch(self, download_if_missing=True):
+    def fetch(self, download_if_missing):
         """Download the funneled or non-funneled dataset, if necessary.
 
         Call this function with no arguments to download the funneled LFW dataset to the standard
@@ -211,11 +226,10 @@ class BaseLFW(object):
             tarfile.open(archive_path, "r:gz").extractall(path=images_root)
             remove(archive_path)
 
-    def image_path(self, dct):
-        return self.home(
-                self.IMAGEDIR,
-                dct['name'],
-                '%s_%04i.jpg'%(dct['name'], dct['number']))
+
+    #
+    # Driver routines to be called by datasets.main
+    #
 
     def main_fetch(self):
         """compatibility with bin/datasets_fetch"""
@@ -227,13 +241,12 @@ class BaseLFW(object):
         # <driver> pairs
         from glviewer import glumpy_viewer, command, glumpy
         import larray
-        import img_utils
         print 'ARGV', sys.argv
         if sys.argv[2] == 'people':
             bunch = self.load_people()
             glumpy_viewer(
                     img_array=larray.lmap(
-                        img_utils.read_rgb_float32,
+                        utils.image.read_rgb_float32,
                         bunch.img_fullpath),
                     arrays_to_print=[bunch.names])
         elif sys.argv[2] == 'pairs' or sys.argv[2] == 'pairs_train':
@@ -247,6 +260,14 @@ class BaseLFW(object):
             left_imgs = img_load(lpaths, slice_, color, resize)
             right_imgs = img_load(rpaths, slice_, color, resize)
             pairs = larray.lzip(left_imgs, right_imgs)
+
+    #
+    # Standard tasks built from self.meta
+    # -----------------------------------
+    #
+    # raw_... methods return filename lists
+    # img_... methods return lazily-loaded image lists
+    #
 
     def raw_recognition_task(self):
         """Return image_paths, labels"""
@@ -278,20 +299,19 @@ class BaseLFW(object):
     def img_recognition_task(self, dtype='uint8'):
         img_paths, labels = self.raw_recognition_task()
         imgs = larray.lmap(
-                img_utils.ImgLoader(shape=(250, 250, 3), dtype=dtype),
+                utils.image.ImgLoader(shape=(250, 250, 3), dtype=dtype),
                 img_paths)
         return imgs, labels
 
     def img_verification_task(self, split='DevTrain', dtype='uint8'):
         lpaths, rpaths, labels = self.raw_verification_task(split)
         limgs = larray.lmap(
-                img_utils.ImgLoader(shape=(250, 250, 3), dtype=dtype),
+                utils.image.ImgLoader(shape=(250, 250, 3), dtype=dtype),
                 lpaths)
         rimgs = larray.lmap(
-                img_utils.ImgLoader(shape=(250, 250, 3), dtype=dtype),
+                utils.image.ImgLoader(shape=(250, 250, 3), dtype=dtype),
                 rpaths)
         return limgs, rimgs, labels
-
 
 
 class Original(BaseLFW):
