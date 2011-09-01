@@ -57,6 +57,18 @@ themselves made available via a lazy-evaluation mechanism. This package provides
 the ``larray`` to help with that, but memory-mapped files and other techniques for
 working with large amounts of data are welcome as well.
 
+Many datasets are meant to be used in the context of particular *tasks*.
+When that is the case, a dataset class will provide methods that filter
+self.meta and return the representation of the data that is most appropriate for
+the task.  For example, a classification task method on a small dataset will
+return an ``X, y`` pair where ``X`` is numpy ndarray design matrix and ``y`` is a numpy
+array of integers.  For a larger dataset, the design matrix might be provided by
+a lazily-evaluated proxy object.
+
+Lazy-evaluation is important to the design of data processing pipelines for
+large datasets. It decouples the logic of providing access to data from the
+logic of efficient caching, which is often task specific.
+
 
 Development Status
 ==================
