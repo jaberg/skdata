@@ -33,7 +33,9 @@ Usually one example from the dataset is one element of the list.
 The dictionary structures need not necessarily be homogeneous (same keys, same
 schema) but often it is natural to make them homogeneous when the examples of the
 dataset represent I.I.D. data.  Datasets are typically implemented as classes,
-and this list of dictionaries is referred to as ``self.meta``.
+and this list of dictionaries is referred to as ``self.meta``.  Elements of
+``self.meta`` should be built of simple data types and be JSON-encodable.  This
+opens the door to using various tools to store and access meta-data.
 
 Some datasets are for all intents and purposes *infinite* (i.e. dynamically
 generated).  In such cases ``self.meta`` is implemented as lazily-evaluated list.

@@ -1,6 +1,16 @@
 
 from datasets import toy
 
+# XXX : this is  starting to look like a generic /task/ definition
+def check_classification_Xy(X, y, N=None):
+    A, B = X.shape
+    C, = y.shape
+    assert A == C
+    if N is not None:
+        assert A == N
+    assert 'int' in str(y.dtype), y.dtype
+
+
 def test_iris():
     iris = toy.Iris()
     assert len(iris.meta) == 150
@@ -9,17 +19,24 @@ def test_iris():
     assert iris.meta[-2]['name'] == 'virginica'
 
     X, y = iris.classification_task()
-    assert X.shape == (150, 4)
-    assert y.shape == (150,)
-    assert y.min() == 0 and y.max() == 2
+    check_classification_Xy(X, y, len(iris.meta))
+    assert y.min() == 0
+    assert y.max() == 2
 
 
 def test_digits():
     digits = toy.Digits()
-    assert len(digits.meta) == 1797
+    assert len(digits.meta) == 1797, len(digits.meta)
     assert digits.descr  #ensure it's been loaded
     assert digits.meta[3]['img'].shape == (8, 8)
     X, y = digits.classification_task()
-    assert X.shape == (len(digits.meta), 64)
+    check_classification_Xy(X, y, len(digits.meta))
     assert y.min() == 0
     assert y.max() == 9
+
+
+def test_diabetes():
+    diabetes = toy.Diabetes()
+    assert len(diabetes.meta) == 442, len(diabetes.meta)
+    X, y = diabetes.classification_task()
+    check_classification_Xy(X, y, len(diabetes.meta))
