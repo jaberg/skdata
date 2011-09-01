@@ -33,17 +33,17 @@ Usually one example from the dataset is one element of the list.
 The dictionary structures need not necessarily be homogeneous (same keys, same
 schema) but often it is natural to make them homogeneous when the examples of the
 dataset represent I.I.D. data.  Datasets are typically implemented as classes,
-and this list of dictionaries is referred to as `self.meta`.
+and this list of dictionaries is referred to as ``self.meta``.
 
 Some datasets are for all intents and purposes *infinite* (i.e. dynamically
-generated).  In such cases `self.meta` is implemented as lazily-evaluated list.
+generated).  In such cases ``self.meta`` is implemented as lazily-evaluated list.
 
 Sometimes there is meta-data that feels like it applies to an entire dataset
 rather than any particular example.  That data goes into a dictionary in
-`self.descr`.
+``self.descr``.
 
 Sometimes there is meta-data that is constant across all examples (e.g. image
-size).  Such data lives in `self.meta_const`.  When such an attribute exists,
+size).  Such data lives in ``self.meta_const``.  When such an attribute exists,
 then every element of `self.meta` will be consistent with it. In other words,
 `self.meta[i] == self.meta[i].update(self.meta_const)` is always true.
 
