@@ -17,5 +17,7 @@ def main(cmd):
             exec "import %s" % modname
         except ImportError:
             break
+    # now carry on trying to interpret tokens as callable things
+    # TODO
     # hail mary...
     exec "sys.exit(datasets.%s.%s())" % (sys.argv[1], runner)

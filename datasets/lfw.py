@@ -40,12 +40,6 @@ import img_utils
 
 logger = logging.getLogger(__name__)
 
-# Create two image loader functions for lmap.
-# This way the dataset can promise what size the images will be
-# while still allowing them to be loaded lazily.
-img_loader_u8 = img_utils.ImgLoader(shape=(250, 250, 3), dtype='uint8')
-img_loader_f32 = img_utils.ImgLoader(shape=(250, 250, 3), dtype='float32')
-
 
 class BaseLFW(object):
     """This base class handles both the original and funneled datasets.
@@ -94,25 +88,72 @@ class BaseLFW(object):
     """
     DOWNLOAD_IF_MISSING = True
 
+    def __get_meta(self):
+        try:
+            return self._meta
+        except AttributeError:
+            self.load()
+            return self._meta
+    meta = property(__get_meta)
+
     def load(self):
-        """Build the .meta attribute
+        """return self.meta attribute
         """
         self.fetch()
         pairs = {}
         pairs['DevTrain'] = self._parse_pairs('pairsDevTrain.txt')[0]
         pairs['DevTest'] = self._parse_pairs('pairsDevTest.txt')[0]
-        for i, fold_i in self._parse_pairs('pairs.txt'):
+        for i, fold_i in enumerate(self._parse_pairs('pairs.txt')):
             pairs['fold_%i'%i] = fold_i
         assert i == getattr(self, 'N_PAIRS_SPLITS', i)
-        meta = self.meta = []
+        meta = []
         for name in sorted(listdir(self.home(self.IMAGEDIR))):
             for filename in sorted(listdir(self.home(self.IMAGEDIR, name))):
                 number = int(filename[-8:-4])
-                assert filename = '%s_%04i.jpg'%(name, number)
+                assert filename == '%s_%04i.jpg'%(name, number)
                 dct = dict(name=name, number=number, pairs={})
                 for set_name, set_dct in pairs.items():
                     dct['pairs'][set_name] = set_dct.get((name, number), [])
                 meta.append(dct)
+        # only assign to self now that all has gone well
+        self._meta = meta
+
+    def _parse_pairs(self, txt_relpath):
+        """
+        index_file is a text file whose rows are one of
+            name1 I name2 J   # non-matching pair    (name1, I), (name2, J)
+            name I J          # matching image pair  (name, I), (name, J)
+            N                 # line will be followed by N matching pairs and
+                              # then followed by N non-matching pairs
+            N M               # line will be followed by N matching pairs and
+                              # then N non-matching pairs... M times
+
+        This function returns a list of dictionaries mapping (name, I) pairs to
+        the ids of image pairs in which (name, I) appears.
+        There is one dictionary for each fold in the file.
+        """
+        txtfile = open(self.home(txt_relpath), 'rb')
+        header = txtfile.readline().strip().split('\t')
+        lines = [l.strip().split('\t') for l in txtfile.readlines()]
+        lines_iter = iter(lines)
+        n_match_per_split = int(header[0])
+        if len(header) == 1:
+            n_splits = 1
+        else:
+            n_splits = int(header[1])
+        rval = []
+        for split_idx in range(n_splits):
+            dct = {}
+            for i in xrange(n_match_per_split):
+                name, I, J = lines_iter.next()
+                dct.setdefault((name, int(I)), []).append(i)
+                dct.setdefault((name, int(J)), []).append(i)
+            for i in xrange(n_match_per_split, 2*n_match_per_split):
+                name1, I, name2, J = lines_iter.next()
+                dct.setdefault((name1, int(I)), []).append(i)
+                dct.setdefault((name2, int(J)), []).append(i)
+            rval.append(dct)
+        return rval
 
     def home(self, *names):
         return join(get_data_home(), 'lfw', self.NAME, *names)
@@ -170,75 +211,11 @@ class BaseLFW(object):
             tarfile.open(archive_path, "r:gz").extractall(path=images_root)
             remove(archive_path)
 
-    def _parse_pairs(self, txt_relpath):
-        """
-        index_file is a text file whose rows are one of
-            name1 I name2 J   # non-matching pair    (name1, I), (name2, J)
-            name I J          # matching image pair  (name, I), (name, J)
-            N                 # line will be followed by N matching pairs and
-                              # then followed by N non-matching pairs
-            N M               # line will be followed by N matching pairs and
-                              # then N non-matching pairs... M times
-
-        This function returns a list of dictionaries mapping (name, I) pairs to
-        the ids of image pairs in which (name, I) appears.
-        There is one dictionary for each fold in the file.
-        """
-        txtfile = open(self.home(txt_relpath), 'rb')
-        header = txtfile.readline().strip().split('\t')
-        lines = iter([l.strip().split('\t') for l in txtfile.readlines()])
-        n_match_per_split = int(header[0])
-        if len(header) == 1:
-            n_splits = 1
-        else:
-            n_splits = int(header[1])
-        rval = []
-        for split_idx in range(n_splits):
-            dct = {}
-            for i in xrange(n_match_per_split):
-                name, I, J = lines.next()
-                dct.setdefault((name, I), []).append(i)
-                dct.setdefault((name, J), []).append(i)
-            for i in xrange(n_match_per_split, 2*n_match_per_split):
-                name1, I, name2, J = lines.next()
-                dct.setdefault((name1, I), []).append(i)
-                dct.setdefault((name2, J), []).append(i)
-            rval.append(dct)
-        return rval
-
     def image_path(self, dct):
         return self.home(
                 self.IMAGEDIR,
                 dct['name'],
                 '%s_%04i.jpg'%(dct['name'], dct['number']))
-
-    def recognition_task(self):
-        """Return image_paths, labels"""
-        image_paths = [self.image_path(m) for m in self.meta]
-        names = np.asarray([m['name'] for m in self.meta])
-        unique_names = np.unique(names)
-        labels = np.searchsorted(unique_names, names)
-        return image_paths, names
-
-    def verification_task(self, split='DevTrain'):
-        """Return left_image_paths, right_image_paths, labels"""
-        paths = {}
-        for m in self.meta:
-            for pid in m['pairs'][split]:
-                paths.setdefault(pid, []).append(m)
-        ids = range(max(paths.keys()) + 1)
-        # begin sanity checking
-        for mlist in paths.values():
-            assert len(mlist) == 2
-        assert len(ids) == len(paths)
-        # end sanity checking
-        left_image_paths = [self.image_path(paths[i][0]) for i in ids]
-        right_image_paths = [self.image_path(paths[i][1]) for i in ids]
-        labels = [paths[i][0]['name'] == paths[i][1]['name'] for i in ids]
-        return (np.asarray(left_image_paths),
-                np.asarray(right_image_paths),
-                np.asarray(labels))
-
 
     def main_fetch(self):
         """compatibility with bin/datasets_fetch"""
@@ -270,6 +247,51 @@ class BaseLFW(object):
             left_imgs = img_load(lpaths, slice_, color, resize)
             right_imgs = img_load(rpaths, slice_, color, resize)
             pairs = larray.lzip(left_imgs, right_imgs)
+
+    def raw_recognition_task(self):
+        """Return image_paths, labels"""
+        image_paths = [self.image_path(m) for m in self.meta]
+        names = np.asarray([m['name'] for m in self.meta])
+        unique_names = np.unique(names)
+        labels = np.searchsorted(unique_names, names)
+        return image_paths, labels
+
+    def raw_verification_task(self, split='DevTrain'):
+        """Return left_image_paths, right_image_paths, labels"""
+        paths = {}
+        for m in self.meta:
+            for pid in m['pairs'][split]:
+                paths.setdefault(pid, []).append(m)
+        ids = range(max(paths.keys()) + 1)
+        # begin sanity checking
+        for mlist in paths.values():
+            assert len(mlist) == 2
+        assert len(ids) == len(paths)
+        # end sanity checking
+        left_image_paths = [self.image_path(paths[i][0]) for i in ids]
+        right_image_paths = [self.image_path(paths[i][1]) for i in ids]
+        labels = [paths[i][0]['name'] == paths[i][1]['name'] for i in ids]
+        return (np.asarray(left_image_paths),
+                np.asarray(right_image_paths),
+                np.asarray(labels, dtype='int'))
+
+    def img_recognition_task(self, dtype='uint8'):
+        img_paths, labels = self.raw_recognition_task()
+        imgs = larray.lmap(
+                img_utils.ImgLoader(shape=(250, 250, 3), dtype=dtype),
+                img_paths)
+        return imgs, labels
+
+    def img_verification_task(self, split='DevTrain', dtype='uint8'):
+        lpaths, rpaths, labels = self.raw_verification_task(split)
+        limgs = larray.lmap(
+                img_utils.ImgLoader(shape=(250, 250, 3), dtype=dtype),
+                lpaths)
+        rimgs = larray.lmap(
+                img_utils.ImgLoader(shape=(250, 250, 3), dtype=dtype),
+                rpaths)
+        return limgs, rimgs, labels
+
 
 
 class Original(BaseLFW):
