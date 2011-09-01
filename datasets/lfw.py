@@ -202,7 +202,7 @@ class BaseLFW(object):
         if isdir(self.home()):
             shutil.rmtree(self.home())
 
-    def fetch(self, download_if_missing):
+    def fetch(self, download_if_missing=True):
         """Download the funneled or non-funneled dataset, if necessary.
 
         Call this function with no arguments to download the funneled LFW dataset to the standard
@@ -359,6 +359,12 @@ class Funneled(BaseLFW):
     URL = "http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz"
     NAME = 'funneled'          # self.home() is <CACHE>/lfw/<NAME>
     IMAGEDIR = 'lfw_funneled'  # this matches what comes out of the tgz
+
+class Aligned(BaseLFW):
+    URL = "http://www.openu.ac.il/home/hassner/data/lfwa/lfwa.tar.gz"
+    NAME = 'aligned'          # self.home() is <CACHE>/lfw/<NAME>
+    IMAGEDIR = 'lfw_aligned'  # this matches what comes out of the tgz
+
 
 
 def main_fetch():
