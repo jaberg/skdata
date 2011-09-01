@@ -7,7 +7,7 @@ XXX Citation
 import os
 import sys
 
-from .base import get_data_home, Bunch
+from data_home import get_data_home
 import utils, utils.image
 
 _genders = ['M', 'M', 'F', 'F', 'M', 'F', 'M', 'M', 'F', 'M', 'F', 'F', 'F',

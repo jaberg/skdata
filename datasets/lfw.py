@@ -41,7 +41,7 @@ import numpy as np
 import urllib
 import tarfile
 
-from .base import get_data_home, Bunch
+from data_home import get_data_home
 import larray
 import utils
 import utils.image
