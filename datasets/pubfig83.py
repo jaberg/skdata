@@ -7,7 +7,7 @@ XXX Citation
 import os
 import sys
 
-from .base import get_data_home, Bunch
+from data_home import get_data_home
 import utils, utils.image
 
 _genders = ['M', 'M', 'F', 'F', 'M', 'F', 'M', 'M', 'F', 'M', 'F', 'F', 'F',
@@ -57,7 +57,7 @@ class PubFig83(object):
         assert len(names) == len(_genders)
         meta = []
         ind = 0
-        for gender, name in zip(genders, names):
+        for gender, name in zip(_genders, names):
             for pic in sorted(os.listdir(self.home('pubfig83', name))):
                 meta.append(dict(
                     gender=gender,
@@ -85,23 +85,8 @@ class PubFig83(object):
         if isdir(self.home()):
             shutil.rmtree(self.home())
 
-    #
-    # Drivers for scikits.data/bin executables
-    #
-
-    def main_fetch(self):
-        """compatibility with bin/datasets-fetch"""
-        fetch()
-
-    def main_show(self):
-        """compatibility with bin/datasets-show"""
-        from glviewer import glumpy_viewer, command, glumpy
-        import larray
-        bunch = PubFig83()
-        glumpy_viewer(
-                img_array=larray.img_load(bunch.img_fullpath),
-                arrays_to_print=[bunch.name])
-
+    def image_path(self, m):
+        return self.home('pubfig83', m['name'], m['jpgfile'])
 
     #
     # Standard Tasks
@@ -110,14 +95,33 @@ class PubFig83(object):
 
     def raw_recognition_task(self):
         names = [m['name'] for m in self.meta]
-        paths = [self.home('pubfig83', m['name'], m['jpgfile'])
-                for m in genders_names_pics]
+        paths = [self.image_path(m) for m in self.meta]
         labels = utils.int_labels(names)
         return paths, labels
 
     def raw_gender_task(self):
         genders = [m['gender'] for m in self.meta]
-        paths = [self.home('pubfig83', m['name'], m['jpgfile'])
-                for m in genders_names_pics]
+        paths = [self.image_path(m) for m in self.meta]
         return paths, utils.int_labels(genders)
+
+
+#
+# Drivers for scikits.data/bin executables
+#
+
+def main_fetch():
+    """compatibility with bin/datasets-fetch"""
+    fetch()
+
+def main_show():
+    """compatibility with bin/datasets-show"""
+    from utils.glviewer import glumpy_viewer, command, glumpy
+    import larray
+    pf = PubFig83()
+    names = [m['name'] for m in pf.meta]
+    paths = [pf.image_path(m) for m in pf.meta]
+    glumpy_viewer(
+            img_array=larray.lmap(utils.image.ImgLoader(), paths),
+            arrays_to_print=[names])
+
 

@@ -40,6 +40,13 @@ class ImgLoader(object):
                     raise ValueError('shape')
         return rval
 
+# XXX: these loaders currently do not coerce the loaded images
+#      to be e.g. rgb or bw. Should they?
+load_rgb_f32 = ImgLoader(ndim=3, dtype='float32')
+load_rgb_u8 = ImgLoader(ndim=3, dtype='uint8')
+load_bw_f32 = ImgLoader(ndim=2, dtype='float32')
+load_bw_u8 = ImgLoader(ndim=2, dtype='uint8')
+
 if 0:
     def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
                        color=False, slice_=(slice(70, 195), slice(78, 172)),

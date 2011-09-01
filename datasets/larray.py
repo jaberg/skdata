@@ -45,6 +45,11 @@ class lazy(object):
 
 
 class larray(lazy):
+    """
+    .shape
+    .ndim
+    .dtype
+    """
     def loop(self):
         return loop(self)
 

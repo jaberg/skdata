@@ -105,7 +105,7 @@ class FakeLFW(lfw.BaseLFW):
             if n_splits == 1:
                 f.write("%d\n" % n_match)
             else:
-                f.write("%d\t%i\n" % (n_match, n_splits))
+                f.write("%d\t%i\n" % (n_splits, n_match))
             for split in xrange(n_splits):
                 more_than_two = [name for name, count in counts.iteritems()
                                  if count >= 2]

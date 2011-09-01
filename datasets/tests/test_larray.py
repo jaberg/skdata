@@ -63,6 +63,7 @@ def test_using_precompute():
             'from', 'stuff', 'i', 'saved',
             'from', 'stuff']
 
+
 def test_pprint():
     paths = None
     rgb_imgs = larray.lmap(test_pprint, paths)
