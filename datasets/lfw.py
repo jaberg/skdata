@@ -24,6 +24,12 @@ detector from various online websites.
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simplified BSD
 
+
+# ISSUES (XXX)
+# - Extra pairs.txt files in the funneled dataset.  The lfw-funneled.tgz dataset
+#   has, in the same dir as the names, a bunch of pairs_0N.txt files and a
+#   pairs.txt file. Why are they there?  Should we be using them?
+
 import os
 from os import listdir, makedirs, remove
 from os.path import exists, isdir
