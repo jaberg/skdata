@@ -2,6 +2,7 @@
 import logging
 import sys
 logging.basicConfig(stream=sys.stderr)
+
 import datasets.main
 cmd = sys.argv[1]
 sys.argv[1:2] = []
