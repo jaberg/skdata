@@ -84,24 +84,31 @@ Contents
 
 The library contains modules and programs.
 
-Modules
+Modules:
 
-- lfw
+- toy (Iris, Digits, Diabetes, Linnerud, Boston, SampleImages)
+- lfw (Labeled Faces in the Wild)
+- pubfig83
+- pascalVOC2007
+.. - mnist
+.. - cifar10
+.. - larochelle2007
 
-Programs
+Programs:
 
-- dataset-fetch download a dataset
+- ``datasets-fetch <dataset>`` download a dataset
+- ``datasets-show <dataset>`` visualize a dataset
 
 
 Programs
 ========
 
-dataset-fetch
+datasets-fetch
 -------------
 
-Usage: dataset-fetch <dataset_name>
+Usage: ``dataset-fetch <dataset_name>``
 
-This program downloads the named dataset into the SCIKIT_LEARN_HOME data directory.
+This program downloads the named dataset into the ``$SCIKITS_DATA`` directory.
 Typically this means downloading from original sources online.
 
 How does this work? It works something like this:
@@ -113,3 +120,15 @@ How does this work? It works something like this:
 
 So every dataset module has to opt into this mechanism by implementing a global
 main_fetch function.
+To see more about how sub-modules use this mechanism, grep the code for ``main_fetch``.
+
+datasets-show
+-------------
+
+Usage: ``dataset-show <dataset_name>``
+
+This program downloads the named dataset if necessary into the ``$SCIKITS_DATA`` directory,
+loads it, and launches a simple GUI program to visualize the elements of the
+dataset.
+To see more about how sub-modules use this mechanism, grep the code for ``main_show``.
+
