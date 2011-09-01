@@ -5,10 +5,15 @@ from datasets import toy
 def check_classification_Xy(X, y, N=None):
     A, B = X.shape
     C, = y.shape
-    assert A == C
-    if N is not None:
-        assert A == N
+    assert A == C == (C if N is None else N)
     assert 'int' in str(y.dtype), y.dtype
+
+def check_regression_XY(X, Y, N=None):
+    A, B = X.shape
+    C, D = Y.shape
+    assert A == C == (C if N is None else N)
+    assert 'float' in str(X.dtype)
+    assert 'float' in str(Y.dtype)
 
 
 def test_iris():
@@ -40,3 +45,12 @@ def test_diabetes():
     assert len(diabetes.meta) == 442, len(diabetes.meta)
     X, y = diabetes.classification_task()
     check_classification_Xy(X, y, len(diabetes.meta))
+
+
+def test_linnerud():
+    linnerud = toy.Linnerud()
+    assert len(linnerud.meta) == 20
+    assert list(sorted(linnerud.meta[5].keys())) == [
+            'chins', 'jumps', 'pulse', 'situps', 'waist', 'weight']
+    X, Y = linnerud.regression_task()
+    check_regression_XY(X, Y, 20)

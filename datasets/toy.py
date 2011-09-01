@@ -125,3 +125,31 @@ class Diabetes(BuildOnInit):
         y = np.asarray([m['l'] for m in self.meta])
         return X, y
 
+
+class Linnerud(BuildOnInit):
+    """
+    """
+    def build_all(self):
+        base_dir = os.path.join(os.path.dirname(__file__), 'data/')
+        data_exercise = np.loadtxt(base_dir + 'linnerud_exercise.csv', skiprows=1)
+        data_physiological = np.loadtxt(base_dir + 'linnerud_physiological.csv',
+                                        skiprows=1)
+        #header_physiological == ['Weight', 'Waist', 'Pulse']
+        #header_exercise == ['Chins', 'Situps', 'Jumps']
+        assert data_exercise.shape == (20, 3)
+        assert data_physiological.shape == (20, 3)
+        meta = [dict(weight=p[0], waist=p[1], pulse=p[2],
+                     chins=e[0], situps=e[1], jumps=e[2])
+                for e, p in zip(data_exercise, data_physiological)]
+        descr = open(os.path.dirname(__file__) + '/descr/linnerud.rst').read()
+        return meta, dict(txt=descr), {}
+
+    def regression_task(self):
+        # Task as defined on pg 15 of
+        #    Tenenhaus, M. (1998). La regression PLS: theorie et pratique.
+        #    Paris: Editions Technic.
+        X = [(m['weight'], m['waist'], m['pulse']) for m in self.meta]
+        Y = [(m['chins'], m['situps'], m['jumps']) for m in self.meta]
+        return np.asarray(X, dtype=np.float), np.asarray(Y, dtype=np.float)
+
+
