@@ -1,5 +1,5 @@
 import numpy as np
-import larray
+from datasets import larray
 
 
 def test_usage():

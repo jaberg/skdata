@@ -36,6 +36,7 @@ import tarfile
 
 from .base import get_data_home, Bunch
 import larray
+import utils
 import utils.image
 
 logger = logging.getLogger(__name__)
@@ -85,6 +86,10 @@ class BaseLFW(object):
     this image is an element.
 
     """
+
+    def __init__(self, meta=None):
+        if meta is not None:
+            self._meta = meta
 
     #
     # Standard dataset object interface
@@ -273,8 +278,7 @@ class BaseLFW(object):
         """Return image_paths, labels"""
         image_paths = [self.image_path(m) for m in self.meta]
         names = np.asarray([m['name'] for m in self.meta])
-        unique_names = np.unique(names)
-        labels = np.searchsorted(unique_names, names)
+        labels = utils.int_labels(names)
         return image_paths, labels
 
     def raw_verification_task(self, split='DevTrain'):

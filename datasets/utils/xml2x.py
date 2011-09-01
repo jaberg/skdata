@@ -7,7 +7,7 @@ class XmlListConfig(list):
     # from http://code.activestate.com/recipes/410469-xml-as-dictionary
     def __init__(self, aList):
         for element in aList:
-            if element:
+            if len(element):
                 # treat like dict
                 if len(element) == 1 or element[0].tag != element[1].tag:
                     self.append(XmlDictConfig(element))
@@ -40,7 +40,7 @@ class XmlDictConfig(dict):
         if parent_element.items():
             self.update(dict(parent_element.items()))
         for element in parent_element:
-            if element:
+            if len(element):
                 # treat like dict - we assume that if the first two tags
                 # in a series are different, then they are all different.
                 if len(element) == 1 or element[0].tag != element[1].tag:

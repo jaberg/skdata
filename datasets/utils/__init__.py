@@ -462,3 +462,14 @@ def memoize(f):
         cache[args] = rval
         return rval
     return cache_f
+
+
+def int_labels(labels, return_dct=False):
+    """['me', 'b', 'b', ...] -> [0, 1, 1, ...]"""
+    u = np.unique(labels)
+    i = np.searchsorted(u, labels)
+    if return_dct:
+        return i, u
+    else:
+        return i
+
