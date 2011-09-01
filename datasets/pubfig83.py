@@ -1,89 +1,123 @@
-from data_cache import cache_join, cache_open
-import dataset
-import column
-import sys
+"""
+XXX Description of dataset (Zak?)
+
+XXX Citation
+
+"""
 import os
+import sys
 
-genders = ['M', 'M', 'F', 'F', 'M', 'F', 'M', 'M', 'F', 'M', 'F', 'F', 'F', 'F', 'F', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'F', 'F', 'M', 'M', 'F', 'F', 'M', 'M', 'F', 'F', 'M', 'M', 'M', 'M', 'F', 'F', 'F', 'F', 'F', 'M', 'M', 'F', 'F', 'F', 'F', 'F', 'F', 'M', 'M', 'F', 'F', 'F', 'M', 'F', 'F', 'M', 'M', 'F', 'M', 'F', 'F', 'M', 'F', 'F', 'M', 'M', 'F', 'F', 'M', 'F', 'F', 'M', 'M', 'M', 'M', 'F', 'F', 'M', 'M', 'M']
+from .base import get_data_home, Bunch
+import utils, utils.image
 
-def pubfig83_join(*names):
-    return cache_join('pubfig', 'pubfig83', *names)
+_genders = ['M', 'M', 'F', 'F', 'M', 'F', 'M', 'M', 'F', 'M', 'F', 'F', 'F',
+'F', 'F', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'M', 'F', 'F', 'M', 'M', 'F', 'F',
+'M', 'M', 'F', 'F', 'M', 'M', 'M', 'M', 'F', 'F', 'F', 'F', 'F', 'M', 'M', 'F',
+'F', 'F', 'F', 'F', 'F', 'M', 'M', 'F', 'F', 'F', 'M', 'F', 'F', 'M', 'M', 'F',
+'M', 'F', 'F', 'M', 'F', 'F', 'M', 'M', 'F', 'F', 'M', 'F', 'F', 'M', 'M', 'M',
+'M', 'F', 'F', 'M', 'M', 'M']
 
-class pubfig83_blob(dataset.DatasetBlob):
-    global_instance = None
-    @classmethod
-    def get_global_instance(cls):
-        if cls.global_instance is None:
-            cls.global_instance = cls()
-        return cls.global_instance
-        
-    def fetch(self):
-        dataset_dir = cache_join('pubfig')
-        os.system('wget http://www.eecs.harvard.edu/~zak/pubfig83/pubfig83_first_draft.tgz -P ' + dataset_dir)
-        os.system('cd ' + dataset_dir + '; tar -xzf pubfig83_first_draft.tgz')
-        
-    def load(self):
-        dataset_path = pubfig83_join() 
-        if not os.path.exists(dataset_path):
-            self.fetch()
-        names = os.listdir(dataset_path)
-        names.sort()
-        assert len(names) == len(genders)
-        genders_names_pics = []
+class PubFig83(object):
+    """
+    XXX Technical description of class (attributes, methods, etc.) rather than
+    descr of dataset (which is above in the file).
+
+    self.meta a list of dictionaries. Each one contains
+        gender: 'M' or 'F'
+        name: str
+        id: int
+        jpgfile: relpath
+    """
+
+    def __init__(self, meta=None):
+        if meta is not None:
+            self._meta = meta
+    #
+    # Standard dataset object interface
+    #
+
+    def __get_meta(self):
+        try:
+            return self._meta
+        except AttributeError:
+            self.fetch(download_if_missing=True)
+            self._meta = self.build_meta()
+            return self._meta
+    meta = property(__get_meta)
+
+    #
+    # Helper routines
+    #
+
+    def home(self, *names):
+        return os.path.join(get_data_home(), 'pubfig83', *names)
+
+    def build_meta(self):
+        names = sorted(os.listdir(self.home('pubfig83')))
+        assert len(names) == len(_genders)
+        meta = []
         ind = 0
         for gender, name in zip(genders, names):
-            pics = os.listdir(pubfig83_join(name))
-            pics.sort()
-            for pic in pics:
-                genders_names_pics.append(dict(
+            for pic in sorted(os.listdir(self.home('pubfig83', name))):
+                meta.append(dict(
                     gender=gender,
-                    name=name, 
+                    name=name,
                     id=ind,
                     jpgfile=pic))
-                ind +=1 
-                
-        return genders_names_pics
+                ind +=1
+        return meta
 
-class ImgRelPath(column.MapColumn):
-    @staticmethod
-    def _fn(dct):
-        return ('pubfig', 'pubfig83', dct['name'], dct['jpgfile'])
+    def fetch(self, download_if_missing=True):
+        """Download and extract the dataset."""
+        dataset_dir = self.home()
+        if os.path.exists(dataset_dir):
+            return
+        if not download_if_missing:
+            raise IOError(dataset_dir)
+        os.makedirs(dataset_dir)
+        # XXX: use urllib instead of wget
+        os.system('wget http://www.eecs.harvard.edu/~zak/pubfig83/pubfig83_first_draft.tgz -P ' + dataset_dir)
+        # XXX: use python's tar wrapper instead of this command which
+        #      will (I think) not work on windows
+        os.system('cd ' + dataset_dir + '; tar -xzf pubfig83_first_draft.tgz')
 
-class ImgFullPath(column.MapColumn):
-    @staticmethod
-    def _fn(dct):
-        return pubfig83_join(dct['name'], dct['jpgfile'])
+    def erase(self):
+        if isdir(self.home()):
+            shutil.rmtree(self.home())
 
-class PubFig83(dataset.Dataset):
-    def __init__(self):
-        self.blob = pubfig83_blob.get_global_instance()
-        genders_names_pics = self.blob.load()
-        columns = {}
-        columns['meta'] = column.ListColumn(genders_names_pics)
-        columns['gender'] = column.ListColumn(
-                [g['gender'] for g in genders_names_pics])
-        columns['name'] = column.ListColumn(
-                [g['name'] for g in genders_names_pics])
-        columns['jpgfile'] = column.ListColumn(
-                [g['jpgfile'] for g in genders_names_pics])
-        columns['img_relpath'] = ImgRelPath(columns['meta'])
-        columns['img_fullpath'] = ImgFullPath(columns['meta'])
-        columns['npy_img'] = column.NdarrayFromImagepath(columns['img_fullpath'])
-        dataset.Dataset.__init__(self, columns)
+    #
+    # Drivers for scikits.data/bin executables
+    #
 
-def pubfig83_from_son(doc):
-    return PubFig83()
+    def main_fetch(self):
+        """compatibility with bin/datasets-fetch"""
+        fetch()
 
-if __name__ == '__main__':
-    dset = PubFig83()
-    dset.columns['npy_img'][0]
-    if 0:
-        print >> sys.stderr, img0.dtype
-    from glviewer import glumpy_viewer, command
-    
-    glumpy_viewer(
-            imgcol=dset.columns['npy_img'],
-            other_cols_to_print=[
-                dset.columns['name'],
-                ])
+    def main_show(self):
+        """compatibility with bin/datasets-show"""
+        from glviewer import glumpy_viewer, command, glumpy
+        import larray
+        bunch = PubFig83()
+        glumpy_viewer(
+                img_array=larray.img_load(bunch.img_fullpath),
+                arrays_to_print=[bunch.name])
+
+
+    #
+    # Standard Tasks
+    # --------------
+    #
+
+    def raw_recognition_task(self):
+        names = [m['name'] for m in self.meta]
+        paths = [self.home('pubfig83', m['name'], m['jpgfile'])
+                for m in genders_names_pics]
+        labels = utils.int_labels(names)
+        return paths, labels
+
+    def raw_gender_task(self):
+        genders = [m['gender'] for m in self.meta]
+        paths = [self.home('pubfig83', m['name'], m['jpgfile'])
+                for m in genders_names_pics]
+        return paths, utils.int_labels(genders)
 

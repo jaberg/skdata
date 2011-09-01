@@ -1,3 +1,7 @@
+from my_path import get_my_path, get_my_path_basename
+from xml2x import xml2dict, xml2list
+
+# -- old utils.py
 import numpy as np
 import scipy.sparse as sp
 import warnings
@@ -27,9 +31,9 @@ def as_float_array(X, overwrite_X=False):
     """
     Converts a numpy array to type np.float
 
-    The new dtype will be float32 or np.float64, depending on the original type.
-    The function can create a copy or modify the argument depending
-    of the argument overwrite_X
+    The new dtype will be float32 or np.float64, depending on the original
+    type.  The function can create a copy or modify the argument depending of
+    the argument overwrite_X
 
     WARNING : If X is not of type float, then a copy of X with the right type
               will be returned
@@ -197,6 +201,7 @@ class deprecated(object):
 
         # FIXME: we should probably reset __new__ for full generality
         init = cls.__init__
+
         def wrapped(*args, **kwargs):
             warnings.warn(msg, category=DeprecationWarning)
             return init(*args, **kwargs)
@@ -441,3 +446,30 @@ def qr_economic(A, **kwargs):
         return scipy.linalg.qr(A, mode='economic', **kwargs)
     else:
         return scipy.linalg.qr(A, econ=True, **kwargs)
+
+
+def memoize(f):
+    """Simple decorator hashes *args to f, stores rvals in dict.
+
+    This simple decorator works in memory only, does not persist between
+    processes.
+    """
+    cache = {}
+    def cache_f(*args):
+        if args in cache:
+            return cache[args]
+        rval = f(*args)
+        cache[args] = rval
+        return rval
+    return cache_f
+
+
+def int_labels(labels, return_dct=False):
+    """['me', 'b', 'b', ...] -> [0, 1, 1, ...]"""
+    u = np.unique(labels)
+    i = np.searchsorted(u, labels)
+    if return_dct:
+        return i, u
+    else:
+        return i
+

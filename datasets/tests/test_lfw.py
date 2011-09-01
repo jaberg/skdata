@@ -21,20 +21,18 @@ try:
 except ImportError:
     imsave = None
 
-from scikits.learn.datasets import load_lfw_pairs
-from scikits.learn.datasets import load_lfw_people
-from scikits.learn.datasets import get_data_home
+from datasets import lfw
 
 from numpy.testing import assert_array_equal
+from numpy.testing import assert_raises
 from numpy.testing import assert_equal
 from nose import SkipTest
 from nose.tools import raises
 
 
 SCIKIT_LEARN_DATA = tempfile.mkdtemp(prefix="scikit_learn_lfw_test_")
-SCIKIT_LEARN_EMPTY_DATA = tempfile.mkdtemp(prefix="scikit_learn_empty_test_")
+SCIKIT_LEARN_DATA_EMPTY = tempfile.mkdtemp(prefix="scikit_learn_empty_test_")
 
-LFW_HOME = os.path.join(SCIKIT_LEARN_DATA, 'lfw_home')
 FAKE_NAMES = [
     'Abdelatif_Smith',
     'Abhati_Kepler',
@@ -45,141 +43,178 @@ FAKE_NAMES = [
     'Onur_Lopez',
 ]
 
+def namelike(fullpath):
+    """Returns part of an image full path that has the name in it"""
+    return fullpath[-18:-8]
+
+
+class EmptyLFW(lfw.BaseLFW):
+    NAME = 'Empty'
+    ARCHIVE_NAME = "i_dont_exist.tgz"
+
+    def home(self, *names):
+        return os.path.join(SCIKIT_LEARN_DATA_EMPTY, 'lfw', self.NAME, *names)
+
+    def fetch(self, download_if_missing=True):
+        return
+
+
+class FakeLFW(lfw.BaseLFW):
+    NAME = 'Fake'
+    IMAGEDIR = 'lfw_fake' # corresponds to lfw, lfw_funneled, lfw_aligned
+
+    def home(self, *names):
+        return os.path.join(SCIKIT_LEARN_DATA, 'lfw', self.NAME, *names)
+
+    def fetch(self, download_if_missing=True):
+        if not os.path.exists(self.home()):
+            os.makedirs(self.home())
+
+        random_state = random.Random(42)
+        np_rng = np.random.RandomState(42)
+
+        # generate some random jpeg files for each person
+        counts = FakeLFW.counts = {}
+        for name in FAKE_NAMES:
+            folder_name = self.home(self.IMAGEDIR, name)
+            if not os.path.exists(folder_name):
+                os.makedirs(folder_name)
+
+            n_faces = np_rng.randint(1, 5)
+            counts[name] = n_faces
+            for i in range(n_faces):
+                file_path = os.path.join(folder_name, name + '_%04d.jpg' % (i+1))
+                uniface = np_rng.randint(0, 255, size=(250, 250, 3))
+                try:
+                    imsave(file_path, uniface)
+                except ImportError:
+                    # PIL is not properly installed, skip those tests
+                    raise SkipTest
+
+        if not os.path.exists(self.home('lfw_funneled')):
+            os.makedirs(self.home('lfw_funneled'))
+
+        # add some random file pollution to test robustness
+        f = open(os.path.join(self.home(), 'lfw_funneled', '.test.swp'), 'wb')
+        f.write('Text file to be ignored by the dataset loader.')
+        f.close()
+
+        # generate some pairing metadata files using the same format as LFW
+        def write_fake_pairs(filename, n_match, n_splits):
+            f = open(os.path.join(self.home(), filename), 'wb')
+            if n_splits == 1:
+                f.write("%d\n" % n_match)
+            else:
+                f.write("%d\t%i\n" % (n_match, n_splits))
+            for split in xrange(n_splits):
+                more_than_two = [name for name, count in counts.iteritems()
+                                 if count >= 2]
+                for i in range(n_match):
+                    name = random_state.choice(more_than_two)
+                    first, second = random_state.sample(range(counts[name]), 2)
+                    f.write('%s\t%d\t%d\n' % (name, first+1, second+1))
+
+                for i in range(n_match):
+                    first_name, second_name = random_state.sample(FAKE_NAMES, 2)
+                    first_index = random_state.choice(range(counts[first_name]))
+                    second_index = random_state.choice(range(counts[second_name]))
+                    f.write('%s\t%d\t%s\t%d\n' % (first_name, first_index+1,
+                                                  second_name, second_index+1))
+            f.close()
+        write_fake_pairs('pairsDevTrain.txt', 5, 1)
+        write_fake_pairs('pairsDevTest.txt', 7, 1)
+        write_fake_pairs('pairs.txt', 4, 3)
+
 
 def setup_module():
     """Test fixture run once and common to all tests of this module"""
-    if imsave is None:
-        raise SkipTest
-
-    if not os.path.exists(LFW_HOME):
-        os.makedirs(LFW_HOME)
-
-    random_state = random.Random(42)
-    np_rng = np.random.RandomState(42)
-
-    # generate some random jpeg files for each person
-    counts = {}
-    for name in FAKE_NAMES:
-        folder_name = os.path.join(LFW_HOME, 'lfw_funneled', name)
-        if not os.path.exists(folder_name):
-            os.makedirs(folder_name)
-
-        n_faces = np_rng.randint(1, 5)
-        counts[name] = n_faces
-        for i in range(n_faces):
-            file_path = os.path.join(folder_name, name + '_%04d.jpg' % i)
-            uniface = np_rng.randint(0, 255, size=(250, 250, 3))
-            try:
-                imsave(file_path, uniface)
-            except ImportError:
-                # PIL is not properly installed, skip those tests
-                raise SkipTest
-
-    # add some random file pollution to test robustness
-    f = open(os.path.join(LFW_HOME, 'lfw_funneled', '.test.swp'), 'wb')
-    f.write('Text file to be ignored by the dataset loader.')
-    f.close()
-
-    # generate some pairing metadata files using the same format as LFW
-    f = open(os.path.join(LFW_HOME, 'pairsDevTrain.txt'), 'wb')
-    f.write("10\n")
-    more_than_two = [name for name, count in counts.iteritems()
-                     if count >= 2]
-    for i in range(5):
-        name = random_state.choice(more_than_two)
-        first, second = random_state.sample(range(counts[name]), 2)
-        f.write('%s\t%d\t%d\n' % (name, first, second))
-
-    for i in range(5):
-        first_name, second_name = random_state.sample(FAKE_NAMES, 2)
-        first_index = random_state.choice(range(counts[first_name]))
-        second_index = random_state.choice(range(counts[second_name]))
-        f.write('%s\t%d\t%s\t%d\n' % (first_name, first_index,
-                                      second_name, second_index))
-    f.close()
-
-    f = open(os.path.join(LFW_HOME, 'pairsDevTest.txt'), 'wb')
-    f.write("Fake place holder that won't be tested")
-    f.close()
-
-    f = open(os.path.join(LFW_HOME, 'pairs.txt'), 'wb')
-    f.write("Fake place holder that won't be tested")
-    f.close()
+    FakeLFW().fetch()
 
 
 def teardown_module():
     """Test fixture (clean up) run once after all tests of this module"""
-    if os.path.isdir(SCIKIT_LEARN_DATA):
-        shutil.rmtree(SCIKIT_LEARN_DATA)
-    if os.path.isdir(SCIKIT_LEARN_EMPTY_DATA):
-        shutil.rmtree(SCIKIT_LEARN_EMPTY_DATA)
+    FakeLFW().erase()
 
 
 @raises(IOError)
-def test_load_empty_lfw_people():
-    lfw_people = load_lfw_people(data_home=SCIKIT_LEARN_EMPTY_DATA)
+def test_empty_load():
+    EmptyLFW().meta
 
 
-def test_load_fake_lfw_people():
-    lfw_people = load_lfw_people(data_home=SCIKIT_LEARN_DATA,
-                                 min_faces_per_person=3)
+def test_fake_load():
+    fake = FakeLFW()
+    counts_copy = dict(FakeLFW.counts)
+    for m in fake.meta:
+        counts_copy[m['name']] -= 1
+    assert all(c == 0 for c in counts_copy.values())
 
-    # The data is croped around the center as a rectangular bounding box
-    # arounthe the face. Colors are converted to gray levels:
-    assert_equal(lfw_people.data.shape, (10, 62, 47))
-
-    # the target is array of person integer ids
-    assert_array_equal(lfw_people.target, [2, 0, 1, 0, 2, 0, 2, 1, 1, 2])
-
-    # names of the persons can be found using the target_names array
-    expected_classes = ['Abdelatif Smith', 'Abhati Kepler', 'Onur Lopez']
-    assert_array_equal(lfw_people.target_names, expected_classes)
-
-    # It is possible to ask for the original data without any croping or color
-    # conversion and not limit on the number of picture per person
-    lfw_people = load_lfw_people(data_home=SCIKIT_LEARN_DATA,
-                                 resize=None, slice_=None, color=True)
-    assert_equal(lfw_people.data.shape, (17, 250, 250, 3))
-
-    # the ids and class names are the same as previously
-    assert_array_equal(lfw_people.target,
-                       [0, 0, 1, 6, 5, 6, 3, 6, 0, 3, 6, 1, 2, 4, 5, 1, 2])
-    assert_array_equal(lfw_people.target_names,
-                      ['Abdelatif Smith', 'Abhati Kepler', 'Camara Alvaro',
-                       'Chen Dupont', 'John Lee', 'Lin Bauman', 'Onur Lopez'])
+    assert list(sorted(m['pairs'].keys())) == [
+            'DevTest', 'DevTrain', 'fold_0', 'fold_1', 'fold_2']
 
 
-@raises(ValueError)
-def test_load_fake_lfw_people_too_restrictive():
-    load_lfw_people(data_home=SCIKIT_LEARN_DATA, min_faces_per_person=100)
+def test_fake_recognition_task():
+    fake = FakeLFW()
+    paths, labels = fake.raw_recognition_task()
+    assert len(paths) == len(labels)
+    assert all(p.endswith('.jpg') for p in paths)
+    assert 'int' in str(labels.dtype)
+
+    #assert that names and labels correspond 1-1
+    sig_l = {}
+    sig_p = {}
+    for p, l in zip(paths, labels):
+        assert sig_l.setdefault(l, namelike(p)) == namelike(p)
+        assert sig_p.setdefault(namelike(p), l) == l
 
 
-@raises(IOError)
-def test_load_empty_lfw_pairs():
-    lfw_people = load_lfw_pairs(data_home=SCIKIT_LEARN_EMPTY_DATA)
+def test_fake_verification_task():
+    fake = FakeLFW()
+    for split in (None, 'DevTrain', 'DevTest', 'fold_0', 'fold_1', 'fold_2'):
+        if split is None:
+            lpaths, rpaths, labels = fake.raw_verification_task()
+        else:
+            lpaths, rpaths, labels = fake.raw_verification_task(split=split)
+
+        if split is None or split == 'DevTrain':
+            assert len(labels) == 5 * 2
+        elif split == 'DevTest':
+            assert len(labels) == 7 * 2
+        elif split.startswith('fold'):
+            assert len(labels) == 4 * 2
+
+        assert len(lpaths) == len(labels)
+        assert len(rpaths) == len(labels)
+        assert 'int' in str(labels.dtype)
+        for l, r, t in zip(lpaths, rpaths, labels):
+            assert t in (0, 1)
+            if t == 0:
+                assert namelike(l) != namelike(r)
+            else:
+                assert namelike(l) == namelike(r)
+
+    assert_raises(KeyError, fake.raw_verification_task, split='invalid')
 
 
-def test_load_fake_lfw_pairs():
-    lfw_pairs_train = load_lfw_pairs(data_home=SCIKIT_LEARN_DATA)
+def test_fake_imgs():
+    fake = FakeLFW()
+    true_n_images = sum(fake.counts.values())
+    # test the default case
+    images, labels = fake.img_recognition_task()
+    assert images.dtype == 'uint8'
+    assert images.ndim == 4
+    assert images.shape == (true_n_images, 250, 250, 3)
 
-    # The data is croped around the center as a rectangular bounding box
-    # arounthe the face. Colors are converted to gray levels:
-    assert_equal(lfw_pairs_train.data.shape, (10, 2, 62, 47))
+    assert images[0].dtype == 'uint8'
+    assert images[0].ndim == 3
+    assert images[0].shape == (250, 250, 3)
 
-    # the target is whether the person is the same or not
-    assert_array_equal(lfw_pairs_train.target, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
+    # test specified dtypes
+    for dtype in 'uint8', 'float32':
+        images, labels = fake.img_recognition_task(dtype=dtype)
+        assert images.dtype == dtype
+        assert images.ndim == 4
+        assert images.shape == (true_n_images, 250, 250, 3)
 
-    # names of the persons can be found using the target_names array
-    expected_classes = ['Different persons', 'Same person']
-    assert_array_equal(lfw_pairs_train.target_names, expected_classes)
-
-    # It is possible to ask for the original data without any croping or color
-    # conversion
-    lfw_pairs_train = load_lfw_pairs(data_home=SCIKIT_LEARN_DATA,
-                                     resize=None, slice_=None, color=True)
-    assert_equal(lfw_pairs_train.data.shape, (10, 2, 250, 250, 3))
-
-    # the ids and class names are the same as previously
-    assert_array_equal(lfw_pairs_train.target, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
-    assert_array_equal(lfw_pairs_train.target_names, expected_classes)
-
+        assert images[0].dtype == dtype
+        assert images[0].ndim == 3
+        assert images[0].shape == (250, 250, 3)

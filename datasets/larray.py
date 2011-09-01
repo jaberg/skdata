@@ -4,6 +4,11 @@ LazyArray
 import sys
 import StringIO
 import numpy as np
+import logging
+logger = logging.getLogger(__name__)
+
+class InferenceError(Exception):
+    """Information about a lazily-evaluated quantity could not be inferred"""
 
 def is_int_idx(idx):
     #XXX: add numpy int types
@@ -47,6 +52,15 @@ class larray(lazy):
 class lmap(larray):
     """
     Return a lazily-evaluated mapping.
+
+    fn can be a normal lambda expression, but it can also respond to the
+    following attributes:
+
+    - call_batch
+
+    - rval_getattr
+        `fn.rval_getattr(name)` if it returns, must return the same thing as
+        `getattr(fn(*args), name)` would return.
     """
     #TODO: add kwarg to specify f_map implementation
     #      that is drop-in for map(f, *args)
@@ -70,6 +84,20 @@ class lmap(larray):
             return min(*[len(o) for o in self.objs])
         else:
             return len(self.objs[0])
+
+    def __get_shape(self):
+        shape_0 = len(self)
+        shape_rest = self.fn.rval_getattr('shape', objs=self.objs)
+        return (shape_0,) + shape_rest
+    shape = property(__get_shape)
+
+    def __get_dtype(self):
+        return self.fn.rval_getattr('dtype', objs=self.objs)
+    dtype = property(__get_dtype)
+
+    def __get_ndim(self):
+        return 1 + self.fn.rval_getattr('ndim', objs=self.objs)
+    ndim = property(__get_ndim)
 
     def __getitem__(self, idx):
         if is_int_idx(idx):
@@ -104,8 +132,41 @@ class lmap(larray):
 
 def lzip(*arrays):
     # XXX: make a version of this method that supports call_batch
-    print arrays
-    return lmap((lambda *args: args), *arrays)
+    class fn(object):
+        def __call__(self, *args):
+            return numpy.asarray(args)
+        def rval_getattr(self, name, objs=None):
+            if name == 'shape':
+                shps = [o.shape for o in objs]
+                shp1 = len(objs)
+                # if all the rest of the shapes are equal
+                # then we have something to say,
+                # otherwise no idea.
+                if all(shps[0][1:] == s[1:] for s in shps):
+                    return (shp1,) + shps[0][1:]
+                else:
+                    raise InferenceError('dont know shape')
+                raise NotImplementedError()
+            if name == 'dtype':
+                # if a shape cannot be inferred, then the
+                # zip result might be ragged, in which case the dtype would be
+                # `object`.
+                shape = self.rval_getattr('shape', objs)
+                # postcondition: result is ndarray-like
+
+                if all(o.dtype == objs[0].dtype for o in objs[1:]):
+                    return objs[0].dtype
+                else:
+                    # XXX upcasting rules
+                    raise NotImplementedError()
+            if name == 'ndim':
+                # if a shape cannot be inferred, then the
+                # zip result might be ragged, in which case the dtype would be
+                # `object`.
+                shape = self.rval_getattr('shape', objs)
+                return len(shape)
+            raise AttributeError(name)
+    return lmap(fn(), *arrays)
 
 
 class loop(larray):
@@ -148,6 +209,18 @@ class reindex(larray):
             # XXX: try this, and restore original exception on failure
             return [self.obj[ii] for ii in mapped_idx]
 
+    def __get_shape(self):
+        return (len(self),) + self.obj.shape[1:]
+    shape = property(__get_shape)
+
+    def __get_dtype(self):
+        return self.obj.dtype
+    dtype = property(__get_dtype)
+
+    def __get_ndim(self):
+        return self.obj.ndim
+    ndim = property(__get_ndim)
+
     def clone(self, given):
         return reindex(
                 given_get(given, self.obj),
@@ -189,79 +262,27 @@ def pprint_str(thing):
     pprint(thing, '', sio)
     return sio.getvalue()
 
+#
+# Stuff to consider factoring out somewhere because of the imread dependency
+#
 
-if 0:
-    class AdvIndexable1D(object):
-        """
-        Suitable base for finite array.
-        """
-        def __getitem__(self, idx):
-            if isinstance(idx, int):  # does this catch e.g. np.uint8?
-                return self.get_int(idx)
-            elif isinstance(idx, slice):
-                return self.get_slice(idx)
+def Flatten(object):
+    def rval_getattr(self, attr, objs):
+        if attr == 'shape':
+            shp = objs[0].shape[1:]
+            if None in shp:
+                return (None,)
             else:
-                return self.get_array(idx)
+                return (numpy.prod(shp),)
+        if attr == 'ndim':
+            return 1
+        if attr == 'dtype':
+            return objs[0].dtype
+        raise AttributeError(attr)
+    def __call__(self, thing):
+        return numpy.flatten(thing)
 
-        def get_int(self, int_idx):
-            raise NotImplementedError('override-me')
-
-        def get_slice(self, slice_idx):
-            start, stop, step = slice_idx.indices(len(self))
-            return SlicedAdvIdx1D(self, start, stop, step)
-
-        def get_array(self, array_idx):
-            rval = [self.get_int(i) for i in array_idx]
-            return rval
-
-        def __array__(self):
-            return np.array(self.src[range(len(self))])
-
-
-    class SlicedAdvIdx1D(AdvIndexable1D):
-        def __init__(self, src, start, stop, step):
-            self.src = src
-            self.start = start
-            self.stop = stop
-            self.step = step
-
-        def get_int(self, int_idx):
-            if int_idx >= 0:
-                idx = self.start + self.step * int_idx
-                if idx < self.stop:
-                    return self.src[idx]
-                else:
-                    raise IndexError()
-            else:
-                idx = self.stop - 1 + self.step * int_idx
-                if idx >= 0:
-                    return self.src[idx]
-                else:
-                    raise IndexError()
-
-    class Map(AdvIndexable1D):
-        def __init__(self, src, f, f_batch=None):
-            self.src = src
-            self.f = f
-            self.f_batch = f_batch
-
-        def get_int(self, int_idx):
-            return self.f_int(self.src[int_idx])
-
-        def get_slice(self, slice_idx):
-            tmp = self.__getitem__(slice_idx)
-            if self.f_batch is None:
-                rval = [self.f(t) for t in tmp]
-            else:
-                rval = self.f_batch(tmp)
-            return numpy.asarray(rval)
-        
-        def get_array(self, array_idx):
-            tmp = self.src[array_idx]
-            if self.f_batch is None:
-                rval = [self.f(t) for t in tmp]
-            else:
-                rval = self.f_batch(tmp)
-            return numpy.asarray(rval)
+def flatten_elements(seq):
+    return lmap(Flatten(), seq)
 
 
