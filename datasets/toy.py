@@ -128,6 +128,13 @@ class Diabetes(BuildOnInit):
 
 class Linnerud(BuildOnInit):
     """
+    meta[i] is dict of
+        weight: float
+        waist: float
+        pulse: float
+        chins: float
+        situps: float
+        jumps: float
     """
     def build_all(self):
         base_dir = os.path.join(os.path.dirname(__file__), 'data/')
@@ -151,5 +158,54 @@ class Linnerud(BuildOnInit):
         X = [(m['weight'], m['waist'], m['pulse']) for m in self.meta]
         Y = [(m['chins'], m['situps'], m['jumps']) for m in self.meta]
         return np.asarray(X, dtype=np.float), np.asarray(Y, dtype=np.float)
+
+
+class Boston(BuildOnInit):
+    """
+    meta[i] is dict of
+        CRIM: float
+        ZN: float
+        INDUS: float
+        CHAS: float
+        NOX: float
+        RM: float
+        AGE: float
+        DIS: float
+        RAD: float
+        TAX: float
+        PTRATIO: float
+        B: float
+        LSTAT: float
+        MEDV: float
+
+    descr is dict of
+        txt: textual description of dataset
+        X_features: list of keys for standard regression task
+        Y_features: list of keys for standard regression task
+
+    The standard regression task is to predict MEDV (median value?) from the
+    other features.
+    """
+    def build_all(self):
+        module_path = os.path.dirname(__file__)
+        descr = open(os.path.join(
+            module_path, 'descr', 'boston_house_prices.rst')).read()
+        data_file = csv.reader(open(os.path.join(
+            module_path, 'data', 'boston_house_prices.csv')))
+        n_samples, n_features = [int(t) for t in data_file.next()[:2]]
+        feature_names = data_file.next()
+        meta = [dict(zip(feature_names, map(float, d))) for d in data_file]
+        return (meta,
+                dict(txt=descr,
+                    X_features=feature_names[:-1],
+                    Y_features=feature_names[-1:]),
+                {})
+
+    def regression_task(self):
+        X_features = self.descr['X_features']
+        Y_features = self.descr['Y_features']
+        X = map(lambda m: [m[f] for f in X_features], self.meta)
+        Y = map(lambda m: [m[f] for f in Y_features], self.meta)
+        return np.asarray(X, np.float), np.asarray(Y, np.float)
 
 

@@ -54,3 +54,12 @@ def test_linnerud():
             'chins', 'jumps', 'pulse', 'situps', 'waist', 'weight']
     X, Y = linnerud.regression_task()
     check_regression_XY(X, Y, 20)
+
+def test_boston():
+    boston = toy.Boston()
+    assert len(boston.meta) == 506
+    keys = ["CRIM","ZN","INDUS","CHAS","NOX","RM","AGE","DIS","RAD",
+            "TAX","PTRATIO","B","LSTAT","MEDV"]
+    assert set(keys) == set(boston.meta[6].keys())
+    X, Y = boston.regression_task()
+    check_regression_XY(X, Y, 506)
