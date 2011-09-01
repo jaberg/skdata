@@ -55,6 +55,7 @@ def test_linnerud():
     X, Y = linnerud.regression_task()
     check_regression_XY(X, Y, 20)
 
+
 def test_boston():
     boston = toy.Boston()
     assert len(boston.meta) == 506
@@ -63,3 +64,12 @@ def test_boston():
     assert set(keys) == set(boston.meta[6].keys())
     X, Y = boston.regression_task()
     check_regression_XY(X, Y, 506)
+
+
+def test_sample_images():
+    si = toy.SampleImages()
+    assert len(si.meta) == 2, len(si.meta)
+    images = si.images()
+    assert len(images) == 2
+    assert images[0].shape == (427, 640, 3)
+    assert images[1].shape == (427, 640, 3)

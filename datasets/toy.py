@@ -4,6 +4,7 @@ import os
 import numpy as np
 
 import utils
+import utils.image
 
 class BuildOnInit(object):
     """
@@ -209,3 +210,28 @@ class Boston(BuildOnInit):
         return np.asarray(X, np.float), np.asarray(Y, np.float)
 
 
+class SampleImages(BuildOnInit):
+    """
+    meta[i] is dict of:
+        filename: str (relative to self.imgdir)
+    """
+    def __init__(self):
+        self.imgdir = os.path.join(os.path.dirname(__file__), "images")
+        BuildOnInit.__init__(self)
+
+    def fullpath(self, relpath):
+        return os.path.join(self.imgdir, relpath)
+
+    def build_all(self):
+        descr = open(os.path.join(self.imgdir, 'README.txt')).read()
+        meta = [dict(filename=filename)
+                     for filename in os.listdir(self.imgdir)
+                     if filename.endswith(".jpg")]
+        return (meta,
+                dict(txt=descr),
+                {})
+
+    def images(self):
+        return map(
+                utils.image.load_rgb_f32,
+                map( lambda m: self.fullpath(m['filename']), self.meta))
