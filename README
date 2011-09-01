@@ -1,6 +1,6 @@
 
-Dataset files (e.g. mnist.py, pascalvoc2007.py) generally download files and/or generate cache
-files for faster repeated loading.  They should do this in the location returned by
-get_cache_dir(dataset_name), which will typically return something like
-`$SCIKITS_DATA/<dataset_name>`
+Scikits.data
+=============
+
+Think "meta"
 
