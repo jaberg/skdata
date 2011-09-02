@@ -8,20 +8,9 @@ from urllib2 import urlopen
 from tarfile import open as taropen
 from xml.dom import minidom as dom
 import os
+from os import path
 
-if 0:
-    # TODO: use get_cache_dir('pascalVOC2007')
-    #       but only at object creation time, not import time.
-
-    # importing the default 'PYTHOR3_DATA' environment
-    # variable. That location will serve as a scratch
-    # directory to store the dataset's images and raw
-    # data.
-    try:
-        scratch = os.environ['PYTHOR3_DATA']
-    except KeyError:
-        raise KeyError('PYTHOR_DATA is not defined')
-
+scratch = './tmp'
 
 def download_and_untar(url, tarName, dirName):
     """
@@ -44,7 +33,10 @@ def download_and_untar(url, tarName, dirName):
     """
     #-- download part
     page = urlopen(url)
-    tar_file = open(tarName, "wb")
+    dirname = path.dirname(tarName)
+    if not path.exists(dirname):
+        os.makedirs(dirname)
+    tar_file = open(tarName, "wb+")
     # size of the download unit (here 2**15 = 32768 Bytes)
     block_size = 32768
     dl_size = 0
@@ -55,6 +47,7 @@ def download_and_untar(url, tarName, dirName):
         print "could not determine size of tarball so"
         print "no progress bar  on download displayed"
     if file_size > 0:
+        print "Downloading '%s' to '%s'" % (url, tarName)
         while True:
             Buffer = page.read(block_size)
             if not Buffer:
@@ -74,6 +67,8 @@ def download_and_untar(url, tarName, dirName):
     file_list = tar.getmembers()
     untar_size = 0
     tar_size = len(file_list)
+    if not path.exists(dirName):
+        os.makedirs(dirName)
     for item in file_list:
         tar.extract(item, path=dirName)
         untar_size += 1
@@ -86,9 +81,7 @@ def download_and_untar(url, tarName, dirName):
 
 
 class PascalVOC2007(object):
-    # by default, the 'temp' directory where the dataset is
-    # being stored is the default 'PYTHOR3_DATA' environment
-    # variable.
+
     def __init__(self, tmp_dir=scratch):
         self.tmp_dir = tmp_dir
 
@@ -118,20 +111,26 @@ class PascalVOC2007(object):
         # data set
         trainvalurl = "http://pascallin.ecs.soton.ac.uk/" + \
                       "challenges/VOC/voc2007/" + \
+
                       "VOCtrainval_06-Nov-2007.tar"
+
         # URL to the Pascal VOC 2007 testing data set
         testurl = "http://pascallin.ecs.soton.ac.uk/" + \
                   "challenges/VOC/voc2007/" + \
                   "VOCtest_06-Nov-2007.tar"
+
         # Names for the *.tar files
-        trainvalTarName = os.path.join(self.tmp_dir, "trainval.tar")
-        testTarName = os.path.join(self.tmp_dir, "test.tar")
+        trainvalTarName = path.join(self.tmp_dir, "trainval.tar")
+        testTarName = path.join(self.tmp_dir, "test.tar")
+
         # Names for the directories in which to untar the files
-        trainvalDirName = os.path.join(self.tmp_dir, "trainval")
-        testDirName = os.path.join(self.tmp_dir, "test")
+        trainvalDirName = path.join(self.tmp_dir, "trainval")
+        testDirName = path.join(self.tmp_dir, "test")
+
         # Actually downloading the tar files and untar
-        dl.download_and_untar(trainvalurl, trainvalTarName, trainvalDirName)
-        dl.download_and_untar(testurl, testTarName, testDirName)
+        download_and_untar(trainvalurl, trainvalTarName, trainvalDirName)
+        download_and_untar(testurl, testTarName, testDirName)
+
         # assigns to the object two new attributes corresponding to the
         # full path to the trainval and test temporary directories
         self.trainvalDirName = trainvalDirName
@@ -155,13 +154,13 @@ class PascalVOC2007(object):
         """
         # path to the base directories
         try:
-            trainval_dir = os.path.join(self.trainvalDirName, 'VOCdevkit',
+            trainval_dir = path.join(self.trainvalDirName, 'VOCdevkit',
                                         'VOC2007')
-            test_dir = os.path.join(self.testDirName, 'VOCdevkit',
+            test_dir = path.join(self.testDirName, 'VOCdevkit',
                                         'VOC2007')
         except AttributeError:
             raise AttributeError('did you fetch the data first ?')
-        
+
         def _extract_filenames(self, pathname):
             """
             **Description**
@@ -176,9 +175,9 @@ class PascalVOC2007(object):
             **Returns**
                 a list of file names of the type '002354.jpg'
             """
-            if not os.path.exists(pathname):
+            if not path.exists(pathname):
                 raise IOError('invalid path : %s' % pathname)
-            elif not os.path.isfile(pathname):
+            elif not path.isfile(pathname):
                 raise IOError('%s is not a file' % pathname)
             lines = open(pathname, 'r').readlines()
             return [line.split('\n')[0] + '.jpg' for line in lines]
@@ -283,19 +282,19 @@ class PascalVOC2007(object):
                     meta_info['split'] = 'test'
                     suffix = meta_info['filename']
                     fullpath.append(
-                             os.path.join(self.testDirName, 'VOCdevkit',
+                             path.join(self.testDirName, 'VOCdevkit',
                              'VOC2007', 'JPEGImages', suffix) )
                 elif meta_info['filename'] in identities['train']:
                     meta_info['split'] = 'train'
                     suffix = meta_info['filename']
-                    fullpath.append(            
-                             os.path.join(self.trainvalDirName, 'VOCdevkit',
+                    fullpath.append(
+                             path.join(self.trainvalDirName, 'VOCdevkit',
                              'VOC2007', 'JPEGImages', suffix) )
                 else:
                     meta_info['split'] = 'val'
                     suffix = meta_info['filename']
-                    fullpath.append(                          
-                             os.path.join(self.trainvalDirName, 'VOCdevkit',
+                    fullpath.append(
+                             path.join(self.trainvalDirName, 'VOCdevkit',
                              'VOC2007', 'JPEGImages', suffix) )
                 # appends the whole meta_info dictionnary to meta
                 meta.append(meta_info)
@@ -312,25 +311,25 @@ class PascalVOC2007(object):
         # to 'train', 'val' or 'test' and gather the information into a
         # dictionnary
         identity = {}
-        trainval_prefix = os.path.join(trainval_dir, 'ImageSets', 'Main')
-        test_prefix = os.path.join(test_dir, 'ImageSets', 'Main')
+        trainval_prefix = path.join(trainval_dir, 'ImageSets', 'Main')
+        test_prefix = path.join(test_dir, 'ImageSets', 'Main')
         for suffix in ['train.txt', 'val.txt', 'test.txt']:
             if suffix == 'train.txt':
-                pathname = os.path.join(trainval_prefix, suffix)
+                pathname = path.join(trainval_prefix, suffix)
                 identity['train'] = _extract_filenames(self, pathname)
             elif suffix == 'val.txt':
-                pathname = os.path.join(trainval_prefix, suffix)
+                pathname = path.join(trainval_prefix, suffix)
                 identity['val'] = _extract_filenames(self, pathname)
             elif suffix == 'test.txt':
-                pathname = os.path.join(test_prefix, suffix)
+                pathname = path.join(test_prefix, suffix)
                 identity['test'] = _extract_filenames(self, pathname)
         # the meta data is contained in directory 'Annotations'
         # for both the testing data and training/validation data
-        trainval_prefix = os.path.join(trainval_dir, 'Annotations')
-        test_prefix = os.path.join(test_dir, 'Annotations')
-        trainval_meta_file_paths = [os.path.join(trainval_prefix, suffix) for
+        trainval_prefix = path.join(trainval_dir, 'Annotations')
+        test_prefix = path.join(test_dir, 'Annotations')
+        trainval_meta_file_paths = [path.join(trainval_prefix, suffix) for
                                     suffix in os.listdir(trainval_prefix)]
-        test_meta_file_paths = [os.path.join(test_prefix, suffix) for suffix in
+        test_meta_file_paths = [path.join(test_prefix, suffix) for suffix in
                                     os.listdir(test_prefix)]
         meta_file_paths = trainval_meta_file_paths + test_meta_file_paths
         (self.meta, self.fullpath) = _extract_meta(self, meta_file_paths, identity)
@@ -347,3 +346,10 @@ class PascalVOC2007(object):
         In the case of Pascal VOC 2007, erases the *.tar archives
         """
         raise NotImplementedError('erase_fetch not implemented')
+
+
+p = PascalVOC2007()
+p.fetch()
+p.load()
+print p.meta
+print p.fullpath
