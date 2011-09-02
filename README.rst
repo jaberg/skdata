@@ -92,10 +92,10 @@ The library contains modules and programs.
 Modules:
 
 - toy (Iris, Digits, Diabetes, Linnerud, Boston, SampleImages)
-- lfw (Labeled Faces in the Wild)
+- mnist (MNIST: hand-drawn digit classification dataset)
+- lfw (Labeled Faces in the Wild: face recognition and verification)
 - pubfig83
 - pascalVOC2007
-.. - mnist
 .. - cifar10
 .. - larochelle2007
 
@@ -103,6 +103,7 @@ Programs:
 
 - ``datasets-fetch <dataset>`` download a dataset
 - ``datasets-show <dataset>`` visualize a dataset
+- ``datasets-erase <dataset>`` erase a downloaded dataset
 
 
 Programs
@@ -136,4 +137,12 @@ This program downloads the named dataset if necessary into the ``$SCIKITS_DATA``
 loads it, and launches a simple GUI program to visualize the elements of the
 dataset.
 To see more about how sub-modules use this mechanism, grep the code for ``main_show``.
+
+datasets-erase
+-------------
+
+Usage: ``dataset-erase <dataset_name>``
+
+This program erases any data cached or downloaded in support of the named dataset.
+To see more about how sub-modules use this mechanism, grep the code for ``main_erase``.
 
