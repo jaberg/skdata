@@ -20,13 +20,15 @@ def test_madelon():
     assert_equal(sum(y == 2), 65, "Unexpected number of samples in class #2")
 
 
-def test_make_regression():
-    X, y, c = make_regression(n_samples=100, n_features=10, n_informative=3,
-                              effective_rank=5, coef=True, bias=0.0,
-                              noise=1.0, random_state=0)
+def test_randlin():
+    randlin = SG.Randlin(n_samples=100, n_features=10, n_informative=3,
+            effective_rank=5, coef=True, bias=0.0, noise=1.0, random_state=0)
 
+    X, y = randlin.regression_task()
     assert_equal(X.shape, (100, 10), "X shape mismatch")
     assert_equal(y.shape, (100,), "y shape mismatch")
+
+    c = randlin.ground_truth
     assert_equal(c.shape, (10,), "coef shape mismatch")
     assert_equal(sum(c != 0.0), 3, "Unexpected number of informative features")
 
