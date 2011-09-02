@@ -115,7 +115,9 @@ class MNIST(object):
             dtype: 'uint8'
 
     """
-    DOWNLOAD_IF_MISSING = True
+
+    DOWNLOAD_IF_MISSING = True  # the value when accessing .meta
+
     def __init__(self):
         self.meta_const = dict(
                 image=dict(
