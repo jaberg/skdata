@@ -205,15 +205,7 @@ class BaseLFW(object):
             shutil.rmtree(self.home())
 
     def fetch(self, download_if_missing=True):
-        """Download the funneled or non-funneled dataset, if necessary.
-
-        Call this function with no arguments to download the funneled LFW dataset to the standard
-        location. This downloads about 200MB.
-
-        If the dataset has already been downloaded, this function returns
-        immediately.
-
-        """
+        """Download the dataset if necessary."""
 
         if not exists(self.home()):
             makedirs(self.home())
@@ -257,16 +249,14 @@ class BaseLFW(object):
     @classmethod
     def main_fetch(cls):
         """compatibility with bin/datasets_fetch"""
-        self.fetch(download_if_missing=True)
+        cls.fetch(download_if_missing=True)
 
     @classmethod
     def main_show(cls):
         # Usage one of:
         # <driver> people
         # <driver> pairs
-        from utils.glviewer import glumpy_viewer, command, glumpy
-        import larray
-        #print 'ARGV', sys.argv
+        from utils.glviewer import glumpy_viewer
         try:
             task = sys.argv[2]
         except IndexError:
@@ -292,12 +282,7 @@ class BaseLFW(object):
         elif task == 'pairs_test':
             raise NotImplementedError()
         elif task == 'pairs_10folds':
-            fold_num = int(sys.argv[3])
             raise NotImplementedError()
-        if 0:
-            left_imgs = img_load(lpaths, slice_, color, resize)
-            right_imgs = img_load(rpaths, slice_, color, resize)
-            pairs = larray.lzip(left_imgs, right_imgs)
 
     #
     # Standard tasks built from self.meta
