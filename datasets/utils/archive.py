@@ -26,8 +26,8 @@ http://code.google.com/p/python-archive/
 Changelog:
 ----------
 
-* 2011/09/02: Cosmetic changes and add verbose kwarg to {Tar,Zip}Archive 
-classes by Nicolas Pinto (pinto@rowland.harvard.edu)
+* 2011/09/02: Cosmetic changes and add verbose kwarg to {Tar,Zip}Archive
+classes by Nicolas Pinto <pinto@rowland.harvard.edu>
 
 """
 
@@ -44,12 +44,12 @@ class UnrecognizedArchiveFormat(ArchiveException):
     """Error raised when passed file is not a recognized archive format."""
 
 
-def extract(path, to_path=''):
+def extract(archive_filename, output_dirname='./', verbose=True):
     """
-    Unpack the tar or zip file at the specified path to the directory
-    specified by to_path.
+    Unpack the tar or zip file at the specified `archive_filename` to the
+    directory specified by `output_dirname`.
     """
-    Archive(path).extract(to_path)
+    Archive(archive_filename).extract(output_dirname)
 
 
 class Archive(object):
@@ -81,8 +81,8 @@ class Archive(object):
                 "Path not a recognized archive format: %s" % filename)
         return cls
 
-    def extract(self, to_path=''):
-        self._archive.extract(to_path)
+    def extract(self, output_dirname=''):
+        self._archive.extract(output_dirname)
 
     def list(self):
         self._archive.list()
@@ -107,16 +107,16 @@ class ExtractInterface(object):
     zipfile).
     """
 
-    def extract(self, to_path, verbose=True):
+    def extract(self, output_dirname, verbose=True):
         if not verbose:
-            self._archive.extractall(to_path)
+            self._archive.extractall(output_dirname)
         else:
             members = self.get_members()
             n_members = len(members)
             for mi, member in enumerate(members):
-                self._archive.extract(member, path=to_path)
+                self._archive.extract(member, path=output_dirname)
                 extracted = mi + 1
-                status = (r"%i files extracted [%4.1f%%]"
+                status = (r"Progress: %20i files extracted [%4.1f%%]"
                           % (extracted, extracted * 100. / n_members))
                 status += chr(8) * (len(status) + 1)
                 print status,
@@ -126,7 +126,6 @@ class ExtractInterface(object):
 class TarArchive(ExtractInterface, BaseArchive):
 
     def __init__(self, filename):
-        self._filename = filename
         self._archive = tarfile.open(filename)
 
     def list(self, *args, **kwargs):
@@ -139,7 +138,6 @@ class TarArchive(ExtractInterface, BaseArchive):
 class ZipArchive(ExtractInterface, BaseArchive):
 
     def __init__(self, filename):
-        self._filename = filename
         self._archive = zipfile.ZipFile(filename)
 
     def list(self, *args, **kwargs):
