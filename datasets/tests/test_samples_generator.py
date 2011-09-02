@@ -85,15 +85,20 @@ def test_friedman3():
                                            / X[:, 0]))
 
 
-def test_make_low_rank_matrix():
-    X = make_low_rank_matrix(n_samples=50, n_features=25, effective_rank=5,
+def test_low_rank_matrix():
+    lrm = SG.LowRankMatrix(n_samples=50, n_features=25, effective_rank=5,
                              tail_strength=0.01, random_state=0)
+    X = lrm.factorization_task()
+    tasks.assert_factorization(X)
 
     assert_equal(X.shape, (50, 25), "X shape mismatch")
 
     from numpy.linalg import svd
     u, s, v = svd(X)
     assert sum(s) - 5 < 0.1, "X rank is not approximately 5"
+
+    X, Y = lrm.matrix_completion_task()
+    tasks.assert_matrix_completion(X, Y)
 
 
 def test_make_sparse_coded_signal():

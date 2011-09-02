@@ -7,17 +7,20 @@ Generate samples of synthetic data sets.
 # License: BSD 3 clause
 
 import numpy as np
-from scipy import linalg
+from scipy import linalg, sparse
 
 from .utils import check_random_state
 
 
 class Base(object):
-    def __init__(self, X, y):
+    def __init__(self, X, y=None):
         self._X = X
         self._Y = y
 
-        self.meta = [dict(x=xi, y=yi) for xi, yi in zip(self._X, self._Y)]
+        if y is None:
+            self.meta = [dict(x=xi) for xi in self._X]
+        else:
+            self.meta = [dict(x=xi, y=yi) for xi, yi in zip(self._X, self._Y)]
         self.meta_const = {}
         self.descr = {}
 
@@ -40,7 +43,14 @@ class Clustering(object):
     def classification_task(self):
         # XXX: try this
         #      and fall back on rebuilding from self.meta
-        return self.X, self.y
+        return self._X
+
+
+class Factorization(object):
+    def factorization_task(self):
+        # XXX: try this
+        #      and fall back on rebuilding from self.meta
+        return self._X
 
 
 class Madelon(Base, Classification):
@@ -349,11 +359,11 @@ class Randlin(Base, Regression):
 
         else:
             # Randomly generate a low rank, fat tail input set
-            X = make_low_rank_matrix(n_samples=n_samples,
+            X = LowRankMatrix(n_samples=n_samples,
                                      n_features=n_features,
                                      effective_rank=effective_rank,
                                      tail_strength=tail_strength,
-                                     random_state=generator)
+                                     random_state=generator)._X
 
         # Generate a ground truth model with only n_informative features being non
         # zeros (the other features are not correlated to y and should be ignored
@@ -655,11 +665,8 @@ class Friedman3(Base, Regression):
         Base.__init__(self, X, y[:, None])
 
 
-def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
-                         tail_strength=0.5, random_state=None):
-    """
-    Generate a mostly low rank random matrix with bell-shaped singular
-    values profile.
+class LowRankMatrix(Base, Factorization):
+    """Mostly low rank random matrix with bell-shaped singular values profile.
 
     Most of the variance can be explained by a bell-shaped curve of width
     effective_rank: the low rank part of the singular values profile is::
@@ -678,52 +685,66 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
     This kind of singular profiles is often seen in practice, for instance:
      - graw level pictures of faces
      - TF-IDF vectors of text documents crawled from the web
-
-    Parameters
-    ----------
-    n_samples : int, optional (default=100)
-        The number of samples.
-
-    n_features : int, optional (default=100)
-        The number of features.
-
-    effective_rank : int, optional (default=10)
-        The approximate number of singular vectors required to explain most of
-        the data by linear combinations.
-
-    tail_strength : float between 0.0 and 1.0, optional (default=0.5)
-        The relative importance of the fat noisy tail of the singular values
-        profile.
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-    Returns
-    -------
-    X : array of shape [n_samples, n_features]
-        The matrix.
     """
-    generator = check_random_state(random_state)
-    n = min(n_samples, n_features)
+    def __init__(self, n_samples=100, n_features=100, effective_rank=10,
+                             tail_strength=0.5, random_state=None):
+        """
 
-    # Random (ortho normal) vectors
-    from .utils import qr_economic
-    u, _ = qr_economic(generator.randn(n_samples, n))
-    v, _ = qr_economic(generator.randn(n_features, n))
+        Parameters
+        ----------
+        n_samples : int, optional (default=100)
+            The number of samples.
 
-    # Index of the singular values
-    singular_ind = np.arange(n, dtype=np.float64)
+        n_features : int, optional (default=100)
+            The number of features.
 
-    # Build the singular profile by assembling signal and noise components
-    low_rank = (1 - tail_strength) * \
-               np.exp(-1.0 * (singular_ind / effective_rank) ** 2)
-    tail = tail_strength * np.exp(-0.1 * singular_ind / effective_rank)
-    s = np.identity(n) * (low_rank + tail)
+        effective_rank : int, optional (default=10)
+            The approximate number of singular vectors required to explain most of
+            the data by linear combinations.
 
-    return np.dot(np.dot(u, s), v.T)
+        tail_strength : float between 0.0 and 1.0, optional (default=0.5)
+            The relative importance of the fat noisy tail of the singular values
+            profile.
+
+        random_state : int, RandomState instance or None, optional (default=None)
+            If int, random_state is the seed used by the random number generator;
+            If RandomState instance, random_state is the random number generator;
+            If None, the random number generator is the RandomState instance used
+            by `np.random`.
+
+        Returns
+        -------
+        X : array of shape [n_samples, n_features]
+            The matrix.
+        """
+        generator = check_random_state(random_state)
+        n = min(n_samples, n_features)
+
+        # Random (ortho normal) vectors
+        from .utils import qr_economic
+        u, _ = qr_economic(generator.randn(n_samples, n))
+        v, _ = qr_economic(generator.randn(n_features, n))
+
+        # Index of the singular values
+        singular_ind = np.arange(n, dtype=np.float64)
+
+        # Build the singular profile by assembling signal and noise components
+        low_rank = (1 - tail_strength) * \
+                   np.exp(-1.0 * (singular_ind / effective_rank) ** 2)
+        tail = tail_strength * np.exp(-0.1 * singular_ind / effective_rank)
+        s = np.identity(n) * (low_rank + tail)
+
+        Base.__init__(self, np.dot(np.dot(u, s), v.T))
+
+        self.descr['mask'] = generator.randint(3, size=self._X.shape)
+
+    def matrix_completion_task(self):
+        X = sparse.csr_matrix(self._X * (self.descr['mask'] == 0))
+        Y = sparse.csr_matrix(self._X * (self.descr['mask'] == 1))
+        assert X.nnz == (self.descr['mask'] == 0).sum()
+        assert Y.nnz == (self.descr['mask'] == 1).sum()
+        # where mask is 2 is neither in X nor Y
+        return X, Y
 
 
 def make_sparse_coded_signal(n_samples, n_components, n_features,

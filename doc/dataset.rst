@@ -79,6 +79,28 @@ Method taking no required arguments.
 Returns X, a 2-d floating point ndarray-like design matrix.
 
 
+factorization_task
+------------------
+
+Optional.
+
+Method taking no required arguments.
+Returns X, a 2-d floating point ndarray-like design matrix.
+
+
+matrix_completion_task
+----------------------
+
+Optional.
+
+Method taking no required arguments.
+Returns X, Y.
+X and Y are both 2-d floating point sparse matrix, in which implicit elements
+carry the semantics of being unobserved, rather than zero.
+X and Y do not overlap.
+The task is to predict the observations in Y from the observations in X.
+
+
 Scripting API
 =============
 
