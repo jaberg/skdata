@@ -2,27 +2,15 @@ import numpy as np
 from numpy.testing import assert_equal, assert_approx_equal, \
                           assert_array_almost_equal, assert_array_less
 
-from datasets.samples_generator import (
-        make_classification,
-        make_regression,
-        make_blobs,
-        make_friedman1,
-        make_friedman2,
-        make_friedman3,
-        make_low_rank_matrix,
-        make_sparse_coded_signal,
-        make_sparse_uncorrelated,
-        make_spd_matrix,
-        make_swiss_roll,
-        make_s_curve)
+from datasets import samples_generator as SG
 
-
-def test_make_classification():
-    X, y = make_classification(n_samples=100, n_features=20, n_informative=5,
+def test_madelon():
+    madelon = SG.Madelon(n_samples=100, n_features=20, n_informative=5,
                                n_redundant=1, n_repeated=1, n_classes=3,
                                n_clusters_per_class=1, hypercube=False,
                                shift=None, scale=None, weights=[0.1, 0.25],
                                random_state=0)
+    X, y = madelon.classification_task()
 
     assert_equal(X.shape, (100, 20), "X shape mismatch")
     assert_equal(y.shape, (100,), "y shape mismatch")
