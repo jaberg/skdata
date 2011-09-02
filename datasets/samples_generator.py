@@ -809,10 +809,9 @@ class SparseCodedSignal(Base, Factorization):
         Base.__init__(self, np.dot(D, X))
 
 
-def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
-    """
-    Generate a random regression problem with sparse uncorrelated design as
-    described in Celeux et al [1].::
+class SparseUncorrelated(Base, Regression):
+    """Generate a random regression problem with sparse uncorrelated design
+    as described in Celeux et al [1].::
 
         X ~ N(0, 1)
         y(X) = X[:, 0] + 2 * X[:, 1] - 2 * X[:, 2] - 1.5 * X[:, 3]
@@ -820,43 +819,37 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
     Only the first 4 features are informative. The remaining features are
     useless.
 
-    Parameters
-    ----------
-    n_samples : int, optional (default=100)
-        The number of samples.
-
-    n_features : int, optional (default=10)
-        The number of features.
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-    Returns
-    -------
-    X : array of shape [n_samples, n_features]
-        The input samples.
-
-    y : array of shape [n_samples]
-        The output values.
-
     References
     ----------
     .. [1] G. Celeux, M. El Anbari, J.-M. Marin, C. P. Robert,
            "Regularization in regression: comparing Bayesian and frequentist
            methods in a poorly informative situation", 2009.
+
     """
-    generator = check_random_state(random_state)
+    def __init__(self, n_samples=100, n_features=10, random_state=None):
+        """
+        Parameters
+        ----------
+        n_samples : int, optional (default=100)
+            The number of samples.
 
-    X = generator.normal(loc=0, scale=1, size=(n_samples, n_features))
-    y = generator.normal(loc=(X[:, 0] +
-                              2 * X[:, 1] -
-                              2 * X[:, 2] -
-                              1.5 * X[:, 3]), scale=np.ones(n_samples))
+        n_features : int, optional (default=10)
+            The number of features.
 
-    return X, y
+        random_state : int, RandomState instance or None, optional (default=None)
+            If int, random_state is the seed used by the random number generator;
+            If RandomState instance, random_state is the random number generator;
+            If None, the random number generator is the RandomState instance used
+            by `np.random`.
+
+        """
+        generator = check_random_state(random_state)
+        X = generator.normal(loc=0, scale=1, size=(n_samples, n_features))
+        y = generator.normal(loc=(X[:, 0] +
+                                  2 * X[:, 1] -
+                                  2 * X[:, 2] -
+                                  1.5 * X[:, 3]), scale=np.ones(n_samples))
+        Base.__init__(self, X, y[:, None])
 
 
 def make_spd_matrix(n_dim, random_state=None):

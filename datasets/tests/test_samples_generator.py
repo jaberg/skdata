@@ -118,11 +118,12 @@ def test_sparse_coded_signal():
                               np.ones(D.shape[1]))
 
 
-def test_make_sparse_uncorrelated():
-    X, y = make_sparse_uncorrelated(n_samples=5, n_features=10, random_state=0)
-
+def test_sparse_uncorrelated():
+    X, y = SG.SparseUncorrelated(n_samples=5, n_features=10,
+            random_state=0).regression_task()
+    tasks.assert_regression(X, y)
     assert_equal(X.shape, (5, 10), "X shape mismatch")
-    assert_equal(y.shape, (5,), "y shape mismatch")
+    assert_equal(y.shape, (5, 1), "y shape mismatch")
 
 
 def test_make_spd_matrix():
