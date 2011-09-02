@@ -18,6 +18,17 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+From:
+http://pypi.python.org/pypi/python-archive/0.1
+http://code.google.com/p/python-archive/
+
+Changelog:
+----------
+
+* 2011/09/02: Cosmetic changes and add verbose kwarg to {Tar,Zip}Archive 
+classes by Nicolas Pinto (pinto@rowland.harvard.edu)
+
 """
 
 import os
@@ -89,28 +100,53 @@ class BaseArchive(object):
         raise NotImplementedError
 
 
-class TarArchive(BaseArchive):
+class ExtractInterface(object):
+    """
+    Interface class exposing common extract functionalities for
+    standard-library-based Archive classes (e.g. based on modules like tarfile,
+    zipfile).
+    """
 
-    def __init__(self, file):
-        self._archive = tarfile.open(file)
+    def extract(self, to_path, verbose=True):
+        if not verbose:
+            self._archive.extractall(to_path)
+        else:
+            members = self.get_members()
+            n_members = len(members)
+            for mi, member in enumerate(members):
+                self._archive.extract(member, path=to_path)
+                extracted = mi + 1
+                status = (r"%i files extracted [%4.1f%%]"
+                          % (extracted, extracted * 100. / n_members))
+                status += chr(8) * (len(status) + 1)
+                print status,
+            print
+
+
+class TarArchive(ExtractInterface, BaseArchive):
+
+    def __init__(self, filename):
+        self._filename = filename
+        self._archive = tarfile.open(filename)
 
     def list(self, *args, **kwargs):
         self._archive.list(*args, **kwargs)
 
-    def extract(self, to_path):
-        self._archive.extractall(to_path)
+    def get_members(self):
+        return self._archive.getmembers()
 
 
-class ZipArchive(BaseArchive):
+class ZipArchive(ExtractInterface, BaseArchive):
 
-    def __init__(self, file):
-        self._archive = zipfile.ZipFile(file)
+    def __init__(self, filename):
+        self._filename = filename
+        self._archive = zipfile.ZipFile(filename)
 
     def list(self, *args, **kwargs):
         self._archive.printdir(*args, **kwargs)
 
-    def extract(self, to_path):
-        self._archive.extractall(to_path)
+    def get_members(self):
+        return self._archive.namelist()
 
 
 extension_map = {
