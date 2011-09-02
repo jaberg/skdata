@@ -143,6 +143,7 @@ class CIFAR10(object):
 def main_fetch():
     CIFAR10().fetch(True)
 
+
 def main_show():
     self = CIFAR10()
     from utils.glviewer import glumpy_viewer, command, glumpy
@@ -152,6 +153,7 @@ def main_show():
             arrays_to_print=[Y],
             cmap=glumpy.colormap.Grey,
             window_shape=(32 * 2, 32 * 2))
+
 
 def main_erase():
     CIFAR10().erase()
