@@ -88,8 +88,8 @@ def test_friedman3():
 def test_low_rank_matrix():
     lrm = SG.LowRankMatrix(n_samples=50, n_features=25, effective_rank=5,
                              tail_strength=0.01, random_state=0)
-    X = lrm.factorization_task()
-    tasks.assert_factorization(X)
+    X = lrm.latent_structure_task()
+    tasks.assert_latent_structure(X)
 
     assert_equal(X.shape, (50, 25), "X shape mismatch")
 
@@ -104,10 +104,10 @@ def test_low_rank_matrix():
 def test_sparse_coded_signal():
     scs = SG.SparseCodedSignal(n_samples=5, n_components=8, n_features=10,
             n_nonzero_coefs=3, random_state=0)
-    Y = scs.factorization_task()
+    Y = scs.latent_structure_task()
     D = scs.D # XXX use scs.descr
     X = scs.X # XXX use scs.meta
-    tasks.assert_factorization(Y)
+    tasks.assert_latent_structure(Y)
     assert_equal(Y.shape, (10, 5), "Y shape mismatch")
     assert_equal(D.shape, (10, 8), "D shape mismatch")
     assert_equal(X.shape, (8, 5), "X shape mismatch")
@@ -126,11 +126,12 @@ def test_sparse_uncorrelated():
     assert_equal(y.shape, (5, 1), "y shape mismatch")
 
 
-def test_make_swiss_roll():
-    X, t = make_swiss_roll(n_samples=5, noise=0.0, random_state=0)
+def test_swiss_roll():
+    X, t = SG.SwissRoll(n_samples=5, noise=0.0,
+            random_state=0).regression_task()
 
     assert_equal(X.shape, (5, 3), "X shape mismatch")
-    assert_equal(t.shape, (5,), "t shape mismatch")
+    assert_equal(t.shape, (5, 1), "t shape mismatch")
     assert_equal(X[:, 0], t * np.cos(t))
     assert_equal(X[:, 2], t * np.sin(t))
 

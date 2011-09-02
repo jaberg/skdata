@@ -70,13 +70,15 @@ y is 1-d integer ndarray-like of labels.
 Task is to predict y from X, minimizing mean cross-entropy.
 
 
-clustering_task
+latent_structure_task
 ---------------
 
 Optional.
 
 Method taking no required arguments.
-Returns X, a 2-d floating point ndarray-like design matrix.
+Returns X, a 2-d floating point ndarray-like matrix of shape (M, N) where
+M is the number of examples and
+N is the number of features.
 
 
 factorization_task

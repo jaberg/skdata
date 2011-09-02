@@ -39,15 +39,8 @@ class Classification(object):
         return self._X, self._Y
 
 
-class Clustering(object):
-    def classification_task(self):
-        # XXX: try this
-        #      and fall back on rebuilding from self.meta
-        return self._X
-
-
-class Factorization(object):
-    def factorization_task(self):
+class LatentStructure(object):
+    def latent_structure_task(self):
         # XXX: try this
         #      and fall back on rebuilding from self.meta
         return self._X
@@ -393,7 +386,7 @@ class Randlin(Base, Regression):
         self.ground_truth = ground_truth
 
 
-class Blobs(Base, Classification, Clustering):
+class Blobs(Base, Classification, LatentStructure):
     """Generate isotropic Gaussian blobs for clustering.
     """
     def __init__(self, n_samples=100, n_features=2, centers=3, cluster_std=1.0,
@@ -665,7 +658,7 @@ class Friedman3(Base, Regression):
         Base.__init__(self, X, y[:, None])
 
 
-class LowRankMatrix(Base, Factorization):
+class LowRankMatrix(Base, LatentStructure):
     """Mostly low rank random matrix with bell-shaped singular values profile.
 
     Most of the variance can be explained by a bell-shaped curve of width
@@ -747,7 +740,7 @@ class LowRankMatrix(Base, Factorization):
         return X, Y
 
 
-class SparseCodedSignal(Base, Factorization):
+class SparseCodedSignal(Base, LatentStructure):
     """Generate a signal as a sparse combination of dictionary elements.
 
     Returns a matrix Y = DX, such as D is (n_features, n_components),
@@ -852,32 +845,8 @@ class SparseUncorrelated(Base, Regression):
         Base.__init__(self, X, y[:, None])
 
 
-def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
-    """
-    Generate a swiss roll dataset.
-
-    Parameters
-    ----------
-    n_samples : int, optional (default=100)
-        The number of sample points on the S curve.
-
-    noise : float, optional (default=0.0)
-        The standard deviation of the gaussian noise.
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-    Returns
-    -------
-    X : array of shape [n_samples, 3]
-        The points.
-
-    t : array of shape [n_samples]
-        The univariate position of the sample according to the main dimension
-        of the points in the manifold.
+class SwissRoll(Base, Regression, LatentStructure):
+    """Generate a swiss roll dataset.
 
     Notes
     -----
@@ -889,19 +858,43 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
            Chapter 10, 2009.
            http://www-ist.massey.ac.nz/smarsland/Code/10/lle.py
     """
-    generator = check_random_state(random_state)
+    def __init__(self, n_samples=100, noise=0.0, random_state=None):
+        """
+        Parameters
+        ----------
+        n_samples : int, optional (default=100)
+            The number of sample points on the S curve.
 
-    t = 1.5 * np.pi * (1 + 2 * generator.rand(1, n_samples))
-    x = t * np.cos(t)
-    y = 21 * generator.rand(1, n_samples)
-    z = t * np.sin(t)
+        noise : float, optional (default=0.0)
+            The standard deviation of the gaussian noise.
 
-    X = np.concatenate((x, y, z))
-    X += noise * generator.randn(3, n_samples)
-    X = X.T
-    t = np.squeeze(t)
+        random_state : int, RandomState instance or None, optional (default=None)
+            If int, random_state is the seed used by the random number generator;
+            If RandomState instance, random_state is the random number generator;
+            If None, the random number generator is the RandomState instance used
+            by `np.random`.
 
-    return X, t
+        Returns
+        -------
+        X : array of shape [n_samples, 3]
+            The points.
+
+        t : array of shape [n_samples]
+            The univariate position of the sample according to the main dimension
+            of the points in the manifold.
+        """
+        generator = check_random_state(random_state)
+
+        t = 1.5 * np.pi * (1 + 2 * generator.rand(1, n_samples))
+        x = t * np.cos(t)
+        y = 21 * generator.rand(1, n_samples)
+        z = t * np.sin(t)
+
+        X = np.concatenate((x, y, z))
+        X += noise * generator.randn(3, n_samples)
+        X = X.T
+        t = np.squeeze(t)
+        Base.__init__(self, X, t[:, None])
 
 
 def make_s_curve(n_samples=100, noise=0.0, random_state=None):
