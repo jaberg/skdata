@@ -145,3 +145,13 @@ Type: classmethod, staticmethod, or module method.
 This method should visualize the dataset.  This is generally interesting, gives
 intuition for what algorithms would make sense, and also convinces the user that
 the dataset was downloaded properly.
+
+main_erase
+----------
+
+Optional.
+
+Type: classmethod, staticmethod, or module method.
+This method should erase the dataset from the cache, undoing the operation of
+``main_fetch`` as well as any subsequent caching done on that dataset.  Scorched
+earth.
