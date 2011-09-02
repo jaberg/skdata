@@ -3,7 +3,8 @@ def main(cmd):
     try:
         runner = dict(
                 fetch='main_fetch',
-                show='main_show')[cmd]
+                show='main_show',
+                erase='main_erase')[cmd]
     except KeyError:
         print >> sys.stderr, "Command not recognized:", cmd
         # XXX: Usage message
