@@ -20,4 +20,10 @@ def main(cmd):
     # now carry on trying to interpret tokens as callable things
     # TODO
     # hail mary...
-    exec "sys.exit(datasets.%s.%s())" % (sys.argv[1], runner)
+    fullname = "datasets.%s.%s" % (sys.argv[1], runner)
+    try:
+        exec "runner_fn = %s" % fullname
+    except AttributeError:
+        print >> sys.stderr, "Error: symbol '%s' not found" % fullname
+        sys.exit(1)
+    sys.exit(runner_fn())
