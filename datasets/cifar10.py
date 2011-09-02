@@ -12,7 +12,6 @@ http://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf
 import os
 import cPickle
 import logging
-import urllib
 import shutil
 
 import numpy as np
@@ -86,7 +85,7 @@ class CIFAR10(object):
         utils.download_and_extract.download_and_extract(
                 URL, self.home())
 
-    def erase(self):
+    def clean_up(self):
         logger.info('recursively erasing %s' % self.home())
         if os.path.isdir(self.home()):
             shutil.rmtree(self.home())
@@ -146,7 +145,7 @@ def main_fetch():
 
 def main_show():
     self = CIFAR10()
-    from utils.glviewer import glumpy_viewer, command, glumpy
+    from utils.glviewer import glumpy_viewer, glumpy
     Y = [m['label'] for m in self.meta]
     glumpy_viewer(
             img_array=CIFAR10._pixels,
