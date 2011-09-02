@@ -362,11 +362,11 @@ class Funneled(BaseLFW):
     NAME = 'funneled'          # self.home() is <CACHE>/lfw/<NAME>
     IMAGEDIR = 'lfw_funneled'  # this matches what comes out of the tgz
 
+
 class Aligned(BaseLFW):
     URL = "http://www.openu.ac.il/home/hassner/data/lfwa/lfwa.tar.gz"
     NAME = 'aligned'          # self.home() is <CACHE>/lfw/<NAME>
     IMAGEDIR = 'lfw_aligned'  # this matches what comes out of the tgz
-
 
 
 def main_fetch():
