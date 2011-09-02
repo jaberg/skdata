@@ -98,8 +98,9 @@ Modules:
 - lfw (Labeled Faces in the Wild: face recognition and verification)
 - pubfig83
 - pascalVOC2007
-.. - cifar10
+- cifar10 (CIFAR-10 image classification dataset)
 .. - larochelle2007
+.. - rgbd
 
 Programs:
 
