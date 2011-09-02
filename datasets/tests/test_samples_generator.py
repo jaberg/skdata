@@ -101,10 +101,13 @@ def test_low_rank_matrix():
     tasks.assert_matrix_completion(X, Y)
 
 
-def test_make_sparse_coded_signal():
-    Y, D, X = make_sparse_coded_signal(n_samples=5, n_components=8,
-                                           n_features=10, n_nonzero_coefs=3,
-                                           random_state=0)
+def test_sparse_coded_signal():
+    scs = SG.SparseCodedSignal(n_samples=5, n_components=8, n_features=10,
+            n_nonzero_coefs=3, random_state=0)
+    Y = scs.factorization_task()
+    D = scs.D # XXX use scs.descr
+    X = scs.X # XXX use scs.meta
+    tasks.assert_factorization(Y)
     assert_equal(Y.shape, (10, 5), "Y shape mismatch")
     assert_equal(D.shape, (10, 8), "D shape mismatch")
     assert_equal(X.shape, (8, 5), "X shape mismatch")

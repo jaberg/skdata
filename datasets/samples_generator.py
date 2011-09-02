@@ -747,62 +747,66 @@ class LowRankMatrix(Base, Factorization):
         return X, Y
 
 
-def make_sparse_coded_signal(n_samples, n_components, n_features,
-                             n_nonzero_coefs, random_state=None):
+class SparseCodedSignal(Base, Factorization):
     """Generate a signal as a sparse combination of dictionary elements.
 
     Returns a matrix Y = DX, such as D is (n_features, n_components),
     X is (n_components, n_samples) and each column of X has exactly
     n_nonzero_coefs non-zero elements.
 
-    Parameters
-    ----------
-    n_samples : int
-        number of samples to generate
-
-    n_components:  int,
-        number of components in the dictionary
-
-    n_features : int
-        number of features of the dataset to generate
-
-    n_nonzero_coefs : int
-        number of active (non-zero) coefficients in each sample
-
-    random_state: int or RandomState instance, optional (default=None)
-        seed used by the pseudo random number generator
-
-    Returns
-    -------
-    data: array of shape [n_features, n_samples]
-        The encoded signal (Y).
-
-    dictionary: array of shape [n_features, n_components]
-        The dictionary with normalized components (D).
-
-    code: array of shape [n_components, n_samples]
-        The sparse code such that each column of this matrix has exactly
-        n_nonzero_coefs non-zero items (X).
-
     """
-    generator = check_random_state(random_state)
+    def __init__(self, n_samples, n_components, n_features, n_nonzero_coefs,
+            random_state=None):
+        """
+        Parameters
+        ----------
+        n_samples : int
+            number of samples to generate
 
-    # generate dictionary
-    D = generator.randn(n_features, n_components)
-    D /= np.sqrt(np.sum((D ** 2), axis=0))
+        n_components:  int,
+            number of components in the dictionary
 
-    # generate code
-    X = np.zeros((n_components, n_samples))
-    for i in xrange(n_samples):
-        idx = np.arange(n_components)
-        generator.shuffle(idx)
-        idx = idx[:n_nonzero_coefs]
-        X[idx, i] = generator.randn(n_nonzero_coefs)
+        n_features : int
+            number of features of the dataset to generate
 
-    # encode signal
-    Y = np.dot(D, X)
+        n_nonzero_coefs : int
+            number of active (non-zero) coefficients in each sample
 
-    return map(np.squeeze, (Y, D, X))
+        random_state: int or RandomState instance, optional (default=None)
+            seed used by the pseudo random number generator
+
+        Returns
+        -------
+        data: array of shape [n_features, n_samples]
+            The encoded signal (Y).
+
+        dictionary: array of shape [n_features, n_components]
+            The dictionary with normalized components (D).
+
+        code: array of shape [n_components, n_samples]
+            The sparse code such that each column of this matrix has exactly
+            n_nonzero_coefs non-zero items (X).
+
+        """
+        generator = check_random_state(random_state)
+
+        # generate dictionary
+        D = generator.randn(n_features, n_components)
+        D /= np.sqrt(np.sum((D ** 2), axis=0))
+
+        # generate code
+        X = np.zeros((n_components, n_samples))
+        for i in xrange(n_samples):
+            idx = np.arange(n_components)
+            generator.shuffle(idx)
+            idx = idx[:n_nonzero_coefs]
+            X[idx, i] = generator.randn(n_nonzero_coefs)
+
+        # XXX: self.meta should include list of non-zeros in X
+        # XXX: self.descr should include dictionary D
+        self.D = D
+        self.X = X
+        Base.__init__(self, np.dot(D, X))
 
 
 def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
