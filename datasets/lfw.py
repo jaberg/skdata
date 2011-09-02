@@ -200,7 +200,7 @@ class BaseLFW(object):
     def home(self, *names):
         return os.path.join(get_data_home(), 'lfw', self.NAME, *names)
 
-    def erase(self):
+    def clean_up(self):
         if isdir(self.home()):
             shutil.rmtree(self.home())
 
