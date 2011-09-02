@@ -257,16 +257,14 @@ class BaseLFW(object):
     @classmethod
     def main_fetch(cls):
         """compatibility with bin/datasets_fetch"""
-        self.fetch(download_if_missing=True)
+        cls.fetch(download_if_missing=True)
 
     @classmethod
     def main_show(cls):
         # Usage one of:
         # <driver> people
         # <driver> pairs
-        from utils.glviewer import glumpy_viewer, command, glumpy
-        import larray
-        #print 'ARGV', sys.argv
+        from utils.glviewer import glumpy_viewer
         try:
             task = sys.argv[2]
         except IndexError:
@@ -292,12 +290,7 @@ class BaseLFW(object):
         elif task == 'pairs_test':
             raise NotImplementedError()
         elif task == 'pairs_10folds':
-            fold_num = int(sys.argv[3])
             raise NotImplementedError()
-        if 0:
-            left_imgs = img_load(lpaths, slice_, color, resize)
-            right_imgs = img_load(rpaths, slice_, color, resize)
-            pairs = larray.lzip(left_imgs, right_imgs)
 
     #
     # Standard tasks built from self.meta
