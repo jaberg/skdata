@@ -71,7 +71,7 @@ Task is to predict y from X, minimizing mean cross-entropy.
 
 
 latent_structure_task
----------------
+---------------------
 
 Optional.
 
@@ -79,6 +79,10 @@ Method taking no required arguments.
 Returns X, a 2-d floating point ndarray-like matrix of shape (M, N) where
 M is the number of examples and
 N is the number of features.
+There are many approaches to extracting latent structure: examples include
+clustering, dimensionality reduction, sparse coding, auto-encoders, RBMs.
+There is no single metric for success in this task.
+Often the inferred latent features are used for other supervised tasks.
 
 
 factorization_task
