@@ -205,15 +205,7 @@ class BaseLFW(object):
             shutil.rmtree(self.home())
 
     def fetch(self, download_if_missing=True):
-        """Download the funneled or non-funneled dataset, if necessary.
-
-        Call this function with no arguments to download the funneled LFW dataset to the standard
-        location. This downloads about 200MB.
-
-        If the dataset has already been downloaded, this function returns
-        immediately.
-
-        """
+        """Download the dataset if necessary."""
 
         if not exists(self.home()):
             makedirs(self.home())
