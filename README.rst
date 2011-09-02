@@ -92,6 +92,8 @@ The library contains modules and programs.
 Modules:
 
 - toy (Iris, Digits, Diabetes, Linnerud, Boston, SampleImages)
+- synthetic (Swiss Roll, S Curve, Friedman{1,2,3}, Madelon, Randlin, Blobs,
+  SparseCodedSignal, LowRankMatrix, SparseUncorrelated)
 - mnist (MNIST: hand-drawn digit classification dataset)
 - lfw (Labeled Faces in the Wild: face recognition and verification)
 - pubfig83
