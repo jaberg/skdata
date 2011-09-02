@@ -1,19 +1,13 @@
 
 from datasets import toy
+from datasets.tasks import assert_classification, assert_regression
 
-# XXX : this is  starting to look like a generic /task/ definition
 def check_classification_Xy(X, y, N=None):
-    A, B = X.shape
-    C, = y.shape
-    assert A == C == (C if N is None else N)
-    assert 'int' in str(y.dtype), y.dtype
+    assert_classification(X, y, N)
+
 
 def check_regression_XY(X, Y, N=None):
-    A, B = X.shape
-    C, D = Y.shape
-    assert A == C == (C if N is None else N)
-    assert 'float' in str(X.dtype)
-    assert 'float' in str(Y.dtype)
+    assert_regression(X, y, N)
 
 
 def test_iris():

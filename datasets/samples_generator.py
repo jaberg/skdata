@@ -145,7 +145,7 @@ class Madelon(object):
 
         # Intialize X and y
         X = np.zeros((n_samples, n_features))
-        y = np.zeros(n_samples)
+        y = np.zeros(n_samples, dtype='int')
 
         # Build the polytope
         from itertools import product
@@ -235,11 +235,14 @@ class Madelon(object):
 
         self.X = X
         self.y = y
+        assert 'int' in str(self.y.dtype)
         self.meta = [dict(x=xi, y=yi) for xi, yi in zip(X, y)]
         self.meta_const = {}
         self.descr = {}
 
     def classification_task(self):
+        # XXX: try this
+        #      and fall back on rebuilding from self.meta
         return self.X, self.y
 
 
@@ -355,98 +358,109 @@ class Randlin(object):
             ground_truth = ground_truth[indices]
 
         self.X = X
-        self.y = y
+        self.y = y[:, None]
         self.ground_truth = ground_truth
         self.meta = [dict(x=xi, y=yi) for xi, yi in zip(X, y)]
         self.meta_const = {}
         self.descr = {}
 
     def regression_task(self):
+        # XXX: try this
+        #      and fall back on rebuilding from self.meta
         return self.X, self.y
 
 
-def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
-               center_box=(-10.0, 10.0), shuffle=True, random_state=None):
+class Blobs(object):
+    """Generate isotropic Gaussian blobs for clustering.
     """
-    Generate isotropic Gaussian blobs for clustering.
+    def __init__(self, n_samples=100, n_features=2, centers=3, cluster_std=1.0,
+                   center_box=(-10.0, 10.0), shuffle=True, random_state=None):
+        """
 
-    Parameters
-    ----------
-    n_samples : int, optional (default=100)
-        The total number of points equally divided among clusters.
+        Parameters
+        ----------
+        n_samples : int, optional (default=100)
+            The total number of points equally divided among clusters.
 
-    n_features : int, optional (default=2)
-        The number of features for each sample.
+        n_features : int, optional (default=2)
+            The number of features for each sample.
 
-    centers : int or array of shape [n_centers, n_features], optional (default=3)
-        The number of centers to generate, or the fixed center locations.
+        centers : int or array of shape [n_centers, n_features], optional (default=3)
+            The number of centers to generate, or the fixed center locations.
 
-    cluster_std: float or sequence of floats, optional (default=1.0)
-        The standard deviation of the clusters.
+        cluster_std: float or sequence of floats, optional (default=1.0)
+            The standard deviation of the clusters.
 
-    center_box: pair of floats (min, max), optional (default=(-10.0, 10.0))
-        The bounding box for each cluster center when centers are
-        generated at random.
+        center_box: pair of floats (min, max), optional (default=(-10.0, 10.0))
+            The bounding box for each cluster center when centers are
+            generated at random.
 
-    shuffle : boolean, optional (default=True)
-        Shuffle the samples.
+        shuffle : boolean, optional (default=True)
+            Shuffle the samples.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        random_state : int, RandomState instance or None, optional (default=None)
+            If int, random_state is the seed used by the random number generator;
+            If RandomState instance, random_state is the random number generator;
+            If None, the random number generator is the RandomState instance used
+            by `np.random`.
 
-    Return
-    ------
-    X : array of shape [n_samples, n_features]
-        The generated samples.
+        Return
+        ------
+        X : array of shape [n_samples, n_features]
+            The generated samples.
 
-    y : array of shape [n_samples]
-        The integer labels for cluster membership of each sample.
+        y : array of shape [n_samples]
+            The integer labels for cluster membership of each sample.
 
-    Examples
-    --------
-    >>> from scikits.learn.datasets.samples_generator import make_blobs
-    >>> X, y = make_blobs(n_samples=10, centers=3, n_features=2, random_state=0)
-    >>> X.shape
-    (10, 2)
-    >>> y
-    array([0, 0, 1, 0, 2, 2, 2, 1, 1, 0])
-    """
-    generator = check_random_state(random_state)
+        """
+        generator = check_random_state(random_state)
 
-    if isinstance(centers, int):
-        centers = generator.uniform(center_box[0], center_box[1],
-                                    size=(centers, n_features))
-    else:
-        centers = np.atleast_2d(centers)
-        n_features = centers.shape[1]
+        if isinstance(centers, int):
+            centers = generator.uniform(center_box[0], center_box[1],
+                                        size=(centers, n_features))
+        else:
+            centers = np.atleast_2d(centers)
+            n_features = centers.shape[1]
 
-    X = []
-    y = []
+        X = []
+        y = []
 
-    n_centers = centers.shape[0]
-    n_samples_per_center = [n_samples / n_centers] * n_centers
+        n_centers = centers.shape[0]
+        n_samples_per_center = [n_samples / n_centers] * n_centers
 
-    for i in xrange(n_samples % n_centers):
-        n_samples_per_center[i] += 1
+        for i in xrange(n_samples % n_centers):
+            n_samples_per_center[i] += 1
 
-    for i, n in enumerate(n_samples_per_center):
-        X.append(centers[i] + generator.normal(scale=cluster_std,
-                                               size=(n, n_features)))
-        y += [i] * n
+        for i, n in enumerate(n_samples_per_center):
+            X.append(centers[i] + generator.normal(scale=cluster_std,
+                                                   size=(n, n_features)))
+            y += [i] * n
 
-    X = np.concatenate(X)
-    y = np.array(y)
+        X = np.concatenate(X)
+        y = np.array(y)
 
-    if shuffle:
-        indices = np.arange(n_samples)
-        generator.shuffle(indices)
-        X = X[indices]
-        y = y[indices]
+        if shuffle:
+            indices = np.arange(n_samples)
+            generator.shuffle(indices)
+            X = X[indices]
+            y = y[indices]
 
-    return X, y
+        self.X = X
+        self.y = y
+        self.meta = [dict(x=xi, y=yi) for xi, yi in zip(X, y)]
+        self.meta_const = {}
+        self.descr = {}
+
+    def classification_task(self):
+        # XXX: try this
+        #      and fall back on rebuilding X, y from self.meta
+        return self.X, self.y
+
+    def clustering_task(self):
+        # XXX: try this
+        #      and fall back on rebuilding from self.meta
+        return self.X
+
 
 
 def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):

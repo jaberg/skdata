@@ -3,6 +3,7 @@ from numpy.testing import assert_equal, assert_approx_equal, \
                           assert_array_almost_equal, assert_array_less
 
 from datasets import samples_generator as SG
+from datasets import tasks
 
 def test_madelon():
     madelon = SG.Madelon(n_samples=100, n_features=20, n_informative=5,
@@ -11,6 +12,7 @@ def test_madelon():
                                shift=None, scale=None, weights=[0.1, 0.25],
                                random_state=0)
     X, y = madelon.classification_task()
+    tasks.assert_classification(X, y, 100)
 
     assert_equal(X.shape, (100, 20), "X shape mismatch")
     assert_equal(y.shape, (100,), "y shape mismatch")
@@ -25,21 +27,24 @@ def test_randlin():
             effective_rank=5, coef=True, bias=0.0, noise=1.0, random_state=0)
 
     X, y = randlin.regression_task()
+    tasks.assert_regression(X, y, 100)
     assert_equal(X.shape, (100, 10), "X shape mismatch")
-    assert_equal(y.shape, (100,), "y shape mismatch")
+    assert_equal(y.shape, (100, 1), "y shape mismatch")
 
     c = randlin.ground_truth
     assert_equal(c.shape, (10,), "coef shape mismatch")
     assert_equal(sum(c != 0.0), 3, "Unexpected number of informative features")
 
     # Test that y ~= np.dot(X, c) + bias + N(0, 1.0)
-    assert_approx_equal(np.std(y - np.dot(X, c)), 1.0, significant=2)
+    assert_approx_equal(np.std(y[:,0] - np.dot(X, c)), 1.0, significant=2)
 
 
-def test_make_blobs():
-    X, y = make_blobs(n_samples=50, n_features=2,
-                      centers=[[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
-                      random_state=0)
+def test_blobs():
+    blobs = SG.Blobs(n_samples=50, n_features=2,
+            centers=[[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
+            random_state=0)
+    X, y = blobs.classification_task()
+    tasks.assert_classification(X, y)
 
     assert_equal(X.shape, (50, 2), "X shape mismatch")
     assert_equal(y.shape, (50,), "y shape mismatch")
