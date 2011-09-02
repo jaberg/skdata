@@ -150,7 +150,8 @@ def main_show():
     glumpy_viewer(
             img_array=CIFAR10._pixels,
             arrays_to_print=[Y],
-            cmap=glumpy.colormap.Grey)
+            cmap=glumpy.colormap.Grey,
+            window_shape=(32 * 2, 32 * 2))
 
 def main_erase():
     CIFAR10().erase()
