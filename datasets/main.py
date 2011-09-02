@@ -26,5 +26,6 @@ def main(cmd):
         exec "runner_fn = %s" % fullname
     except AttributeError:
         print >> sys.stderr, "Error: symbol '%s' not found" % fullname
+        print >> sys.stderr, "(Hint: verify you can import that module.)"
         sys.exit(1)
     sys.exit(runner_fn())

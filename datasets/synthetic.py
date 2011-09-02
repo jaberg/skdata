@@ -10,6 +10,9 @@ Synthetic data sets.
 # 
 # XXX: by these datasets default to using a different random state on every call
 #      - I think this is bad. Thoughts?
+#
+# XXX: make some of these datasets infinite to test out that lazy-evaluation
+# machinery on meta data.
 
 import numpy as np
 from scipy import linalg, sparse
