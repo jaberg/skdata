@@ -3,6 +3,7 @@ from numpy.testing import assert_equal, assert_approx_equal, \
                           assert_array_almost_equal, assert_array_less
 
 from datasets import samples_generator as SG
+from datasets import tasks
 
 def test_madelon():
     madelon = SG.Madelon(n_samples=100, n_features=20, n_informative=5,
@@ -11,6 +12,7 @@ def test_madelon():
                                shift=None, scale=None, weights=[0.1, 0.25],
                                random_state=0)
     X, y = madelon.classification_task()
+    tasks.assert_classification(X, y, 100)
 
     assert_equal(X.shape, (100, 20), "X shape mismatch")
     assert_equal(y.shape, (100,), "y shape mismatch")
@@ -20,73 +22,83 @@ def test_madelon():
     assert_equal(sum(y == 2), 65, "Unexpected number of samples in class #2")
 
 
-def test_make_regression():
-    X, y, c = make_regression(n_samples=100, n_features=10, n_informative=3,
-                              effective_rank=5, coef=True, bias=0.0,
-                              noise=1.0, random_state=0)
+def test_randlin():
+    randlin = SG.Randlin(n_samples=100, n_features=10, n_informative=3,
+            effective_rank=5, coef=True, bias=0.0, noise=1.0, random_state=0)
 
+    X, y = randlin.regression_task()
+    tasks.assert_regression(X, y, 100)
     assert_equal(X.shape, (100, 10), "X shape mismatch")
-    assert_equal(y.shape, (100,), "y shape mismatch")
+    assert_equal(y.shape, (100, 1), "y shape mismatch")
+
+    c = randlin.ground_truth
     assert_equal(c.shape, (10,), "coef shape mismatch")
     assert_equal(sum(c != 0.0), 3, "Unexpected number of informative features")
 
     # Test that y ~= np.dot(X, c) + bias + N(0, 1.0)
-    assert_approx_equal(np.std(y - np.dot(X, c)), 1.0, significant=2)
+    assert_approx_equal(np.std(y[:,0] - np.dot(X, c)), 1.0, significant=2)
 
 
-def test_make_blobs():
-    X, y = make_blobs(n_samples=50, n_features=2,
-                      centers=[[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
-                      random_state=0)
+def test_blobs():
+    blobs = SG.Blobs(n_samples=50, n_features=2,
+            centers=[[0.0, 0.0], [1.0, 1.0], [0.0, 1.0]],
+            random_state=0)
+    X, y = blobs.classification_task()
+    tasks.assert_classification(X, y)
 
     assert_equal(X.shape, (50, 2), "X shape mismatch")
     assert_equal(y.shape, (50,), "y shape mismatch")
     assert_equal(np.unique(y).shape, (3,), "Unexpected number of blobs")
 
 
-def test_make_friedman1():
-    X, y = make_friedman1(n_samples=5, n_features=10, noise=0.0,
-                          random_state=0)
+def test_friedman1():
+    X, y = SG.Friedman1(n_samples=5, n_features=10, noise=0.0,
+                          random_state=0).regression_task()
 
     assert_equal(X.shape, (5, 10), "X shape mismatch")
-    assert_equal(y.shape, (5,), "y shape mismatch")
+    assert_equal(y.shape, (5, 1), "y shape mismatch")
 
-    assert_array_almost_equal(y, 10 * np.sin(np.pi * X[:, 0] * X[:, 1])
+    assert_array_almost_equal(y[:,0], 10 * np.sin(np.pi * X[:, 0] * X[:, 1])
                                  + 20 * (X[:, 2] - 0.5) ** 2 \
                                  + 10 * X[:, 3] + 5 * X[:, 4])
 
 
-def test_make_friedman2():
-    X, y = make_friedman2(n_samples=5, noise=0.0, random_state=0)
+def test_friedman2():
+    X, y = SG.Friedman2(n_samples=5, noise=0.0, random_state=0).regression_task()
 
     assert_equal(X.shape, (5, 4), "X shape mismatch")
-    assert_equal(y.shape, (5,), "y shape mismatch")
+    assert_equal(y.shape, (5, 1), "y shape mismatch")
 
-    assert_array_almost_equal(y, (X[:, 0] ** 2
+    assert_array_almost_equal(y[:,0], (X[:, 0] ** 2
                                  + (X[:, 1] * X[:, 2]
                                     - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5)
 
 
-def test_make_friedman3():
-    X, y = make_friedman3(n_samples=5, noise=0.0, random_state=0)
+def test_friedman3():
+    X, y = SG.Friedman3(n_samples=5, noise=0.0, random_state=0).regression_task()
 
     assert_equal(X.shape, (5, 4), "X shape mismatch")
-    assert_equal(y.shape, (5,), "y shape mismatch")
+    assert_equal(y.shape, (5, 1), "y shape mismatch")
 
-    assert_array_almost_equal(y, np.arctan((X[:, 1] * X[:, 2]
+    assert_array_almost_equal(y[:,0], np.arctan((X[:, 1] * X[:, 2]
                                             - 1 / (X[:, 1] * X[:, 3]))
                                            / X[:, 0]))
 
 
-def test_make_low_rank_matrix():
-    X = make_low_rank_matrix(n_samples=50, n_features=25, effective_rank=5,
+def test_low_rank_matrix():
+    lrm = SG.LowRankMatrix(n_samples=50, n_features=25, effective_rank=5,
                              tail_strength=0.01, random_state=0)
+    X = lrm.factorization_task()
+    tasks.assert_factorization(X)
 
     assert_equal(X.shape, (50, 25), "X shape mismatch")
 
     from numpy.linalg import svd
     u, s, v = svd(X)
     assert sum(s) - 5 < 0.1, "X rank is not approximately 5"
+
+    X, Y = lrm.matrix_completion_task()
+    tasks.assert_matrix_completion(X, Y)
 
 
 def test_make_sparse_coded_signal():
