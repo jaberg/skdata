@@ -71,6 +71,9 @@ Lazy-evaluation is important to the design of data processing pipelines for
 large datasets. It decouples the logic of providing access to data from the
 logic of efficient caching, which is often task specific.
 
+More design and reference documentation will be written in ``doc/``.
+This is already starting with ``doc/dataset.rst``.
+
 
 Development Status
 ==================
