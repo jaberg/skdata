@@ -132,14 +132,16 @@ def test_swiss_roll():
 
     assert_equal(X.shape, (5, 3), "X shape mismatch")
     assert_equal(t.shape, (5, 1), "t shape mismatch")
+    t = t[:, 0]
     assert_equal(X[:, 0], t * np.cos(t))
     assert_equal(X[:, 2], t * np.sin(t))
 
 
 def test_make_s_curve():
-    X, t = make_s_curve(n_samples=5, noise=0.0, random_state=0)
+    X, t = SG.S_Curve(n_samples=5, noise=0.0, random_state=0).regression_task()
 
     assert_equal(X.shape, (5, 3), "X shape mismatch")
-    assert_equal(t.shape, (5,), "t shape mismatch")
+    assert_equal(t.shape, (5, 1), "t shape mismatch")
+    t = t[:, 0]
     assert_equal(X[:, 0], np.sin(t))
     assert_equal(X[:, 2], np.sign(t) * (np.cos(t) - 1))
