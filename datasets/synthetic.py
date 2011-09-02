@@ -1,10 +1,15 @@
 """
-Generate samples of synthetic data sets.
+Synthetic data sets.
 """
 
 # Authors: B. Thirion, G. Varoquaux, A. Gramfort, V. Michel, O. Grisel,
-#          G. Louppe
+#          G. Louppe, J. Bergstra
 # License: BSD 3 clause
+
+# XXX: main_show would be nice to have for several of these datasets
+# 
+# XXX: by these datasets default to using a different random state on every call
+#      - I think this is bad. Thoughts?
 
 import numpy as np
 from scipy import linalg, sparse
@@ -463,6 +468,13 @@ class Blobs(Base, Classification, LatentStructure):
 
         Base.__init__(self, X, y)
 
+    @classmethod
+    def main_show(cls):
+        self = cls(n_samples=500)
+        import matplotlib.pyplot as plt
+        plt.scatter(self._X[:, 0], self._X[:, 1])
+        plt.show()
+
 
 class Friedman1(Base, Regression):
     def __init__(self, n_samples=100, n_features=10, noise=0.0, random_state=None):
@@ -896,6 +908,16 @@ class SwissRoll(Base, Regression, LatentStructure):
         t = np.squeeze(t)
         Base.__init__(self, X, t[:, None])
 
+    @classmethod
+    def main_show(cls):
+        self = cls(n_samples=1000)
+        import matplotlib.pyplot as plt
+        from mpl_toolkits.mplot3d import Axes3D
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(self._X[:, 2], self._X[:, 1], self._X[:, 0])
+        plt.show()
+
 
 class S_Curve(Base, Regression, LatentStructure):
     """Generate an S curve dataset.
@@ -930,3 +952,15 @@ class S_Curve(Base, Regression, LatentStructure):
         t = np.squeeze(t)
 
         Base.__init__(self, X, t[:, None])
+
+    @classmethod
+    def main_show(cls):
+        self = cls(n_samples=1000)
+        import matplotlib.pyplot as plt
+        from mpl_toolkits.mplot3d import Axes3D
+        fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.scatter(self._X[:, 2], self._X[:, 1], self._X[:, 0])
+        plt.show()
+
+
