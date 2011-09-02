@@ -51,36 +51,36 @@ def test_blobs():
     assert_equal(np.unique(y).shape, (3,), "Unexpected number of blobs")
 
 
-def test_make_friedman1():
-    X, y = make_friedman1(n_samples=5, n_features=10, noise=0.0,
-                          random_state=0)
+def test_friedman1():
+    X, y = SG.Friedman1(n_samples=5, n_features=10, noise=0.0,
+                          random_state=0).regression_task()
 
     assert_equal(X.shape, (5, 10), "X shape mismatch")
-    assert_equal(y.shape, (5,), "y shape mismatch")
+    assert_equal(y.shape, (5, 1), "y shape mismatch")
 
-    assert_array_almost_equal(y, 10 * np.sin(np.pi * X[:, 0] * X[:, 1])
+    assert_array_almost_equal(y[:,0], 10 * np.sin(np.pi * X[:, 0] * X[:, 1])
                                  + 20 * (X[:, 2] - 0.5) ** 2 \
                                  + 10 * X[:, 3] + 5 * X[:, 4])
 
 
-def test_make_friedman2():
-    X, y = make_friedman2(n_samples=5, noise=0.0, random_state=0)
+def test_friedman2():
+    X, y = SG.Friedman2(n_samples=5, noise=0.0, random_state=0).regression_task()
 
     assert_equal(X.shape, (5, 4), "X shape mismatch")
-    assert_equal(y.shape, (5,), "y shape mismatch")
+    assert_equal(y.shape, (5, 1), "y shape mismatch")
 
-    assert_array_almost_equal(y, (X[:, 0] ** 2
+    assert_array_almost_equal(y[:,0], (X[:, 0] ** 2
                                  + (X[:, 1] * X[:, 2]
                                     - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5)
 
 
-def test_make_friedman3():
-    X, y = make_friedman3(n_samples=5, noise=0.0, random_state=0)
+def test_friedman3():
+    X, y = SG.Friedman3(n_samples=5, noise=0.0, random_state=0).regression_task()
 
     assert_equal(X.shape, (5, 4), "X shape mismatch")
-    assert_equal(y.shape, (5,), "y shape mismatch")
+    assert_equal(y.shape, (5, 1), "y shape mismatch")
 
-    assert_array_almost_equal(y, np.arctan((X[:, 1] * X[:, 2]
+    assert_array_almost_equal(y[:,0], np.arctan((X[:, 1] * X[:, 2]
                                             - 1 / (X[:, 1] * X[:, 3]))
                                            / X[:, 0]))
 

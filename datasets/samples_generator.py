@@ -11,7 +11,39 @@ from scipy import linalg
 
 from .utils import check_random_state
 
-class Madelon(object):
+
+class Base(object):
+    def __init__(self, X, y):
+        self._X = X
+        self._Y = y
+
+        self.meta = [dict(x=xi, y=yi) for xi, yi in zip(self._X, self._Y)]
+        self.meta_const = {}
+        self.descr = {}
+
+
+class Regression(object):
+    def regression_task(self):
+        # XXX: try this
+        #      and fall back on rebuilding from self.meta
+        return self._X, self._Y
+
+
+class Classification(object):
+    def classification_task(self):
+        # XXX: try this
+        #      and fall back on rebuilding from self.meta
+        return self._X, self._Y
+
+
+class Clustering(object):
+    def classification_task(self):
+        # XXX: try this
+        #      and fall back on rebuilding from self.meta
+        return self.X, self.y
+
+
+class Madelon(Base, Classification):
     """Random classification task.
 
     The algorithm is adapted from Guyon [1] and was designed to generate
@@ -233,20 +265,10 @@ class Madelon(object):
             generator.shuffle(indices)
             X[:, :] = X[:, indices]
 
-        self.X = X
-        self.y = y
-        assert 'int' in str(self.y.dtype)
-        self.meta = [dict(x=xi, y=yi) for xi, yi in zip(X, y)]
-        self.meta_const = {}
-        self.descr = {}
-
-    def classification_task(self):
-        # XXX: try this
-        #      and fall back on rebuilding from self.meta
-        return self.X, self.y
+        Base.__init__(self, X, y)
 
 
-class Randlin(object):
+class Randlin(Base, Regression):
     """Random linear regression problem.
 
     The input set can either be well conditioned (by default) or have a low
@@ -357,20 +379,11 @@ class Randlin(object):
             X[:, :] = X[:, indices]
             ground_truth = ground_truth[indices]
 
-        self.X = X
-        self.y = y[:, None]
+        Base.__init__(self, X, y[:, None])
         self.ground_truth = ground_truth
-        self.meta = [dict(x=xi, y=yi) for xi, yi in zip(X, y)]
-        self.meta_const = {}
-        self.descr = {}
-
-    def regression_task(self):
-        # XXX: try this
-        #      and fall back on rebuilding from self.meta
-        return self.X, self.y
 
 
-class Blobs(object):
+class Blobs(Base, Classification, Clustering):
     """Generate isotropic Gaussian blobs for clustering.
     """
     def __init__(self, n_samples=100, n_features=2, centers=3, cluster_std=1.0,
@@ -445,213 +458,201 @@ class Blobs(object):
             X = X[indices]
             y = y[indices]
 
-        self.X = X
-        self.y = y
-        self.meta = [dict(x=xi, y=yi) for xi, yi in zip(X, y)]
-        self.meta_const = {}
-        self.descr = {}
-
-    def classification_task(self):
-        # XXX: try this
-        #      and fall back on rebuilding X, y from self.meta
-        return self.X, self.y
-
-    def clustering_task(self):
-        # XXX: try this
-        #      and fall back on rebuilding from self.meta
-        return self.X
+        Base.__init__(self, X, y)
 
 
+class Friedman1(Base, Regression):
+    def __init__(self, n_samples=100, n_features=10, noise=0.0, random_state=None):
+        """
+        Generate the "Friedman #1" regression problem as described in Friedman [1]
+        and Breiman [2].
 
-def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
-    """
-    Generate the "Friedman #1" regression problem as described in Friedman [1]
-    and Breiman [2].
+        Inputs `X` are independent features uniformly distributed on the interval
+        [0, 1]. The output `y` is created according to the formula::
 
-    Inputs `X` are independent features uniformly distributed on the interval
-    [0, 1]. The output `y` is created according to the formula::
+            y(X) = 10 * sin(pi * X[:, 0] * X[:, 1]) + 20 * (X[:, 2] - 0.5) ** 2 \
+                   + 10 * X[:, 3] + 5 * X[:, 4] + noise * N(0, 1).
 
-        y(X) = 10 * sin(pi * X[:, 0] * X[:, 1]) + 20 * (X[:, 2] - 0.5) ** 2 \
-               + 10 * X[:, 3] + 5 * X[:, 4] + noise * N(0, 1).
+        Out of the `n_features` features, only 5 are actually used to compute
+        `y`. The remaining features are independent of `y`.
 
-    Out of the `n_features` features, only 5 are actually used to compute
-    `y`. The remaining features are independent of `y`.
+        The number of features has to be >= 5.
 
-    The number of features has to be >= 5.
+        Parameters
+        ----------
+        n_samples : int, optional (default=100)
+            The number of samples.
 
-    Parameters
-    ----------
-    n_samples : int, optional (default=100)
-        The number of samples.
+        n_features : int, optional (default=10)
+            The number of features. Should be at least 5.
 
-    n_features : int, optional (default=10)
-        The number of features. Should be at least 5.
+        noise : float, optional (default=0.0)
+            The standard deviation of the gaussian noise applied to the output.
 
-    noise : float, optional (default=0.0)
-        The standard deviation of the gaussian noise applied to the output.
+        random_state : int, RandomState instance or None, optional (default=None)
+            If int, random_state is the seed used by the random number generator;
+            If RandomState instance, random_state is the random number generator;
+            If None, the random number generator is the RandomState instance used
+            by `np.random`.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        Returns
+        -------
+        X : array of shape [n_samples, n_features]
+            The input samples.
 
-    Returns
-    -------
-    X : array of shape [n_samples, n_features]
-        The input samples.
+        y : array of shape [n_samples]
+            The output values.
 
-    y : array of shape [n_samples]
-        The output values.
+        References
+        ----------
+        .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
+               of Statistics 19 (1), pages 1-67, 1991.
 
-    References
-    ----------
-    .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
-           of Statistics 19 (1), pages 1-67, 1991.
+        .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
+               pages 123-140, 1996.
+        """
+        assert n_features >= 5
 
-    .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
-           pages 123-140, 1996.
-    """
-    assert n_features >= 5
+        generator = check_random_state(random_state)
 
-    generator = check_random_state(random_state)
+        X = generator.rand(n_samples, n_features)
+        y = 10 * np.sin(np.pi * X[:, 0] * X[:, 1]) + 20 * (X[:, 2] - 0.5) ** 2 \
+            + 10 * X[:, 3] + 5 * X[:, 4] + noise * generator.randn(n_samples)
 
-    X = generator.rand(n_samples, n_features)
-    y = 10 * np.sin(np.pi * X[:, 0] * X[:, 1]) + 20 * (X[:, 2] - 0.5) ** 2 \
-        + 10 * X[:, 3] + 5 * X[:, 4] + noise * generator.randn(n_samples)
-
-    return X, y
-
-
-def make_friedman2(n_samples=100, noise=0.0, random_state=None):
-    """
-    Generate the "Friedman #2" regression problem as described in Friedman [1]
-    and Breiman [2].
-
-    Inputs `X` are 4 independent features uniformly distributed on the
-    intervals::
-
-        0 <= X[:, 0] <= 100,
-        40 * pi <= X[:, 1] <= 560 * pi,
-        0 <= X[:, 2] <= 1,
-        1 <= X[:, 3] <= 11.
-
-    The output `y` is created according to the formula::
-
-        y(X) = (X[:, 0] ** 2 \
-                   + (X[:, 1] * X[:, 2] \
-                         - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 \
-               + noise * N(0, 1).
-
-    Parameters
-    ----------
-    n_samples : int, optional (default=100)
-        The number of samples.
-
-    noise : float, optional (default=0.0)
-        The standard deviation of the gaussian noise applied to the output.
-
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
-
-    Returns
-    -------
-    X : array of shape [n_samples, 4]
-        The input samples.
-
-    y : array of shape [n_samples]
-        The output values.
-
-    References
-    ----------
-    .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
-           of Statistics 19 (1), pages 1-67, 1991.
-
-    .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
-           pages 123-140, 1996.
-    """
-    generator = check_random_state(random_state)
-
-    X = generator.rand(n_samples, 4)
-    X[:, 0] *= 100
-    X[:, 1] *= 520 * np.pi
-    X[:, 1] += 40 * np.pi
-    X[:, 3] *= 10
-    X[:, 3] += 1
-
-    y = (X[:, 0] ** 2
-            + (X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 \
-        + noise * generator.randn(n_samples)
-
-    return X, y
+        Base.__init__(self, X, y[:, None])
 
 
-def make_friedman3(n_samples=100, noise=0.0, random_state=None):
-    """
-    Generate the "Friedman #3" regression problem as described in Friedman [1]
-    and Breiman [2].
+class Friedman2(Base, Regression):
+    def __init__(self, n_samples=100, noise=0.0, random_state=None):
+        """
+        Generate the "Friedman #2" regression problem as described in Friedman [1]
+        and Breiman [2].
 
-    Inputs `X` are 4 independent features uniformly distributed on the
-    intervals::
+        Inputs `X` are 4 independent features uniformly distributed on the
+        intervals::
 
-        0 <= X[:, 0] <= 100,
-        40 * pi <= X[:, 1] <= 560 * pi,
-        0 <= X[:, 2] <= 1,
-        1 <= X[:, 3] <= 11.
+            0 <= X[:, 0] <= 100,
+            40 * pi <= X[:, 1] <= 560 * pi,
+            0 <= X[:, 2] <= 1,
+            1 <= X[:, 3] <= 11.
 
-    The output `y` is created according to the formula::
+        The output `y` is created according to the formula::
 
-        y(X) = arctan((X[:, 1] * X[:, 2] \
-                          - 1 / (X[:, 1] * X[:, 3])) \
-                      / X[:, 0]) \
-               + noise * N(0, 1).
+            y(X) = (X[:, 0] ** 2 \
+                       + (X[:, 1] * X[:, 2] \
+                             - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 \
+                   + noise * N(0, 1).
 
-    Parameters
-    ----------
-    n_samples : int, optional (default=100)
-        The number of samples.
+        Parameters
+        ----------
+        n_samples : int, optional (default=100)
+            The number of samples.
 
-    noise : float, optional (default=0.0)
-        The standard deviation of the gaussian noise applied to the output.
+        noise : float, optional (default=0.0)
+            The standard deviation of the gaussian noise applied to the output.
 
-    random_state : int, RandomState instance or None, optional (default=None)
-        If int, random_state is the seed used by the random number generator;
-        If RandomState instance, random_state is the random number generator;
-        If None, the random number generator is the RandomState instance used
-        by `np.random`.
+        random_state : int, RandomState instance or None, optional (default=None)
+            If int, random_state is the seed used by the random number generator;
+            If RandomState instance, random_state is the random number generator;
+            If None, the random number generator is the RandomState instance used
+            by `np.random`.
 
-    Returns
-    -------
-    X : array of shape [n_samples, 4]
-        The input samples.
+        Returns
+        -------
+        X : array of shape [n_samples, 4]
+            The input samples.
 
-    y : array of shape [n_samples]
-        The output values.
+        y : array of shape [n_samples]
+            The output values.
 
-    References
-    ----------
-    .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
-           of Statistics 19 (1), pages 1-67, 1991.
+        References
+        ----------
+        .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
+               of Statistics 19 (1), pages 1-67, 1991.
 
-    .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
-           pages 123-140, 1996.
-    """
-    generator = check_random_state(random_state)
+        .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
+               pages 123-140, 1996.
+        """
+        generator = check_random_state(random_state)
 
-    X = generator.rand(n_samples, 4)
-    X[:, 0] *= 100
-    X[:, 1] *= 520 * np.pi
-    X[:, 1] += 40 * np.pi
-    X[:, 3] *= 10
-    X[:, 3] += 1
+        X = generator.rand(n_samples, 4)
+        X[:, 0] *= 100
+        X[:, 1] *= 520 * np.pi
+        X[:, 1] += 40 * np.pi
+        X[:, 3] *= 10
+        X[:, 3] += 1
 
-    y = np.arctan((X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) / X[:, 0]) \
-        + noise * generator.randn(n_samples)
+        y = (X[:, 0] ** 2
+                + (X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 \
+            + noise * generator.randn(n_samples)
 
-    return X, y
+        return Base.__init__(self, X, y[:, None])
+
+
+class Friedman3(Base, Regression):
+    def __init__(self, n_samples=100, noise=0.0, random_state=None):
+        """
+        Generate the "Friedman #3" regression problem as described in Friedman [1]
+        and Breiman [2].
+
+        Inputs `X` are 4 independent features uniformly distributed on the
+        intervals::
+
+            0 <= X[:, 0] <= 100,
+            40 * pi <= X[:, 1] <= 560 * pi,
+            0 <= X[:, 2] <= 1,
+            1 <= X[:, 3] <= 11.
+
+        The output `y` is created according to the formula::
+
+            y(X) = arctan((X[:, 1] * X[:, 2] \
+                              - 1 / (X[:, 1] * X[:, 3])) \
+                          / X[:, 0]) \
+                   + noise * N(0, 1).
+
+        Parameters
+        ----------
+        n_samples : int, optional (default=100)
+            The number of samples.
+
+        noise : float, optional (default=0.0)
+            The standard deviation of the gaussian noise applied to the output.
+
+        random_state : int, RandomState instance or None, optional (default=None)
+            If int, random_state is the seed used by the random number generator;
+            If RandomState instance, random_state is the random number generator;
+            If None, the random number generator is the RandomState instance used
+            by `np.random`.
+
+        Returns
+        -------
+        X : array of shape [n_samples, 4]
+            The input samples.
+
+        y : array of shape [n_samples]
+            The output values.
+
+        References
+        ----------
+        .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
+               of Statistics 19 (1), pages 1-67, 1991.
+
+        .. [2] L. Breiman, "Bagging predictors", Machine Learning 24,
+               pages 123-140, 1996.
+        """
+        generator = check_random_state(random_state)
+
+        X = generator.rand(n_samples, 4)
+        X[:, 0] *= 100
+        X[:, 1] *= 520 * np.pi
+        X[:, 1] += 40 * np.pi
+        X[:, 3] *= 10
+        X[:, 3] += 1
+
+        y = np.arctan((X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) / X[:, 0]) \
+            + noise * generator.randn(n_samples)
+
+        Base.__init__(self, X, y[:, None])
 
 
 def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
