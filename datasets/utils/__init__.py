@@ -1,5 +1,6 @@
 from my_path import get_my_path, get_my_path_basename
 from xml2x import xml2dict, xml2list
+from download_and_extract import download, extract, download_and_extract
 
 # -- old utils.py
 import numpy as np

@@ -28,6 +28,7 @@ from utils import download, extract
 import logging
 logger = logging.getLogger(__name__)
 
+
 class BasePASCAL(object):
 
     def __init__(self, meta=None):

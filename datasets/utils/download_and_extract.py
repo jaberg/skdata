@@ -9,17 +9,12 @@ from os import path
 
 import archive
 
-def download(url, output_filename, overwrite=False):
+def download(url, output_filename):
     """Downloads file at `url` and write it in `output_dirname`"""
 
     page = urlopen(url)
     page_info = page.info()
 
-    if path.exists(output_filename) and not overwrite:
-        print("'%s' already exists! "
-              "To overwrite, set overwrite=True."
-              % output_filename)
-        return
     output_file = open(output_filename, 'wb+')
 
     # size of the download unit
@@ -56,6 +51,7 @@ def extract(archive_filename, output_dirname, verbose=True):
     * Zip formats and equivalents: .zip, .egg, .jar
     * Tar and compressed tar formats: .tar, .tar.gz, .tgz, .tar.bz2, .tz2
     """
+    print "Extracting '%s' to '%s'" % (archive_filename, output_dirname)
     archive.extract(archive_filename, output_dirname, verbose=verbose)
 
 
@@ -67,5 +63,5 @@ def download_and_extract(url, output_dirname, verbose=True):
     """
     archive_basename = path.basename(url)
     archive_filename = path.join(output_dirname, archive_basename)
-    download(url, archive_filename, overwrite=True)
+    download(url, archive_filename)
     extract(archive_filename, output_dirname, verbose=verbose)

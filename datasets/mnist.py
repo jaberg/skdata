@@ -160,7 +160,7 @@ class MNIST(object):
                 else:
                     raise
 
-    def erase(self):
+    def clean_up(self):
         logger.info('recursively erasing %s' % self.home())
         if os.path.isdir(self.home()):
             shutil.rmtree(self.home())
@@ -208,8 +208,8 @@ class MNIST(object):
         return cls().fetch(download_if_missing=True)
 
     @classmethod
-    def main_erase(cls):
-        return cls().erase()
+    def main_clean_up(cls):
+        return cls().clean_up()
 
     @classmethod
     def main_show(cls):
@@ -230,6 +230,6 @@ def main_show():
     MNIST.main_show()
 
 
-def main_erase():
+def main_clean_up():
     logger.setLevel(logging.INFO)
-    MNIST.main_erase()
+    MNIST.main_clean_up()

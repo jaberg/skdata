@@ -81,7 +81,7 @@ class PubFig83(object):
         #      will (I think) not work on windows
         os.system('cd ' + dataset_dir + '; tar -xzf pubfig83_first_draft.tgz')
 
-    def erase(self):
+    def clean_up(self):
         if isdir(self.home()):
             shutil.rmtree(self.home())
 

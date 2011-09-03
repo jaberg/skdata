@@ -154,5 +154,5 @@ def main_show():
             window_shape=(32 * 2, 32 * 2))
 
 
-def main_erase():
-    CIFAR10().erase()
+def main_clean_up():
+    CIFAR10().clean_up()
