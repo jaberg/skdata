@@ -1,29 +1,31 @@
-"""PASCAL Visual Object Classes Datasets
+"""PASCAL Visual Object Classes (VOC) Datasets
 
-    http://pascallin.ecs.soton.ac.uk/challenges/VOC
+http://pascallin.ecs.soton.ac.uk/challenges/VOC
+
+If you make use of this data, please cite the following journal paper in
+any publications:
+
+The PASCAL Visual Object Classes (VOC) Challenge
+Everingham, M., Van Gool, L., Williams, C. K. I., Winn, J. and Zisserman,
+A.  International Journal of Computer Vision, 88(2), 303-338, 2010
+
+http://pascallin.ecs.soton.ac.uk/challenges/VOC/pubs/everingham10.pdf
+http://pascallin.ecs.soton.ac.uk/challenges/VOC/pubs/everingham10.html#abstract
+http://pascallin.ecs.soton.ac.uk/challenges/VOC/pubs/everingham10.html#bibtex
 """
 
 # Copyright (c) 2011 Nicolas Pinto <pinto@rowland.harvard.edu>
-# Copyright (c) 2011 Nicolas Poilver <poilvert@rowland.harvard.edu>
+# Copyright (c) 2011 Nicolas Poilvert <poilvert@rowland.harvard.edu>
 # License: Simplified BSD
 
-#from os import listdir, makedirs, remove
 import os
 from os import path
 import shutil
-import sys
-
-import logging
-import numpy as np
-import urllib
-import tarfile
 
 from data_home import get_data_home
-import larray
-import utils
-#import utils.image
 from utils import download, extract
 
+import logging
 logger = logging.getLogger(__name__)
 
 class BasePASCAL(object):
@@ -47,16 +49,17 @@ class BasePASCAL(object):
             os.makedirs(home)
 
         # download archives
-        for set, basename in self.ARCHIVES.iteritems():
-            url = path.join(self.BASE_URL, basename)
+        archive_filenames = []
+        for url in self.ARCHIVES.itervalues():
+            basename = path.basename(url)
             archive_filename = path.join(home, basename)
             if not path.exists(archive_filename):
                 download(url, archive_filename)
+            archive_filenames += [archive_filename]
 
         # extract them
         if not path.exists(path.join(home, 'VOCdevkit')):
-            for set, basename in self.ARCHIVES.iteritems():
-                archive_filename = path.join(home, basename)
+            for archive_filename in archive_filenames:
                 extract(archive_filename, home, verbose=True)
 
     # ------------------------------------------------------------------------
@@ -73,15 +76,15 @@ class BasePASCAL(object):
             return self._meta
 
     def _build_meta(self):
-        pass
+        return "TODO"
 
     # ------------------------------------------------------------------------
     # -- Dataset Interface: clean_up()
     # ------------------------------------------------------------------------
 
     def clean_up(self):
-        if path.isdir(self.home()):
-            shutil.rmtree(self.home())
+        if path.isdir(self.home):
+            shutil.rmtree(self.home)
 
     # ------------------------------------------------------------------------
     # -- Driver routines to be called by datasets.main
@@ -97,10 +100,67 @@ class BasePASCAL(object):
 
 
 class VOC2007(BasePASCAL):
-    BASE_URL = 'http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2007'
     ARCHIVES = {
-        'trainval': 'VOCtrainval_06-Nov-2007.tar',
-        'test': 'VOCtest_06-Nov-2007.tar'
+        'trainval': (
+            'http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2007/'
+            'VOCtrainval_06-Nov-2007.tar'
+        ),
+        'test': (
+            'http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2007/'
+            'VOCtest_06-Nov-2007.tar'
+        ),
+    }
+
+
+class VOC2008(BasePASCAL):
+    ARCHIVES = {
+        'trainval': (
+            'http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2008/'
+            'VOCtrainval_14-Jul-2008.tar'
+        ),
+        'test': (
+            'https://s3.amazonaws.com/scikits.data/pascal/'
+            'VOC2008test.tar'
+        ),
+    }
+
+
+class VOC2009(BasePASCAL):
+    ARCHIVES = {
+        'trainval': (
+            'http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2009/'
+            'VOCtrainval_11-May-2009.tar'
+        ),
+        'test': (
+            'https://s3.amazonaws.com/scikits.data/pascal/'
+            'VOC2009test.tar'
+        ),
+    }
+
+
+class VOC2010(BasePASCAL):
+    ARCHIVES = {
+        'trainval': (
+            'http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2010/'
+            'VOCtrainval_03-May-2010.tar'
+        ),
+        'test': (
+            'https://s3.amazonaws.com/scikits.data/pascal/'
+            'VOC2010test.tar'
+        ),
+    }
+
+
+class VOC2011(BasePASCAL):
+    ARCHIVES = {
+        'trainval': (
+            'http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2011/'
+            'VOCtrainval_25-May-2011.tar'
+        ),
+        'test': (
+            'https://s3.amazonaws.com/scikits.data/pascal/'
+            'VOC2010test.tar.gz'
+        ),
     }
 
 
@@ -111,4 +171,5 @@ def main_fetch():
 def main_show():
     raise NotImplementedError
 
-VOC2007().meta
+voc07 = VOC2007()
+print voc07.meta
