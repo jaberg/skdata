@@ -24,9 +24,7 @@ import os
 from os import path
 import shutil
 from glob import glob
-
-import logging
-logger = logging.getLogger(__name__)
+import hashlib
 
 import numpy as np
 
@@ -50,6 +48,9 @@ class BasePASCAL(object):
 
                 filename: str
                     Full path to the image.
+
+                hash: str
+                    SHA1 hash of the image.
 
                 shape: tuple
                     Shape of the image (height, width, depth).
@@ -186,6 +187,11 @@ class BasePASCAL(object):
 
             data['filename'] = img_filename
 
+            # hash
+            hash = hashlib.sha1(open(img_filename).read()).hexdigest()
+            data['hash'] = hash
+
+            # image id
             img_basename = path.basename(path.split(img_filename)[1])
             img_id = path.splitext(img_basename)[0]
             img_ids += [img_id]
@@ -224,13 +230,14 @@ class BasePASCAL(object):
                 # lazy-evaluate it ?
                 pass
 
-            # objects
+            # objects with their bounding boxes
             objs = xl[6:]
             objects = []
             for obj in objs:
                 bndbox = obj.pop('bndbox')
                 bounding_box = [(int(bndbox[key]) - 1)
                                 for key in 'xmin', 'xmax', 'ymin', 'ymax']
+                assert (np.array(bounding_box) >= 0).all()
                 obj['bounding_box'] = tuple(bounding_box)
                 n_objects += 1
                 if obj['name'] not in unique_object_names:
