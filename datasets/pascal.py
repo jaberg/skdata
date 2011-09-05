@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """PASCAL Visual Object Classes (VOC) Datasets
 
 http://pascallin.ecs.soton.ac.uk/challenges/VOC
@@ -35,11 +37,77 @@ from utils import download, extract, xml2list
 class BasePASCAL(object):
 
     def __init__(self, meta=None):
-        """PASCAL VOC Dataset Object
+        """PASCAL VOC Dataset
 
-        Use '.meta' to access the metadata. Note that if joblib is available,
-        the metadata will be cached for faster processing. To install joblib
-        use 'pip install -vU joblib'.
+        Attributes
+        ----------
+        meta: list of dict
+            Metadata associated with the dataset. For each image with index i,
+            meta[i] is a dict with keys:
+
+                id: str
+                    Identifier of the image.
+
+                filename: str
+                    Full path to the image.
+
+                shape: tuple
+                    Shape of the image (height, width, depth).
+
+                split: str
+                    'train', 'val' or 'test'.
+
+                objects: list of dict [optional]
+                    Description of the objects present in the image. Note that
+                    this key may not be available if split is 'test'. If the
+                    key is present, then objects[i] is a dict with keys:
+
+                        name: str
+                            Name (label) of the object.
+
+                        bounding_box: tuple of int
+                            Bounding box coordinates (0-based index) of the
+                            form (x_min, x_max, y_min, y_max):
+                            +-----------------------------------------▶ x-axis
+                            |
+                            |   +-------+    .  .  .  y_min (top)
+                            |   | bbox  |
+                            |   +-------+    .  .  .  y_max (bottom)
+                            |
+                            |   .       .
+                            |
+                            |   .       .
+                            |
+                            |  x_min   x_max
+                            |  (left)  (right)
+                            |
+                            ▼
+                            y-axis
+
+                        pose: str
+                            'Left', 'Right', 'Frontal', 'Rear' or 'Unspecified'
+
+                        truncated: boolean
+                            True if the object is occluded / truncated.
+
+                        difficult: boolean
+                            True if the object has been tagged as difficult
+                            (should be ignored during evaluation?).
+
+                segmented: boolean
+                    True if segmentation information is available.
+
+                owner: dict
+                    Owner of the image (self-explanatory).
+
+                source: dict
+                    Source of the image (self-explanatory).
+
+
+        Notes
+        -----
+        If joblib is available, then `meta` be cached for faster processing. To
+        install joblib use 'pip install -U joblib' or 'easy_install -U joblib'.
         """
 
         if meta is not None:
@@ -116,6 +184,8 @@ class BasePASCAL(object):
 
             data = {}
 
+            data['filename'] = img_filename
+
             img_basename = path.basename(path.split(img_filename)[1])
             img_id = path.splitext(img_basename)[0]
             img_ids += [img_id]
@@ -136,24 +206,37 @@ class BasePASCAL(object):
             # image basename
             assert img_basename == xl[1]
 
-            # size (width, height, depth)
-            data.update(xl[4])
+            # source
+            data['source'] = xl[2]
+
+            # owner
+            data['owner'] = xl[3]
+
+            # size / shape
+            size = xl[4]
+            data['shape'] = size['height'], size['width'], size['depth']
 
             # segmentation ?
             segmented = bool(xl[5])
             data['segmented'] = segmented
             if segmented:
-                # TODO: parse segmentation data (in 'SegmentationClass')
+                # TODO: parse segmentation data (in 'SegmentationClass') or
+                # lazy-evaluate it ?
                 pass
 
             # objects
-            # XXX: change the names of the keys, eg 'bndbox' -> 'bounding_box'
             objs = xl[6:]
-            data['objects'] = objs
+            objects = []
             for obj in objs:
+                bndbox = obj.pop('bndbox')
+                bounding_box = [(int(bndbox[key]) - 1)
+                                for key in 'xmin', 'xmax', 'ymin', 'ymax']
+                obj['bounding_box'] = tuple(bounding_box)
                 n_objects += 1
                 if obj['name'] not in unique_object_names:
                     unique_object_names += [obj['name']]
+                objects += [obj]
+            data['objects'] = objects
 
             # append to meta
             meta += [data]
@@ -202,8 +285,10 @@ class BasePASCAL(object):
             split_counts[data['split']] += 1
 
         for split in splits:
+            count = split_counts[split]
+            assert count > 0
             print(" Number of images in '%s': %d"
-                  % (split, split_counts[split]))
+                  % (split, count))
 
         meta = np.array(meta)
         return meta
