@@ -9,6 +9,10 @@ Tiny Images", Alex Krizhevsky, 2009.
 http://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf
 
 """
+
+# Authors: James Bergstra <bergstra@rowland.harvard.edu>
+# License: BSD 3 clause
+
 import os
 import cPickle
 import logging
@@ -118,7 +122,7 @@ class CIFAR10(object):
                     id=i,
                     split='train' if i < 50000 else 'test',
                     label=LABELS[l])
-                for i,l in enumerate(labels)]
+                for i,l in enumerate(self._labels)]
         return meta
 
     def unpickle(self, basename):

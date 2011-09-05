@@ -13,6 +13,7 @@ def test_CIFAR10():
     assert cifar.meta[59999] == dict(id=59999, label='horse', split='test')
     assert len(cifar.meta) == 60000
 
+
 def test_classification():
     cifar = cifar10.CIFAR10()  # just make sure we can create the class
     cifar.DOWNLOAD_IF_MISSING = False
@@ -26,3 +27,8 @@ def test_latent_structure():
     X = cifar.latent_structure_task()
     tasks.assert_latent_structure(X, 60000)
 
+
+def test_meta_cache():
+    a = cifar10.CIFAR10()
+    b = cifar10.CIFAR10()
+    assert a.meta == b.meta
