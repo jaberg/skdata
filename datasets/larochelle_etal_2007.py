@@ -168,12 +168,23 @@ class BaseL2007(object):
     - convert the dataset from amat format to npy format
     - load the dataset from either amat or npy source files
 
+    meta[i] is a dict with keys:
+        id: int identifier of this example
+        label: int in range(10)
+        split: 'train', 'valid', or 'test'
+
+    meta_const is dict with keys:
+        image:
+            shape: 28, 28
+            dtype: 'float32'
+
     """
 
     BASE_URL = 'http://www.iro.umontreal.ca/~lisa/icml2007data'
     DOWNLOAD_IF_MISSING = True  # value used on first access to .meta
     MMAP_MODE = 'r'             # _labels and _inputs are loaded this way.
                                 # See numpy.load / numpy.memmap for semantics.
+    TRANSPOSE_IMAGES = False    # Some of the datasets were saved sideways.
 
     meta_const = dict(
             image=dict(
@@ -184,11 +195,18 @@ class BaseL2007(object):
         return os.path.join(
                 get_data_home(),
                 'larochelle_etal_2007',
+                self.NAME,
                 *names)
 
     # ------------------------------------------------------------------------
     # -- Dataset Interface: fetch()
     # ------------------------------------------------------------------------
+
+    def test_amat(self):
+        return self.home(self.AMAT + '_test.amat')
+
+    def train_amat(self):
+        return self.home(self.AMAT + '_train.amat')
 
     def fetch(self, download_if_missing):
         try:
@@ -197,10 +215,10 @@ class BaseL2007(object):
         except IOError:
             if download_if_missing:
                 try:
-                    amat_test = AMat(self.home(self.AMAT + '_test.amat'))
+                    amat_test = AMat(self.test_amat())
                 except IOError:
                     logger.info('Failed to read %s, downloading %s' %(
-                        self.home(self.AMAT + '_test.amat'),
+                        self.test_amat(),
                         os.path.join(self.BASE_URL, self.REMOTE)))
                     if not os.path.exists(self.home()):
                         os.makedirs(self.home())
@@ -208,8 +226,8 @@ class BaseL2007(object):
                         os.path.join(self.BASE_URL, self.REMOTE),
                         self.home(),
                         verbose=False)
-                    amat_test = AMat(self.home(self.AMAT + '_test.amat'))
-                amat_train = AMat(self.home(self.AMAT + '_train.amat'))
+                    amat_test = AMat(self.test_amat())
+                amat_train = AMat(self.train_amat())
                 n_inputs = 28**2
                 n_train = self.descr['n_train']
                 n_valid = self.descr['n_valid']
@@ -227,6 +245,9 @@ class BaseL2007(object):
                 assert np.all(labels < self.descr['n_classes'])
                 np.save(self.home(self.NAME + '_inputs.npy'), inputs)
                 np.save(self.home(self.NAME + '_labels.npy'), labels)
+                # clean up the .amat files we downloaded
+                os.remove(self.test_amat())
+                os.remove(self.train_amat())
             else:
                 raise
 
@@ -252,6 +273,8 @@ class BaseL2007(object):
                     mmap_mode=self.MMAP_MODE)
             labels = np.load(self.home(self.NAME + '_labels.npy'),
                     mmap_mode=self.MMAP_MODE)
+            if self.TRANSPOSE_IMAGES:
+                inputs = inputs.transpose(0,2,1)
             self.__class__._inputs = inputs
             self.__class__._labels = labels
             assert len(inputs) == len(labels)
@@ -324,6 +347,7 @@ class MNIST_Basic(BaseMNIST):
 
 
 class MNIST_BackgroundImages(BaseMNIST):
+    TRANSPOSE_IMAGES = True
     REMOTE = 'mnist_background_images.zip'
     REMOTE_SIZE = '88M'
     AMAT = 'mnist_background_images'
@@ -331,7 +355,8 @@ class MNIST_BackgroundImages(BaseMNIST):
 
 
 class MNIST_BackgroundRandom(BaseMNIST):
-    REMOTE = 'mnist_background_random.zip',
+    TRANSPOSE_IMAGES = True
+    REMOTE = 'mnist_background_random.zip'
     REMOTE_SIZE = '219M'
     AMAT = 'mnist_background_random'
     NAME = 'mnist_background_random'
@@ -352,12 +377,11 @@ class MNIST_Rotated(BaseMNIST):
     REMOTE_SIZE = '56M'
     NAME = 'mnist_rotated'
 
-    if 0:
-        self.amat_filename_test = os.path.join(rootdir,
-            'mnist_all_rotation_normalized_float_test.amat')
-        self.amat_filename_train=os.path.join(rootdir,
-            'mnist_all_rotation_normalized_float_train_valid.amat'),
-        self.npy_filename_root=os.path.join(rootdir, 'mnist_rotated'),
+    def test_amat(self):
+        return self.home('mnist_all_rotation_normalized_float_test.amat')
+
+    def train_amat(self):
+        return self.home('mnist_all_rotation_normalized_float_train_valid.amat')
 
 
 class MNIST_RotatedBackgroundImages(BaseMNIST):
@@ -374,29 +398,129 @@ class MNIST_RotatedBackgroundImages(BaseMNIST):
     REMOTE = 'mnist_rotation_back_image_new.zip'
     REMOTE_SIZE = '115M'
     NAME = 'mnist_rotated_background_images'
-    if 0:
-        amat_filename_test=os.path.join(
-                rootdir,
-                'mnist_all_background_images_rotation_normalized_test.amat')
-        amat_filename_train=os.path.join(
-                rootdir,
-                'mnist_all_background_images_rotation_normalized_train_valid.amat')
-        npy_filename_root=os.path.join(
-                rootdir,
-                'mnist_rotated_background_images')
+
+    def test_amat(self):
+        return self.home('mnist_all_background_images_rotation_normalized_test.amat')
+
+    def train_amat(self):
+        return self.home('mnist_all_background_images_rotation_normalized_train_valid.amat')
 
 
-class MNIST_Noise(BaseMNIST):
-    def __init__(self, level):
-        if level not in range(1, 7):
-            raise ValueError('Noise level must be an int 1 <= level <= 6', level)
-        self.level = level
-        raise NotImplementedError()
+class BaseNoise(BaseMNIST):
+    TRANSPOSE_IMAGES = True
+    REMOTE = 'mnist_noise_variation.tar.gz'
+    REMOTE_SIZE = '304M'
+    descr = dict(
+            n_classes=10,
+            n_train=10000,
+            n_valid=2000,
+            n_test=2000
+            )
 
-        self.http_source='http://www.iro.umontreal.ca/~lisa/icml2007data/mnist_noise_variation.tar.gz',
-        self.amat_filename_all=os.path.join(rootdir,
-            'mnist_noise_variations_all_%i.amat'%level),
-        self.npy_filename_root=os.path.join(rootdir, 'mnist_noise_%i'%level),
+    def __init__(self, level=None):
+        if level is not None:
+            self.LEVEL = level
+        self.NAME = 'mnist_noise_%i' % self.LEVEL
+
+    def level_amat(self, level):
+        return self.home(
+                'mnist_noise_variations_all_%i.amat' % level)
+
+    def fetch(self, download_if_missing):
+        try:
+            open(self.home(self.NAME+'_inputs.npy')).close()
+            open(self.home(self.NAME+'_labels.npy')).close()
+        except IOError:
+            if download_if_missing:
+                all_amat_filename = self.level_amat(self.LEVEL)
+                try:
+                    amat_all = AMat(all_amat_filename)
+                except IOError:
+                    logger.info('Failed to read %s, downloading %s' %(
+                        all_amat_filename,
+                        os.path.join(self.BASE_URL, self.REMOTE)))
+                    if not os.path.exists(self.home()):
+                        os.makedirs(self.home())
+                    utils.download_and_extract(
+                        os.path.join(self.BASE_URL, self.REMOTE),
+                        self.home(),
+                        verbose=False)
+                    amat_all = AMat(all_amat_filename)
+                # at this point self.home() contains not only the
+                # all_amat_filename, but it also contains the amats for all
+                # the other levels too.
+                #
+                # This for loop transfers each amat to the dataset folder where
+                # it belongs.
+                for level in range(1, 7):
+                    if level == self.LEVEL:
+                        continue
+                    if not os.path.exists(self.level_amat(level)):
+                        continue
+                    other = BaseNoise(level)
+                    try:
+                        # try loading the other one
+                        other.fetch(download_if_missing=False)
+
+                        # if that worked, then delete just-downloaded amat
+                        # required for the other's build_meta
+                        os.remove(self.level_amat(level))
+                    except IOError:
+                        # assuming this was because fetch failed,
+                        # move the amat for the other level into the
+                        # home folder of the other dataset.
+                        # next time the other dataset is fetched,
+                        # it will load the amat, save a npy, and delete the
+                        # amat.
+                        if not os.path.exists(other.home()):
+                            os.makedirs(other.home())
+                        os.rename(
+                                self.level_amat(level),
+                                other.level_amat(level))
+
+                # now carry on loading as usual
+                n_inputs = 28**2
+                n_train = self.descr['n_train']
+                n_valid = self.descr['n_valid']
+                n_test = self.descr['n_test']
+                assert amat_all.all.shape[0] == n_train + n_valid + n_test
+                assert amat_all.all.shape[1] == n_inputs + 1
+                inputs = np.reshape(
+                        amat_all.all[:, :n_inputs].astype('float32'),
+                        (-1, 28, 28))
+                labels = amat_all.all[:, n_inputs].astype('int32')
+                assert np.all(labels == amat_all.all[:, n_inputs])
+                assert np.all(labels < self.descr['n_classes'])
+                np.save(self.home(self.NAME + '_inputs.npy'), inputs)
+                np.save(self.home(self.NAME + '_labels.npy'), labels)
+                # clean up the .amat files we downloaded
+                os.remove(all_amat_filename)
+            else:
+                raise
+
+
+class MNIST_Noise1(BaseNoise):
+    LEVEL = 1
+
+
+class MNIST_Noise2(BaseNoise):
+    LEVEL = 2
+
+
+class MNIST_Noise3(BaseNoise):
+    LEVEL = 3
+
+
+class MNIST_Noise4(BaseNoise):
+    LEVEL = 4
+
+
+class MNIST_Noise5(BaseNoise):
+    LEVEL = 5
+
+
+class MNIST_Noise6(BaseNoise):
+    LEVEL = 6
 
 
 #
@@ -441,3 +565,9 @@ class Convex(BaseL2007):
         n_train=6500,
         n_valid=1500,
         n_test=50000)
+
+    def train_amat(self):
+        return self.home('convex_train.amat')
+
+    def test_amat(self):
+        return self.home('50k', 'convex_test.amat')
