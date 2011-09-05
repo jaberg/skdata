@@ -325,6 +325,28 @@ class BaseL2007(object):
     def main_clean_up(cls):
         cls().clean_up()
 
+    # ------------------------------------------------------------------------
+    # -- Task Interface: constructors for standard tasks
+    # ------------------------------------------------------------------------
+
+    def classification_task(self):
+        #XXX: use .meta
+        y = self._labels
+        X = self.latent_structure_task()
+        return X, y
+
+    def latent_structure_task(self):
+        #XXX: use .meta
+        # Consider: is it right to use TRANSPOSE_IMAGES to un-transpose?
+        #      pro - it prevents a usually un-necessary copy
+        #      con - it means the pixels aren't in a standard point in the 784
+        #            feature vector.
+        #      I think con wins here, it's better to make the copy and have standard
+        #      features.  In the future the TRANSPOSE_IMAGES should be consulted
+        #      during fetch, before even writing the npy file.
+        #      XXX: use TRANSPOSE_IMAGES during fetch.
+        return self._inputs.reshape((-1, 784))
+
 
 #
 # MNIST Variations

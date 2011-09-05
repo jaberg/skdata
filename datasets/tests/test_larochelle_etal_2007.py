@@ -43,3 +43,6 @@ def test_several():
         bb = dset(dsetname)
         assert aa.meta == bb.meta
 
+        tasks.assert_classification(*aa.classification_task())
+        tasks.assert_latent_structure(aa.latent_structure_task())
+
