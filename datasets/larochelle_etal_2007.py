@@ -391,7 +391,7 @@ class MNIST_Noise(BaseMNIST):
         if level not in range(1, 7):
             raise ValueError('Noise level must be an int 1 <= level <= 6', level)
         self.level = level
-        self.REMOTE = 
+        raise NotImplementedError()
 
         self.http_source='http://www.iro.umontreal.ca/~lisa/icml2007data/mnist_noise_variation.tar.gz',
         self.amat_filename_all=os.path.join(rootdir,
