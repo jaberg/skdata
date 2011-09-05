@@ -107,8 +107,9 @@ class BasePASCAL(object):
 
         Notes
         -----
-        If joblib is available, then `meta` be cached for faster processing. To
-        install joblib use 'pip install -U joblib' or 'easy_install -U joblib'.
+        If joblib is available, then `meta` will be cached for faster
+        processing. To install joblib use 'pip install -U joblib' or
+        'easy_install -U joblib'.
         """
 
         if meta is not None:
