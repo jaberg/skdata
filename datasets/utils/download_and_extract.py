@@ -14,7 +14,8 @@ import archive
 def verify_sha1(filename, sha1):
     data = open(filename, 'rb').read()
     if sha1 != hashlib.sha1(data).hexdigest():
-        raise IOError("File '%s': invalid SHA-1 hash!" % filename)
+        raise IOError("File '%s': invalid SHA-1 hash! You may want to delete"
+                      "this corrupted file..." % filename)
 
 
 def download(url, output_filename, sha1=None, verbose=True):
