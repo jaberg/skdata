@@ -1,22 +1,24 @@
-""" Functions related to the datasets used in Larochelle et al. 2007
+"""MNIST Variations, Rectanges, and Convex from Larochelle et al. 2007
 
-Dataset:
+http://www.iro.umontreal.ca/~lisa/twiki/pub/Public/DeepVsShallowComparisonICML2007
+
+Datasets:
 
 - convex
-- rectangles basic
+- rectangles
 - rectangles images
 - mnist basic
 - mnist rotated
 - mnist background images
 - mnist background random
+- mnist noise {1,2,3,4,5,6}
 
-These datasets were introduced in "An Empirical Evaluation of Deep Architectures
-on Problems with Many Factors of Variation" Hugo Larochelle, Dumitru Erhan,
-Aaron Courville, James Bergstra and Yoshua Bengio. In Proc of International
-Conference on Machine Learning (2007).
+These datasets were introduced in the paper:
 
-url: http://www.iro.umontreal.ca/~lisa/twiki/pub/Public/
-    DeepVsShallowComparisonICML2007/icml-2007-camera-ready.pdf
+"An Empirical Evaluation of Deep Architectures on Problems with Many Factors of
+Variation"
+H. Larochelle, D. Erhan, A. Courville, J. Bergstra and Y. Bengio.
+In Proc. of International Conference on Machine Learning (2007).
 
 """
 
@@ -45,6 +47,11 @@ import utils
 import logging
 logger = logging.getLogger(__name__)
 
+# TODO: standardize the API for downloading papers describing a dataset?
+PAPER_URL = '/'.join(
+        'http://www.iro.umontreal.ca/~lisa/twiki/pub/Public'
+        'Public/DeepVsShallowComparisonICML2007',
+        'icml-2007-camera-ready.pdf')
 
 class AMat:
     """DataSource to access a plearn amat file as a periodic unrandomized stream.
@@ -365,6 +372,7 @@ class BaseMNIST(BaseL2007):
 
 class MNIST_Basic(BaseMNIST):
     REMOTE = 'mnist.zip'  # fetch BASE_URL/REMOTE
+    SHA1 = '14ac2e9135705499b80bf7efac981377940150c8'
     REMOTE_SIZE = '23M'
     AMAT = 'mnist'        # matches name unzip'd from REMOTE
     NAME = 'mnist_basic'  # use this as root filename for saved npy files
@@ -373,6 +381,7 @@ class MNIST_Basic(BaseMNIST):
 class MNIST_BackgroundImages(BaseMNIST):
     TRANSPOSE_IMAGES = True
     REMOTE = 'mnist_background_images.zip'
+    SHA1 = 'fb6fce9ed6372e0068ff7cb3e7b9e78dbda7ceae'
     REMOTE_SIZE = '88M'
     AMAT = 'mnist_background_images'
     NAME = 'mnist_background_images'
@@ -381,6 +390,7 @@ class MNIST_BackgroundImages(BaseMNIST):
 class MNIST_BackgroundRandom(BaseMNIST):
     TRANSPOSE_IMAGES = True
     REMOTE = 'mnist_background_random.zip'
+    SHA1 = '75e11ec966459c1162979e78ab4e21f9ab7fb5cd'
     REMOTE_SIZE = '219M'
     AMAT = 'mnist_background_random'
     NAME = 'mnist_background_random'
@@ -398,6 +408,7 @@ class MNIST_Rotated(BaseMNIST):
     This class loads the corrected dataset.
     """
     REMOTE = 'mnist_rotation_new.zip'
+    SHA1 = 'e67f72fa42029f62fd8eb92b0638c1b9761c9a63'
     REMOTE_SIZE = '56M'
     NAME = 'mnist_rotated'
 
@@ -420,6 +431,7 @@ class MNIST_RotatedBackgroundImages(BaseMNIST):
     This class loads the corrected dataset.
     """
     REMOTE = 'mnist_rotation_back_image_new.zip'
+    SHA1 = '902bb7e96136dd76e9f2924d7fdb9eb832f7bc33'
     REMOTE_SIZE = '115M'
     NAME = 'mnist_rotated_background_images'
 
@@ -433,6 +445,7 @@ class MNIST_RotatedBackgroundImages(BaseMNIST):
 class BaseNoise(BaseMNIST):
     TRANSPOSE_IMAGES = True
     REMOTE = 'mnist_noise_variation.tar.gz'
+    SHA1 = 'XXX'
     REMOTE_SIZE = '304M'
     descr = dict(
             n_classes=10,
@@ -553,6 +566,7 @@ class MNIST_Noise6(BaseNoise):
 
 class Rectangles(BaseL2007):
     REMOTE = 'rectangles.zip'
+    SHA1 = 'b8d456b1f83bea5efebe76a47a9535adc4b72586  '
     REMOTE_SIZE = '2.7M'
     AMAT = 'rectangles'
     NAME = 'rectangles'
@@ -565,6 +579,7 @@ class Rectangles(BaseL2007):
 
 class RectanglesImages(BaseL2007):
     REMOTE = 'rectangles_images.zip'
+    SHA1 = '2700ba92129ae195e93070d8b27f830323573a57'
     REMOTE_SIZE = '82M'
     AMAT = 'rectangles_im'
     NAME = 'rectangles_images'
@@ -581,6 +596,7 @@ class RectanglesImages(BaseL2007):
 
 class Convex(BaseL2007):
     REMOTE = 'convex.zip'
+    SHA1 = '61eab3c60e0e1caeaa0b82abf827f1809cfd2ef9'
     REMOTE_SIZE = '3.4M'
     AMAT = 'convex'
     NAME = 'convex'
