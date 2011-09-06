@@ -48,10 +48,10 @@ import logging
 logger = logging.getLogger(__name__)
 
 # TODO: standardize the API for downloading papers describing a dataset?
-PAPER_URL = '/'.join(
+PAPER_URL = '/'.join([
         'http://www.iro.umontreal.ca/~lisa/twiki/pub/Public'
         'Public/DeepVsShallowComparisonICML2007',
-        'icml-2007-camera-ready.pdf')
+        'icml-2007-camera-ready.pdf'])
 
 
 class AMat:
