@@ -58,7 +58,6 @@ def classification_train_valid_test(dataset):
     :rtype: (X_train, y_train), (X_valid, y_valid), (X_test, y_test)
 
     """
-    # XXX this code is note tested
 
     if hasattr(dataset, 'classification_train_valid_test_task'):
         return dataset.classification_train_valid_test_task()
