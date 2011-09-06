@@ -41,8 +41,9 @@ def download(url, output_filename, sha1=None, verbose=True):
                 break
             dl_size += block_size / 1024
             output_file.write(buffer)
+            percent = min(100, 100. * dl_size / file_size)
             status = r"Progress: %20d kilobytes [%4.1f%%]" \
-                    % (dl_size, 100. * dl_size / file_size)
+                    % (dl_size, percent)
             status = status + chr(8) * (len(status) + 1)
             print status,
         print ''
