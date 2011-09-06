@@ -34,3 +34,4 @@ if 0:
     from .svmlight_format import load_svmlight_file
     from .olivetti_faces import fetch_olivetti_faces
 
+from factory import dataset_factory
