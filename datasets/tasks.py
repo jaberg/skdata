@@ -1,7 +1,10 @@
 """Task API
 """
+import larray
 
 def assert_classification(X, y, N=None):
+    assert X.ndim == 2
+    assert y.ndim == 1
     A, B = X.shape
     C, = y.shape
     assert A == C == (C if N is None else N)
@@ -10,19 +13,21 @@ def assert_classification(X, y, N=None):
 
 
 def assert_classification_train_valid_test(train, valid, test):
+    assert_classification(*train)
+    assert_classification(*valid)
+    assert_classification(*test)
+
     X_train, y_train = train
     X_valid, y_valid = valid
     X_test, y_test = test
-
-    assert_classification(train)
-    assert_classification(valid)
-    assert_classification(test)
 
     assert X_train.shape[1] == X_valid.shape[1]
     assert X_train.shape[1] == X_test.shape[1]
 
 
 def assert_regression(X, Y, N=None):
+    assert X.ndim == 2
+    assert Y.ndim == 2
     A, B = X.shape
     C, D = Y.shape
     assert A == C == (C if N is None else N)
@@ -41,6 +46,7 @@ def assert_matrix_completion(X, Y, N=None):
 
 
 def assert_latent_structure(X, N=None):
+    assert X.ndim == 2
     A, B = X.shape
     assert A == (A if N is None else N)
     assert 'float' in str(X.dtype)
