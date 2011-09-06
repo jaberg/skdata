@@ -6,10 +6,18 @@
 
 from urllib2 import urlopen
 from os import path
+import hashlib
 
 import archive
 
-def download(url, output_filename):
+
+def verify_sha1(filename, sha1):
+    data = open(filename, 'rb').read()
+    if sha1 != hashlib.sha1(data).hexdigest():
+        raise IOError("File '%s': invalid SHA-1 hash!" % filename)
+
+
+def download(url, output_filename, sha1=None, verbose=True):
     """Downloads file at `url` and write it in `output_dirname`"""
 
     page = urlopen(url)
@@ -18,12 +26,13 @@ def download(url, output_filename):
     output_file = open(output_filename, 'wb+')
 
     # size of the download unit
-    block_size = 2**15
+    block_size = 2 ** 15
     dl_size = 0
 
+    if verbose:
+        print "Downloading '%s' to '%s'" % (url, output_filename)
     # display  progress only if we know the length
-    print "Downloading '%s' to '%s'" % (url, output_filename)
-    if 'content-length' in page_info:
+    if 'content-length' in page_info and verbose:
         # file size in Kilobytes
         file_size = int(page_info['content-length']) / 1024.
         while True:
@@ -42,8 +51,11 @@ def download(url, output_filename):
 
     output_file.close()
 
+    if sha1 is not None:
+        verify_sha1(output_filename, sha1)
 
-def extract(archive_filename, output_dirname, verbose=True):
+
+def extract(archive_filename, output_dirname, sha1=None, verbose=True):
     """Extracts `archive_filename` in `output_dirname`.
 
     Supported archives:
@@ -51,11 +63,16 @@ def extract(archive_filename, output_dirname, verbose=True):
     * Zip formats and equivalents: .zip, .egg, .jar
     * Tar and compressed tar formats: .tar, .tar.gz, .tgz, .tar.bz2, .tz2
     """
-    print "Extracting '%s' to '%s'" % (archive_filename, output_dirname)
+    if verbose:
+        print "Extracting '%s' to '%s'" % (archive_filename, output_dirname)
+    if sha1 is not None:
+        if verbose:
+            print " SHA-1 verification..."
+        verify_sha1(archive_filename, sha1)
     archive.extract(archive_filename, output_dirname, verbose=verbose)
 
 
-def download_and_extract(url, output_dirname, verbose=True):
+def download_and_extract(url, output_dirname, sha1=None, verbose=True):
     """Downloads and extracts archive in `url` into `output_dirname`.
 
     Note that `output_dirname` has to exist and won't be created by this
@@ -63,5 +80,5 @@ def download_and_extract(url, output_dirname, verbose=True):
     """
     archive_basename = path.basename(url)
     archive_filename = path.join(output_dirname, archive_basename)
-    download(url, archive_filename)
-    extract(archive_filename, output_dirname, verbose=verbose)
+    download(url, archive_filename, sha1=sha1, verbose=verbose)
+    extract(archive_filename, output_dirname, sha1=sha1, verbose=verbose)
