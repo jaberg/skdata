@@ -4,7 +4,7 @@ def main(cmd):
         runner = dict(
                 fetch='main_fetch',
                 show='main_show',
-                clean_up='clean_up')[cmd]
+                clean_up='main_clean_up')[cmd]
     except KeyError:
         print >> sys.stderr, "Command not recognized:", cmd
         # XXX: Usage message
