@@ -8,6 +8,7 @@ If you make use of this data, please cite the following paper:
 "Scaling-up Biologically-Inspired Computer Vision: A Case-Study on Facebook."
 Nicolas Pinto, Zak Stone, Todd Zickler, David D. Cox
 IEEE CVPR, Workshop on Biologically Consistent Vision (2011).
+http://pinto.scripts.mit.edu/uploads/Research/pinto-stone-zickler-cox-cvpr2011.pdf
 
 Please consult the publication for further information.
 """

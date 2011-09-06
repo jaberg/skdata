@@ -10,11 +10,13 @@ http://www.vision.caltech.edu/Image_Datasets/Caltech256/
 The Caltech-256
 Griffin, G. Holub, AD. Perona, P.
 Caltech Technical Report (2007)
+http://www.vision.caltech.edu/Image_Datasets/Caltech256/paper/256.pdf
 
 Learning generative visual models from few training examples: an incremental
 Bayesian approach tested on 101 object categories.
 L. Fei-Fei, R. Fergus and P. Perona.
 IEEE CVPR, Workshop on Generative-Model Based Vision (2004)
+http://www.vision.caltech.edu/feifeili/Fei-Fei_GMBV04.pdf
 """
 
 # Copyright (C) 2011
