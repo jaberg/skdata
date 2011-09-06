@@ -7,7 +7,7 @@ If you make use of this data, please cite the following paper:
 
 "Scaling-up Biologically-Inspired Computer Vision: A Case-Study on Facebook."
 Nicolas Pinto, Zak Stone, Todd Zickler, David D. Cox
-Proc. CVPR Workshop on Biologically Consistent Vision (2011).
+IEEE CVPR, Workshop on Biologically Consistent Vision (2011).
 
 Please consult the publication for further information.
 """
@@ -17,6 +17,7 @@ Please consult the publication for further information.
 #          Dan Yamins <yamins@mit.edu>
 #          James Bergstra <bergstra@rowland.harvard.edu>
 #          Nicolas Pinto <pinto@rowland.harvard.edu>
+
 # License: Simplified BSD
 
 # XXX: splits (csv-based) for verification and identification tasks (CVPR'11)
