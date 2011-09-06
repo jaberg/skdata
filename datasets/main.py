@@ -1,5 +1,42 @@
+"""
+Entry point for bin/* scripts
+
+XXX
+"""
 import sys
+import logging
+logger = logging.getLogger(__name__)
+
+def import_tokens(tokens):
+    # XXX Document me
+    # import as many as we can
+    rval = None
+    for i in range(len(tokens)):
+        modname = '.'.join(tokens[:i+1])
+        # XXX: try using getattr, and then merge with load_tokens
+        try:
+            logger.info('importing %s' % modname)
+            exec "import %s" % modname
+            exec "rval = %s" % modname
+        except ImportError, e:
+            logger.info('failed to import %s' % modname)
+            logger.info('reason: %s' % str(e))
+            break
+    return rval, tokens[i:]
+
+def load_tokens(tokens):
+    # XXX: merge with import_tokens
+    logger.info('load_tokens: %s' % str(tokens))
+    symbol, remainder = import_tokens(tokens)
+    for attr in remainder:
+        symbol = getattr(symbol, attr)
+    return symbol
+
 def main(cmd):
+    """
+    Entry point for bin/* scripts
+    XXX
+    """
     try:
         runner = dict(
                 fetch='main_fetch',
@@ -10,22 +47,12 @@ def main(cmd):
         # XXX: Usage message
         sys.exit(1)
 
-    module_tokens = ['datasets'] + sys.argv[1].split('.')
-    # import as many as we can
-    for i in range(len(module_tokens)):
-        modname = '.'.join(module_tokens[:i+1])
-        try:
-            exec "import %s" % modname
-        except ImportError:
-            break
-    # now carry on trying to interpret tokens as callable things
-    # TODO
-    # hail mary...
-    fullname = "datasets.%s.%s" % (sys.argv[1], runner)
     try:
-        exec "runner_fn = %s" % fullname
-    except AttributeError:
-        print >> sys.stderr, "Error: symbol '%s' not found" % fullname
-        print >> sys.stderr, "(Hint: verify you can import that module.)"
-        sys.exit(1)
-    sys.exit(runner_fn())
+        argv1 = sys.argv[1]
+    except IndexError:
+        logger.error('Module name required (XXX: print Usage)')
+        return 1
+
+    symbol = load_tokens(['datasets'] + argv1.split('.') + [runner])
+    logger.info('running: %s' % str(symbol))
+    sys.exit(symbol())
