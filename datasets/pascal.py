@@ -51,8 +51,9 @@ class BasePASCAL(object):
             sha1: str
                 SHA-1 hash of the image.
 
-            shape: tuple
-                Shape of the image (height, width, depth).
+            shape: dict with int values
+                Shape of the image. dict with keys 'height', 'width', 'depth'
+                and int values.
 
             split: str
                 'train', 'val' or 'test'.
@@ -65,9 +66,10 @@ class BasePASCAL(object):
                     name: str
                         Name (label) of the object.
 
-                    bounding_box: tuple of int
-                        Bounding box coordinates (0-based index) of the form
-                        (x_min, x_max, y_min, y_max):
+                    bounding_box: dict with int values
+                        Bounding box coordinates (0-based index). dict with
+                        keys 'x_min', 'x_max', 'y_min', 'y_max' and int values
+                        such that:
                         +-----------------------------------------▶ x-axis
                         |
                         |   +-------+    .  .  .  y_min (top)
@@ -240,7 +242,7 @@ class BasePASCAL(object):
             width = int(size['width'])
             height = int(size['height'])
             depth = int(size['depth'])
-            data['shape'] = (height, width, depth)
+            data['shape'] = dict(height=height, width=width, depth=depth)
 
             # segmentation ?
             segmented = bool(xd['segmented'])
@@ -265,7 +267,8 @@ class BasePASCAL(object):
                             (int(np.round(float(bndbox['ymin']))) - 1))
                 y_max = min(height - 1,
                             (int(np.round(float(bndbox['ymax']))) - 1))
-                bounding_box = (x_min, x_max, y_min, y_max)
+                bounding_box = dict(x_min=x_min, x_max=x_max,
+                                    y_min=y_min, y_max=y_max)
                 assert (np.array(bounding_box) >= 0).all()
                 obj['bounding_box'] = bounding_box
                 n_objects += 1

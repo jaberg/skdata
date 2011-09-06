@@ -2,6 +2,7 @@
 # may fail to deliver the expected results in some situations, use at your own
 # risk!
 
+
 def xml2dict(xml_filename):
     tree = ElementTree.parse(xml_filename)
     root = tree.getroot()
@@ -19,6 +20,7 @@ def xml2list(xml_filename):
 # Modified from http://code.activestate.com/recipes/410469-xml-as-dictionary
 # -----------------------------------------------------------------------------
 from xml.etree import ElementTree
+
 
 class XmlListConfig(list):
     def __init__(self, aList):
@@ -99,6 +101,3 @@ class XmlDictConfig(dict):
             # the text
             else:
                 self.update({element.tag: element.text})
-
-
-
