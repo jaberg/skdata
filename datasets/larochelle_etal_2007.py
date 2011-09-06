@@ -331,12 +331,14 @@ class BaseL2007(object):
 
     def classification_task(self):
         #XXX: use .meta
+        self.meta  #touch it to make sure it's been built
         y = self._labels
         X = self.latent_structure_task()
         return X, y
 
     def latent_structure_task(self):
         #XXX: use .meta
+        self.meta  #touch it to make sure it's been built
         # Consider: is it right to use TRANSPOSE_IMAGES to un-transpose?
         #      pro - it prevents a usually un-necessary copy
         #      con - it means the pixels aren't in a standard point in the 784
