@@ -97,10 +97,13 @@ Modules:
 - mnist (MNIST: hand-drawn digit classification dataset)
 - lfw (Labeled Faces in the Wild: face recognition and verification)
 - pubfig83
-- pascalVOC2007
+- pascal (PASCAL Visual Object Classes 2007-2011)
 - cifar10 (CIFAR-10 image classification dataset)
+- caltech (Caltech101 and Caltech256 Object datasets)
+- iicbu (IICBU 2008: Biomedical Image Classification)
 .. - larochelle2007
 .. - rgbd
+
 
 Programs:
 
