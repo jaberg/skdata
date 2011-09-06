@@ -234,7 +234,8 @@ class BaseL2007(object):
                     utils.download_and_extract(
                         os.path.join(self.BASE_URL, self.REMOTE),
                         self.home(),
-                        verbose=False)
+                        verbose=False,
+                        sha1=self.SHA1)
                     amat_test = AMat(self.test_amat())
                 amat_train = AMat(self.train_amat())
                 n_inputs = 28**2
@@ -451,7 +452,7 @@ class MNIST_RotatedBackgroundImages(BaseMNIST):
 class BaseNoise(BaseMNIST):
     TRANSPOSE_IMAGES = True
     REMOTE = 'mnist_noise_variation.tar.gz'
-    SHA1 = 'XXX'
+    SHA1 = '2d2cfa47c4aa51cc7a8fd1e52abadc7df4b7bfbd'
     REMOTE_SIZE = '304M'
     descr = dict(
             n_classes=10,
@@ -487,7 +488,8 @@ class BaseNoise(BaseMNIST):
                     utils.download_and_extract(
                         os.path.join(self.BASE_URL, self.REMOTE),
                         self.home(),
-                        verbose=False)
+                        verbose=False,
+                        sha1=self.SHA1)
                     amat_all = AMat(all_amat_filename)
                 # at this point self.home() contains not only the
                 # all_amat_filename, but it also contains the amats for all
