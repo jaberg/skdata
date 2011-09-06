@@ -29,7 +29,7 @@ In Proc. of International Conference on Machine Learning (2007).
 # ISSUES (XXX)
 # ------------
 # - These datasets are all built algorithmically by modifying image datasets.
-#   It would be nice to have the code that did those modifications in this file.
+#   It would be nice to have the code for those modifications in this file.
 #   The original matlab code is available here:
 #     http://www.iro.umontreal.ca/~lisa/twiki/pub/Public/
 #     DeepVsShallowComparisonICML2007/scripts_only.tar.gz
@@ -53,8 +53,9 @@ PAPER_URL = '/'.join(
         'Public/DeepVsShallowComparisonICML2007',
         'icml-2007-camera-ready.pdf')
 
+
 class AMat:
-    """DataSource to access a plearn amat file as a periodic unrandomized stream.
+    """access a plearn amat file as a periodic unrandomized stream
 
     Attributes:
 
@@ -102,17 +103,17 @@ class AMat:
         n_data_lines = 0
         len_float_line = None
 
-        for i,line in enumerate(f):
+        for i, line in enumerate(f):
             if n_data_lines == head:
-                #we've read enough data, 
+                # we've read enough data,
                 # break even if there's more in the file
                 break
             if len(line) == 0 or line == '\n':
                 continue
             if line[0] == '#':
                 if not data_started:
-                    #the condition means that the file has a header, and we're on 
-                    # some header line
+                    # the condition means that the file has a header, and we're
+                    # on some header line
                     self.header = True
                     if line.startswith(AMat.marker_size):
                         info = line[len(AMat.marker_size):]
@@ -132,9 +133,10 @@ class AMat:
                     len_float_line = len(float_line)
                     if (self.header_cols is not None) \
                             and self.header_cols != len_float_line:
-                        print >> sys.stderr, \
-                                'WARNING: header declared %i cols but first line has %i, using %i',\
-                                self.header_cols, len_float_line, len_float_line
+                        logger.warn(('header declared %i cols'
+                            ' but first line has %i, using %i') % (
+                            self.header_cols, len_float_line,
+                            len_float_line))
                 else:
                     if len_float_line != len(float_line):
                         raise IOError('wrong line length', i, line)
@@ -152,13 +154,13 @@ class AMat:
         # assign
         if self.header_sizes is not None:
             if len(self.header_sizes) > 4:
-                print >> sys.stderr, 'WARNING: ignoring sizes after 4th in %s' % path
+                logger.warn('ignoring sizes after 4th in %s' % path)
             leftmost = 0
             #here we make use of the fact that if header_sizes has len < 4
             # the loop will exit before 4 iterations
             attrlist = ['input', 'target', 'weight', 'extra']
-            for attr, ncols in zip(attrlist, self.header_sizes): 
-                setattr(self, attr, self.all[:, leftmost:leftmost+ncols])
+            for attr, ncols in zip(attrlist, self.header_sizes):
+                setattr(self, attr, self.all[:, leftmost:leftmost + ncols])
                 leftmost += ncols
             logger.info('AMat loaded %s shape: %s' % (attr,
                 repr(getattr(self, attr).shape)))
@@ -217,14 +219,14 @@ class BaseL2007(object):
 
     def fetch(self, download_if_missing):
         try:
-            open(self.home(self.NAME+'_inputs.npy')).close()
-            open(self.home(self.NAME+'_labels.npy')).close()
+            open(self.home(self.NAME + '_inputs.npy')).close()
+            open(self.home(self.NAME + '_labels.npy')).close()
         except IOError:
             if download_if_missing:
                 try:
                     amat_test = AMat(self.test_amat())
                 except IOError:
-                    logger.info('Failed to read %s, downloading %s' %(
+                    logger.info('Failed to read %s, downloading %s' % (
                         self.test_amat(),
                         os.path.join(self.BASE_URL, self.REMOTE)))
                     if not os.path.exists(self.home()):
@@ -281,7 +283,7 @@ class BaseL2007(object):
             labels = np.load(self.home(self.NAME + '_labels.npy'),
                     mmap_mode=self.MMAP_MODE)
             if self.TRANSPOSE_IMAGES:
-                inputs = inputs.transpose(0,2,1)
+                inputs = inputs.transpose(0, 2, 1)
             self.__class__._inputs = inputs
             self.__class__._labels = labels
             assert len(inputs) == len(labels)
@@ -297,7 +299,7 @@ class BaseL2007(object):
                 [self.descr[s] for s in 'n_train', 'n_valid', 'n_test'])
 
         meta = [dict(id=i, split=split_of_pos(i), label=l)
-                for i,l in enumerate(self._labels)]
+                for i, l in enumerate(self._labels)]
 
         return meta
 
@@ -338,21 +340,21 @@ class BaseL2007(object):
 
     def classification_task(self):
         #XXX: use .meta
-        self.meta  #touch it to make sure it's been built
+        self.meta   # touch self.meta to ensure it's been built
         y = self._labels
         X = self.latent_structure_task()
         return X, y
 
     def latent_structure_task(self):
         #XXX: use .meta
-        self.meta  #touch it to make sure it's been built
+        self.meta   # touch self.meta to ensure it's been built
         # Consider: is it right to use TRANSPOSE_IMAGES to un-transpose?
         #      pro - it prevents a usually un-necessary copy
         #      con - it means the pixels aren't in a standard point in the 784
         #            feature vector.
-        #      I think con wins here, it's better to make the copy and have standard
-        #      features.  In the future the TRANSPOSE_IMAGES should be consulted
-        #      during fetch, before even writing the npy file.
+        #      I think con wins here, it's better to make the copy and have
+        #      standard features.  In the future the TRANSPOSE_IMAGES should be
+        #      consulted during fetch, before even writing the npy file.
         #      XXX: use TRANSPOSE_IMAGES during fetch.
         return self._inputs.reshape((-1, 784))
 
@@ -413,10 +415,12 @@ class MNIST_Rotated(BaseMNIST):
     NAME = 'mnist_rotated'
 
     def test_amat(self):
-        return self.home('mnist_all_rotation_normalized_float_test.amat')
+        return self.home(
+                'mnist_all_rotation_normalized_float_test.amat')
 
     def train_amat(self):
-        return self.home('mnist_all_rotation_normalized_float_train_valid.amat')
+        return self.home(
+                'mnist_all_rotation_normalized_float_train_valid.amat')
 
 
 class MNIST_RotatedBackgroundImages(BaseMNIST):
@@ -436,10 +440,12 @@ class MNIST_RotatedBackgroundImages(BaseMNIST):
     NAME = 'mnist_rotated_background_images'
 
     def test_amat(self):
-        return self.home('mnist_all_background_images_rotation_normalized_test.amat')
+        return self.home(
+            'mnist_all_background_images_rotation_normalized_test.amat')
 
     def train_amat(self):
-        return self.home('mnist_all_background_images_rotation_normalized_train_valid.amat')
+        return self.home(
+            'mnist_all_background_images_rotation_normalized_train_valid.amat')
 
 
 class BaseNoise(BaseMNIST):
@@ -465,15 +471,15 @@ class BaseNoise(BaseMNIST):
 
     def fetch(self, download_if_missing):
         try:
-            open(self.home(self.NAME+'_inputs.npy')).close()
-            open(self.home(self.NAME+'_labels.npy')).close()
+            open(self.home(self.NAME + '_inputs.npy')).close()
+            open(self.home(self.NAME + '_labels.npy')).close()
         except IOError:
             if download_if_missing:
                 all_amat_filename = self.level_amat(self.LEVEL)
                 try:
                     amat_all = AMat(all_amat_filename)
                 except IOError:
-                    logger.info('Failed to read %s, downloading %s' %(
+                    logger.info('Failed to read %s, downloading %s' % (
                         all_amat_filename,
                         os.path.join(self.BASE_URL, self.REMOTE)))
                     if not os.path.exists(self.home()):
