@@ -33,5 +33,3 @@ if 0:
     from .mldata import fetch_mldata, mldata_filename
     from .svmlight_format import load_svmlight_file
     from .olivetti_faces import fetch_olivetti_faces
-
-from factory import dataset_factory
