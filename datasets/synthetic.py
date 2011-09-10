@@ -340,6 +340,16 @@ class FourRegions(Base, Classification):
         assert np.all(y > 0)
         Base.__init__(self, X, y[:, None])
 
+    @classmethod
+    def main_show(cls):
+        dataset = cls(n_samples=50000)
+        import matplotlib.pyplot as plt
+        X, y = dataset.classification_task()
+        plt.scatter(X[:, 0], X[:, 1], 10, y, cmap='gray')
+        plt.axis('equal')
+        plt.title('%d samples from the four regions task' % len(X))
+        plt.show()
+
 
 class Randlin(Base, Regression):
     """Random linear regression problem.
