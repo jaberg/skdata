@@ -3,7 +3,7 @@ Synthetic data sets.
 """
 
 # Authors: B. Thirion, G. Varoquaux, A. Gramfort, V. Michel, O. Grisel,
-#          G. Louppe, J. Bergstra
+#          G. Louppe, J. Bergstra, D. Warde-Farley
 # License: BSD 3 clause
 
 # XXX: main_show would be nice to have for several of these datasets
@@ -277,6 +277,68 @@ class Madelon(Base, Classification):
             X[:, :] = X[:, indices]
 
         Base.__init__(self, X, y)
+
+
+class FourRegions(Base, Classification):
+    """The four regions classification task.
+
+    A classic benchmark task for non-linear classifiers. Generates
+    a 2-dimensional dataset on the [-1, 1]^2 square where two
+    concentric rings are divided in half, and opposing sides of
+    the inner and outer circles are assigned to the same class,
+    with two more classes formed from the two halves of the square
+    excluding the rings.
+
+    References
+    ----------
+
+    .. [1] S. Singhal and L. Wu, "Training multilayer perceptrons
+           with the extended Kalman algorithm". Advances in Neural
+           Information Processing Systems, Proceedings of the 1988
+           Conference, pp.133-140.
+           http://books.nips.cc/papers/files/nips01/0133.pdf
+    """
+    def __init__(self, n_samples=100, random_state=None):
+        """Generate a (finite) dataset for the four regions task.
+
+        Parameters
+        ----------
+        n_samples : int, optional
+            The number of samples to generate in this instance of the
+            dataset.
+
+        random_state : int, RandomState instance or None, optional
+            If int, random_state is the seed used by the random number
+            generator; If RandomState instance, random_state is the
+            random number generator; If None, the random number
+            generator is the RandomState instance used by `np.random`.
+        """
+        generator = check_random_state(random_state)
+        X = generator.uniform(-1, 1, size=(n_samples, 2))
+        y = np.zeros(X.shape[0], dtype=int)
+        top_half = X[:, 1] > 0
+        right_half = X[:, 0] > 0
+        dists = np.sqrt(np.sum(X ** 2, axis=1))
+
+        # The easy ones -- the outer shelf.
+        y[dists > np.sqrt(2)] = -1
+        outer = dists > 5. / 6.
+        y[np.logical_and(top_half, outer)] = 3
+        y[np.logical_and(np.logical_not(top_half), outer)] = 4
+        first_ring = np.logical_and(dists > 1. / 6., dists <= 1. / 2.)
+        second_ring = np.logical_and(dists > 1. / 2., dists <= 5. / 6.)
+
+        # Region 2 -- right inner and left outer, excluding center nut
+        y[np.logical_and(first_ring, right_half)] = 2
+        y[np.logical_and(second_ring, np.logical_not(right_half))] = 2
+
+        # Region 1 -- left inner and right outer, including center nut
+        y[np.logical_and(second_ring, right_half)] = 1
+        y[np.logical_and(np.logical_not(right_half), dists < 1. / 2.)] = 1
+        y[np.logical_and(right_half, dists < 1. / 6.)] = 1
+
+        assert np.all(y > 0)
+        Base.__init__(self, X, y[:, None])
 
 
 class Randlin(Base, Regression):
