@@ -321,7 +321,6 @@ class FourRegions(Base, Classification):
         dists = np.sqrt(np.sum(X ** 2, axis=1))
 
         # The easy ones -- the outer shelf.
-        y[dists > np.sqrt(2)] = -1
         outer = dists > 5. / 6.
         y[np.logical_and(top_half, outer)] = 2
         y[np.logical_and(np.logical_not(top_half), outer)] = 3
