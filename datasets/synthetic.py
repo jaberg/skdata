@@ -315,7 +315,7 @@ class FourRegions(Base, Classification):
         """
         generator = check_random_state(random_state)
         X = generator.uniform(-1, 1, size=(n_samples, 2))
-        y = np.zeros(X.shape[0], dtype=int)
+        y = -np.ones(X.shape[0], dtype=int)
         top_half = X[:, 1] > 0
         right_half = X[:, 0] > 0
         dists = np.sqrt(np.sum(X ** 2, axis=1))
@@ -323,21 +323,21 @@ class FourRegions(Base, Classification):
         # The easy ones -- the outer shelf.
         y[dists > np.sqrt(2)] = -1
         outer = dists > 5. / 6.
-        y[np.logical_and(top_half, outer)] = 3
-        y[np.logical_and(np.logical_not(top_half), outer)] = 4
+        y[np.logical_and(top_half, outer)] = 2
+        y[np.logical_and(np.logical_not(top_half), outer)] = 3
         first_ring = np.logical_and(dists > 1. / 6., dists <= 1. / 2.)
         second_ring = np.logical_and(dists > 1. / 2., dists <= 5. / 6.)
 
         # Region 2 -- right inner and left outer, excluding center nut
-        y[np.logical_and(first_ring, right_half)] = 2
-        y[np.logical_and(second_ring, np.logical_not(right_half))] = 2
+        y[np.logical_and(first_ring, right_half)] = 1
+        y[np.logical_and(second_ring, np.logical_not(right_half))] = 1
 
         # Region 1 -- left inner and right outer, including center nut
-        y[np.logical_and(second_ring, right_half)] = 1
-        y[np.logical_and(np.logical_not(right_half), dists < 1. / 2.)] = 1
-        y[np.logical_and(right_half, dists < 1. / 6.)] = 1
+        y[np.logical_and(second_ring, right_half)] = 0
+        y[np.logical_and(np.logical_not(right_half), dists < 1. / 2.)] = 0
+        y[np.logical_and(right_half, dists < 1. / 6.)] = 0
 
-        assert np.all(y > 0)
+        assert np.all(y >= 0)
         Base.__init__(self, X, y[:, None])
 
     @classmethod
