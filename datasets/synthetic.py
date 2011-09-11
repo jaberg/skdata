@@ -298,7 +298,7 @@ class FourRegions(Base, Classification):
            Conference, pp.133-140.
            http://books.nips.cc/papers/files/nips01/0133.pdf
     """
-    def __init__(self, n_samples=100, random_state=None):
+    def __init__(self, n_samples=100, n_features=2, random_state=None):
         """Generate a (finite) dataset for the four regions task.
 
         Parameters
@@ -307,14 +307,22 @@ class FourRegions(Base, Classification):
             The number of samples to generate in this instance of the
             dataset.
 
+        n_features : int, optional
+            The number of features (dimensionality of the task). The
+            default, 2, recovers the standard four regions task, but
+            the task can be meaningfully generalized to higher
+            dimensions (though the class balance will change).
+
         random_state : int, RandomState instance or None, optional
             If int, random_state is the seed used by the random number
             generator; If RandomState instance, random_state is the
             random number generator; If None, the random number
             generator is the RandomState instance used by `np.random`.
         """
+        assert n_features >= 2, ("Cannot generate FourRegions dataset with "
+                                 "n_features < 2")
         generator = check_random_state(random_state)
-        X = generator.uniform(-1, 1, size=(n_samples, 2))
+        X = generator.uniform(-1, 1, size=(n_samples, n_features))
         y = -np.ones(X.shape[0], dtype=int)
         top_half = X[:, 1] > 0
         right_half = X[:, 0] > 0
