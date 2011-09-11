@@ -337,7 +337,7 @@ class FourRegions(Base, Classification):
         y[np.logical_and(right_half, dists < 1. / 6.)] = 0
 
         assert np.all(y >= 0)
-        Base.__init__(self, X, y[:, None])
+        Base.__init__(self, X, y)
 
     @classmethod
     def main_show(cls):
