@@ -340,8 +340,8 @@ class FourRegions(Base, Classification):
         Base.__init__(self, X, y)
 
     @classmethod
-    def main_show(cls):
-        dataset = cls(n_samples=50000)
+    def main_show(cls, n_samples=50000):
+        dataset = cls(n_samples=n_samples)
         import matplotlib.pyplot as plt
         X, y = dataset.classification_task()
         plt.scatter(X[:, 0], X[:, 1], 10, y, cmap='gray')
