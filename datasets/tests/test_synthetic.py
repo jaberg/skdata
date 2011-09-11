@@ -2,7 +2,7 @@ import numpy as np
 from numpy.testing import assert_equal, assert_approx_equal, \
                           assert_array_almost_equal, assert_array_less
 
-from datasets import samples_generator as SG
+from datasets import synthetic as SG
 from datasets import tasks
 
 def test_madelon():
@@ -20,6 +20,20 @@ def test_madelon():
     assert_equal(sum(y == 0), 10, "Unexpected number of samples in class #0")
     assert_equal(sum(y == 1), 25, "Unexpected number of samples in class #1")
     assert_equal(sum(y == 2), 65, "Unexpected number of samples in class #2")
+
+
+def test_four_regions():
+    four_regions = SG.FourRegions(n_samples=100, random_state=0)
+    X, y = four_regions.classification_task()
+    tasks.assert_classification(X, y, 100)
+
+    assert_equal(X.shape, (100, 2), "X shape mismatch")
+    assert_equal(y.shape, (100,), "y shape mismatch")
+    assert_equal(np.unique(y).shape, (4,), "Unexpected number of classes")
+    assert_equal(sum(y == 0), 22, "Unexpected number of samples in class #0")
+    assert_equal(sum(y == 1), 31, "Unexpected number of samples in class #1")
+    assert_equal(sum(y == 2), 24, "Unexpected number of samples in class #2")
+    assert_equal(sum(y == 3), 23, "Unexpected number of samples in class #3")
 
 
 def test_randlin():
