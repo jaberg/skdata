@@ -133,7 +133,7 @@ def setup_module():
 
 def teardown_module():
     """Test fixture (clean up) run once after all tests of this module"""
-    FakeLFW().erase()
+    FakeLFW().clean_up()
 
 
 @raises(IOError)

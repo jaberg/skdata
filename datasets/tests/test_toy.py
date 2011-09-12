@@ -7,7 +7,7 @@ def check_classification_Xy(X, y, N=None):
 
 
 def check_regression_XY(X, Y, N=None):
-    assert_regression(X, y, N)
+    assert_regression(X, Y, N)
 
 
 def test_iris():

@@ -2,10 +2,12 @@ from my_path import get_my_path, get_my_path_basename
 from xml2x import xml2dict, xml2list
 from download_and_extract import download, extract, download_and_extract
 
+
 # -- old utils.py
 import numpy as np
 import scipy.sparse as sp
 import warnings
+import scipy.linalg
 
 _FLOAT_CODES = np.typecodes['AllFloat']
 
@@ -441,7 +443,6 @@ def qr_economic(A, **kwargs):
 
     Scipy 0.9 changed the keyword econ=True to mode='economic'
     """
-    import scipy.linalg
     # trick: triangular solve has introduced in 0.9
     if hasattr(scipy.linalg, 'solve_triangular'):
         return scipy.linalg.qr(A, mode='economic', **kwargs)
@@ -498,7 +499,7 @@ def random_spd_matrix(n_dim, random_state=None):
     generator = check_random_state(random_state)
 
     A = generator.rand(n_dim, n_dim)
-    U, s, V = linalg.svd(np.dot(A.T, A))
+    U, s, V = scipy.linalg.svd(np.dot(A.T, A))
     X = np.dot(np.dot(U, 1.0 + np.diag(generator.rand(n_dim))), V)
 
     return X
