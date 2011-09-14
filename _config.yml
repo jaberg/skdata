@@ -1,7 +1,7 @@
 
 safe: true
-source: .
-destination: .
+#source: .
+#destination: _site
 lsi: false
 pygments: true
 
