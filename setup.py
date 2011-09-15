@@ -17,7 +17,7 @@ MAINTAINER_EMAIL = 'bergstra@rowland.harvard.edu'
 URL = ''
 LICENSE = 'new BSD'
 DOWNLOAD_URL = ''
-VERSION = '0.9-git'
+VERSION = '0.1'
 
 import setuptools  # we are using a setuptools namespace
 from numpy.distutils.core import setup
