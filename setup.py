@@ -1,9 +1,7 @@
 #! /usr/bin/env python
 #
-# Copyright (C) 2007-2009 Cournapeau David <cournape@gmail.com>
-#               2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
 
-descr = """A set of python modules for machine learning and data mining"""
+descr = """A collection of datasets and associated tools"""
 
 import sys
 import os
