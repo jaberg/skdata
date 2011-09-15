@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 #
 
-descr = """A collection of datasets and associated tools"""
+descr = """A collection of datasets available and associated tools"""
 
 import sys
 import os
