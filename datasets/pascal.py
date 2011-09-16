@@ -258,6 +258,8 @@ class BasePASCAL(object):
                 objs = [objs]
             objects = []
             for obj in objs:
+                # parse bounding box coordinates and convert them to valid
+                # 0-indexed coordinates
                 bndbox = obj.pop('bndbox')
                 x_min = max(0,
                             (int(np.round(float(bndbox['xmin']))) - 1))
@@ -274,7 +276,15 @@ class BasePASCAL(object):
                 n_objects += 1
                 if obj['name'] not in unique_object_names:
                     unique_object_names += [obj['name']]
+
+                # convert 'difficult' to boolean
+                obj['difficult'] = bool(int(obj['difficult']))
+
+                # convert 'truncated' to boolean
+                obj['truncated'] = bool(int(obj['truncated']))
+
                 objects += [obj]
+
             data['objects'] = objects
 
             # -- print progress
