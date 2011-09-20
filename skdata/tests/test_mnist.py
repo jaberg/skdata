@@ -1,5 +1,4 @@
-
-from datasets import mnist, tasks
+from skdata import mnist, tasks
 
 def test_MNIST():
     M = mnist.MNIST()  # just make sure we can create the class

@@ -1,7 +1,7 @@
 
-============
-Scikits Data
-============
+===========
+scikit-data
+===========
 
 Scikits data is a library of datasets for empirical computer science. Lots of
 disciplines such as machine learning, natural language processing, and computer
@@ -128,8 +128,8 @@ How does this work? It works something like this:
 
 .. code:: python
 
-    exec "datasets.%s" % dataset_name
-    exec "datasets.%s.main_fetch()" % dataset_name
+    exec "skdata.%s" % dataset_name
+    exec "skdata.%s.main_fetch()" % dataset_name
 
 So every dataset module has to opt into this mechanism by implementing a global
 main_fetch function.

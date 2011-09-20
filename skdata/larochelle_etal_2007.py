@@ -313,7 +313,7 @@ class BaseL2007(object):
             shutil.rmtree(self.home())
 
     # ------------------------------------------------------------------------
-    # -- Driver routines to be called by datasets.main
+    # -- Driver routines to be called by skdata.main
     # ------------------------------------------------------------------------
 
     @classmethod

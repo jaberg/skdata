@@ -1,5 +1,5 @@
-from datasets import larochelle_etal_2007 as L2007
-from datasets import tasks
+from skdata import larochelle_etal_2007 as L2007
+from skdata import tasks
 
 def dset(name):
     rval = getattr(L2007, name)()

@@ -10,7 +10,6 @@ joblib, successive runs will be fast (less than 200ms).
 
 import random
 import os
-import shutil
 import tempfile
 import numpy as np
 try:
@@ -21,11 +20,9 @@ try:
 except ImportError:
     imsave = None
 
-from datasets import lfw
+from skdata import lfw
 
-from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
-from numpy.testing import assert_equal
 from nose import SkipTest
 from nose.tools import raises
 

@@ -2,8 +2,8 @@ import numpy as np
 from numpy.testing import assert_equal, assert_approx_equal, \
                           assert_array_almost_equal, assert_array_less
 
-from datasets import synthetic as SG
-from datasets import tasks
+from skdata import synthetic as SG
+from skdata import tasks
 
 def test_madelon():
     madelon = SG.Madelon(n_samples=100, n_features=20, n_informative=5,
