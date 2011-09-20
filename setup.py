@@ -41,7 +41,8 @@ setup(
 
     include_package_data=True,
 
-    scripts=['bin/datasets', 'bin/datasets-fetch', 'bin/datasets-show'],
+    scripts=['bin/datasets-fetch', 'bin/datasets-show',
+             'bin/datasets-clean-up'],
 
     install_requires=parse_requirements('requirements.txt'),
     dependency_links=parse_dependency_links('requirements.txt'),
