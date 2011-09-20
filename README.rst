@@ -1,4 +1,3 @@
-
 ===========
 scikit-data
 ===========
@@ -100,8 +99,8 @@ Modules:
 - cifar10 (CIFAR-10 image classification dataset)
 - caltech (Caltech101 and Caltech256 Object datasets)
 - iicbu (IICBU 2008: Biomedical Image Classification)
-- larochelle_etal_2007 (MNIST Variations, Rectangles, and Convex:
-      Image classification tasks with multiple factors of variation)
+- larochelle_etal_2007 (MNIST Variations, Rectangles, and 
+    Convex: Image classification tasks with multiple factors of variation)
 - pubfig83
 .. - rgbd
 
