@@ -106,7 +106,7 @@ if 0:
         """
 
     #
-    # Drivers for scikits.data/bin executables
+    # Drivers for skdata/bin executables
     #
 
     def main_show():

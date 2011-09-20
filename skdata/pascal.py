@@ -383,7 +383,7 @@ class VOC2008(BasePASCAL):
             'sha1': 'fc87d2477a1ae78c6748dc25b88c052eb8b06d75',
         },
         'test': {
-            'url': ('https://s3.amazonaws.com/scikits.data/pascal/'
+            'url': ('https://s3.amazonaws.com/scikit-data/pascal/'
                     'VOC2008test.tar'),
             'sha1': '2044e7c61c407ca1f085e2bff5f188c7f7df7f48',
         },
@@ -398,7 +398,7 @@ class VOC2009(BasePASCAL):
             'sha1': '0bc2be22b76a9bcb744c0458c535f3a84f054bbc',
         },
         'test': {
-            'url': ('https://s3.amazonaws.com/scikits.data/pascal/'
+            'url': ('https://s3.amazonaws.com/scikit-data/pascal/'
                     'VOC2009test.tar'),
             'sha1': 'e638975ae3faca04aabc3ddb577d13e04da60950',
         }
@@ -413,7 +413,7 @@ class VOC2010(BasePASCAL):
             'sha1': 'bf9985e9f2b064752bf6bd654d89f017c76c395a',
         },
         'test': {
-            'url': ('https://s3.amazonaws.com/scikits.data/pascal/'
+            'url': ('https://s3.amazonaws.com/scikit-data/pascal/'
                     'VOC2010test.tar'),
             'sha1': '8f426aee2cb0ed0e07b5fceb45eff6a38595abfb',
         }
@@ -432,7 +432,7 @@ class VOC2011(BasePASCAL):
                        'destination': 'VOCdevkit'}],
         },
         'test': {
-            'url': ('https://s3.amazonaws.com/scikits.data/pascal/'
+            'url': ('https://s3.amazonaws.com/scikit-data/pascal/'
                     'VOC2011test.tar.gz'),
             'sha1': 'e988fa911f2199309f76a6f44691e9471a011c45',
         }

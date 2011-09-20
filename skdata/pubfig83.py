@@ -184,7 +184,7 @@ class PubFig83(object):
 
 
 # ------------------------------------------------------------------------
-# -- Drivers for scikits.data/bin executables
+# -- Drivers for skdata/bin executables
 # ------------------------------------------------------------------------
 
 def main_fetch():
