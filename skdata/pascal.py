@@ -278,10 +278,18 @@ class BasePASCAL(object):
                     unique_object_names += [obj['name']]
 
                 # convert 'difficult' to boolean
-                obj['difficult'] = bool(int(obj['difficult']))
+                if 'difficult' in obj:
+                    obj['difficult'] = bool(int(obj['difficult']))
+                else:
+                    # assume difficult=False if key not present
+                    obj['difficult'] = False
 
                 # convert 'truncated' to boolean
-                obj['truncated'] = bool(int(obj['truncated']))
+                if 'truncated' in obj:
+                    obj['truncated'] = bool(int(obj['truncated']))
+                else:
+                    # assume truncated=False if key not present
+                    obj['truncated'] = False
 
                 objects += [obj]
 
