@@ -577,7 +577,7 @@ class MNIST_Noise6(BaseNoise):
 
 class Rectangles(BaseL2007):
     REMOTE = 'rectangles.zip'
-    SHA1 = 'b8d456b1f83bea5efebe76a47a9535adc4b72586  '
+    SHA1 = 'b8d456b1f83bea5efebe76a47a9535adc4b72586'
     REMOTE_SIZE = '2.7M'
     AMAT = 'rectangles'
     NAME = 'rectangles'
