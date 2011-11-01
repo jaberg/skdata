@@ -1,4 +1,8 @@
 import numpy as np
+
+import logging
+logger = logging.getLogger(__name__)
+
 try:
     try:
         from scipy.misc import imread
