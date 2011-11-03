@@ -178,7 +178,7 @@ class BaseCaltech(object):
 
     def img_classification_task(self, dtype='uint8'):
         img_paths, labels = self.raw_classification_task()
-        imgs = larray.lmap(ImgLoader(dtype=dtype),
+        imgs = larray.lmap(ImgLoader(ndim=3, dtype=dtype),
                            img_paths)
         return imgs, labels
 
