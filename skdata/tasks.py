@@ -34,7 +34,7 @@ def assert_img_verification(X, Y, z, N=None):
     assert z.ndim == 1
     A = len(X)
     B = len(Y)
-    C, = y.shape
+    C, = z.shape
     assert A == B == C == (C if N is None else N)
     assert 'float' in str(X.dtype)
     assert 'float' in str(Y.dtype)
