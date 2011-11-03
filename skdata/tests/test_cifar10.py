@@ -1,5 +1,4 @@
-
-from datasets import cifar10, tasks
+from skdata import cifar10, tasks
 
 def test_CIFAR10():
     cifar = cifar10.CIFAR10()  # just make sure we can create the class

@@ -1,7 +1,6 @@
-
-============
-Scikits Data
-============
+===========
+scikit-data
+===========
 
 Scikits data is a library of datasets for empirical computer science. Lots of
 disciplines such as machine learning, natural language processing, and computer
@@ -100,8 +99,8 @@ Modules:
 - cifar10 (CIFAR-10 image classification dataset)
 - caltech (Caltech101 and Caltech256 Object datasets)
 - iicbu (IICBU 2008: Biomedical Image Classification)
-- larochelle_etal_2007 (MNIST Variations, Rectangles, and Convex:
-      Image classification tasks with multiple factors of variation)
+- larochelle_etal_2007 (MNIST Variations, Rectangles, and 
+    Convex: Image classification tasks with multiple factors of variation)
 - pubfig83
 .. - rgbd
 
@@ -128,8 +127,8 @@ How does this work? It works something like this:
 
 .. code:: python
 
-    exec "datasets.%s" % dataset_name
-    exec "datasets.%s.main_fetch()" % dataset_name
+    exec "skdata.%s" % dataset_name
+    exec "skdata.%s.main_fetch()" % dataset_name
 
 So every dataset module has to opt into this mechanism by implementing a global
 main_fetch function.

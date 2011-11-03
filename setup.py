@@ -1,5 +1,4 @@
-#! /usr/bin/env python
-#
+#!/usr/bin/env python
 
 descr = """A collection of datasets available and associated tools"""
 

@@ -1,4 +1,8 @@
 import numpy as np
+
+import logging
+logger = logging.getLogger(__name__)
+
 try:
     try:
         from scipy.misc import imread
@@ -106,7 +110,7 @@ if 0:
         """
 
     #
-    # Drivers for scikits.data/bin executables
+    # Drivers for skdata/bin executables
     #
 
     def main_show():

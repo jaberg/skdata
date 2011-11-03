@@ -1,6 +1,6 @@
 import unittest
 import numpy as np
-from datasets import larochelle_etal_2007, tasks
+from skdata import larochelle_etal_2007, tasks
 
 def rnd(dtype, *shp):
     return np.random.rand(*shp).astype(dtype)

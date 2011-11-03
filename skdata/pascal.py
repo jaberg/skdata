@@ -258,6 +258,8 @@ class BasePASCAL(object):
                 objs = [objs]
             objects = []
             for obj in objs:
+                # parse bounding box coordinates and convert them to valid
+                # 0-indexed coordinates
                 bndbox = obj.pop('bndbox')
                 x_min = max(0,
                             (int(np.round(float(bndbox['xmin']))) - 1))
@@ -274,7 +276,23 @@ class BasePASCAL(object):
                 n_objects += 1
                 if obj['name'] not in unique_object_names:
                     unique_object_names += [obj['name']]
+
+                # convert 'difficult' to boolean
+                if 'difficult' in obj:
+                    obj['difficult'] = bool(int(obj['difficult']))
+                else:
+                    # assume difficult=False if key not present
+                    obj['difficult'] = False
+
+                # convert 'truncated' to boolean
+                if 'truncated' in obj:
+                    obj['truncated'] = bool(int(obj['truncated']))
+                else:
+                    # assume truncated=False if key not present
+                    obj['truncated'] = False
+
                 objects += [obj]
+
             data['objects'] = objects
 
             # -- print progress
@@ -338,7 +356,7 @@ class BasePASCAL(object):
             shutil.rmtree(self.home())
 
     # ------------------------------------------------------------------------
-    # -- Driver routines to be called by datasets.main
+    # -- Driver routines to be called by skdata.main
     # ------------------------------------------------------------------------
 
     @classmethod
@@ -373,7 +391,7 @@ class VOC2008(BasePASCAL):
             'sha1': 'fc87d2477a1ae78c6748dc25b88c052eb8b06d75',
         },
         'test': {
-            'url': ('https://s3.amazonaws.com/scikits.data/pascal/'
+            'url': ('https://s3.amazonaws.com/scikit-data/pascal/'
                     'VOC2008test.tar'),
             'sha1': '2044e7c61c407ca1f085e2bff5f188c7f7df7f48',
         },
@@ -388,7 +406,7 @@ class VOC2009(BasePASCAL):
             'sha1': '0bc2be22b76a9bcb744c0458c535f3a84f054bbc',
         },
         'test': {
-            'url': ('https://s3.amazonaws.com/scikits.data/pascal/'
+            'url': ('https://s3.amazonaws.com/scikit-data/pascal/'
                     'VOC2009test.tar'),
             'sha1': 'e638975ae3faca04aabc3ddb577d13e04da60950',
         }
@@ -403,7 +421,7 @@ class VOC2010(BasePASCAL):
             'sha1': 'bf9985e9f2b064752bf6bd654d89f017c76c395a',
         },
         'test': {
-            'url': ('https://s3.amazonaws.com/scikits.data/pascal/'
+            'url': ('https://s3.amazonaws.com/scikit-data/pascal/'
                     'VOC2010test.tar'),
             'sha1': '8f426aee2cb0ed0e07b5fceb45eff6a38595abfb',
         }
@@ -422,7 +440,7 @@ class VOC2011(BasePASCAL):
                        'destination': 'VOCdevkit'}],
         },
         'test': {
-            'url': ('https://s3.amazonaws.com/scikits.data/pascal/'
+            'url': ('https://s3.amazonaws.com/scikit-data/pascal/'
                     'VOC2011test.tar.gz'),
             'sha1': 'e988fa911f2199309f76a6f44691e9471a011c45',
         }

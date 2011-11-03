@@ -1,6 +1,6 @@
 
-from datasets import toy
-from datasets.tasks import assert_classification, assert_regression
+from skdata import toy
+from skdata.tasks import assert_classification, assert_regression
 
 def check_classification_Xy(X, y, N=None):
     assert_classification(X, y, N)

@@ -1,11 +1,11 @@
-"""Manage the scikits-data cache directory.
+"""Manage the scikit-data cache directory.
 
 This folder is used by some large dataset loaders to avoid downloading the data
 several times.
 
-By default the data dir is set to a folder named '.scikits.data'
+By default the data dir is set to a folder named '.scikit-data'
 in the user home folder.  This directory can be specified prior to importing
-this module via the SCIKITS_DATA environment variable.
+this module via the SCIKIT_DATA environment variable.
 
 After importing the module that environment variable is no longer consulted,
 and a module-level variable called DATA_HOME becomes the new point of reference.
@@ -22,8 +22,8 @@ import shutil
 
 DATA_HOME = os.path.expanduser(
         os.environ.get(
-            'SCIKITS_DATA',
-            os.path.join('~', '.scikits.data')))
+            'SCIKIT_DATA',
+            os.path.join('~', '.scikit-data')))
 
 def get_data_home():
     if not os.path.exists(DATA_HOME):

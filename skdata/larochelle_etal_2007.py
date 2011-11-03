@@ -41,6 +41,8 @@ import sys
 
 import numpy as np
 
+import lockfile
+
 from data_home import get_data_home
 import utils
 
@@ -218,48 +220,49 @@ class BaseL2007(object):
         return self.home(self.AMAT + '_train.amat')
 
     def fetch(self, download_if_missing):
-        try:
-            open(self.home(self.NAME + '_inputs.npy')).close()
-            open(self.home(self.NAME + '_labels.npy')).close()
-        except IOError:
-            if download_if_missing:
-                try:
-                    amat_test = AMat(self.test_amat())
-                except IOError:
-                    logger.info('Failed to read %s, downloading %s' % (
-                        self.test_amat(),
-                        os.path.join(self.BASE_URL, self.REMOTE)))
-                    if not os.path.exists(self.home()):
-                        os.makedirs(self.home())
-                    utils.download_and_extract(
-                        os.path.join(self.BASE_URL, self.REMOTE),
-                        self.home(),
-                        verbose=False,
-                        sha1=self.SHA1)
-                    amat_test = AMat(self.test_amat())
-                amat_train = AMat(self.train_amat())
-                n_inputs = 28**2
-                n_train = self.descr['n_train']
-                n_valid = self.descr['n_valid']
-                n_test = self.descr['n_test']
-                assert amat_train.all.shape[0] == n_train + n_valid
-                assert amat_test.all.shape[0] == n_test
-                assert amat_train.all.shape[1] == amat_test.all.shape[1]
-                assert amat_train.all.shape[1] == n_inputs + 1
-                allmat = np.vstack((amat_train.all, amat_test.all))
-                inputs = np.reshape(
-                        allmat[:, :n_inputs].astype('float32'),
-                        (-1, 28, 28))
-                labels = allmat[:, n_inputs].astype('int32')
-                assert np.all(labels == allmat[:, n_inputs])
-                assert np.all(labels < self.descr['n_classes'])
-                np.save(self.home(self.NAME + '_inputs.npy'), inputs)
-                np.save(self.home(self.NAME + '_labels.npy'), labels)
-                # clean up the .amat files we downloaded
-                os.remove(self.test_amat())
-                os.remove(self.train_amat())
-            else:
-                raise
+        with lockfile.FileLock(self.home()) as lock:
+            try:
+                open(self.home(self.NAME + '_inputs.npy')).close()
+                open(self.home(self.NAME + '_labels.npy')).close()
+            except IOError:
+                if download_if_missing:
+                    try:
+                        amat_test = AMat(self.test_amat())
+                    except IOError:
+                        logger.info('Failed to read %s, downloading %s' % (
+                            self.test_amat(),
+                            os.path.join(self.BASE_URL, self.REMOTE)))
+                        if not os.path.exists(self.home()):
+                            os.makedirs(self.home())
+                        utils.download_and_extract(
+                            os.path.join(self.BASE_URL, self.REMOTE),
+                            self.home(),
+                            verbose=False,
+                            sha1=self.SHA1)
+                        amat_test = AMat(self.test_amat())
+                    amat_train = AMat(self.train_amat())
+                    n_inputs = 28**2
+                    n_train = self.descr['n_train']
+                    n_valid = self.descr['n_valid']
+                    n_test = self.descr['n_test']
+                    assert amat_train.all.shape[0] == n_train + n_valid
+                    assert amat_test.all.shape[0] == n_test
+                    assert amat_train.all.shape[1] == amat_test.all.shape[1]
+                    assert amat_train.all.shape[1] == n_inputs + 1
+                    allmat = np.vstack((amat_train.all, amat_test.all))
+                    inputs = np.reshape(
+                            allmat[:, :n_inputs].astype('float32'),
+                            (-1, 28, 28))
+                    labels = allmat[:, n_inputs].astype('int32')
+                    assert np.all(labels == allmat[:, n_inputs])
+                    assert np.all(labels < self.descr['n_classes'])
+                    np.save(self.home(self.NAME + '_inputs.npy'), inputs)
+                    np.save(self.home(self.NAME + '_labels.npy'), labels)
+                    # clean up the .amat files we downloaded
+                    os.remove(self.test_amat())
+                    os.remove(self.train_amat())
+                else:
+                    raise
 
     # ------------------------------------------------------------------------
     # -- Dataset Interface: meta
@@ -313,7 +316,7 @@ class BaseL2007(object):
             shutil.rmtree(self.home())
 
     # ------------------------------------------------------------------------
-    # -- Driver routines to be called by datasets.main
+    # -- Driver routines to be called by skdata.main
     # ------------------------------------------------------------------------
 
     @classmethod
@@ -574,7 +577,7 @@ class MNIST_Noise6(BaseNoise):
 
 class Rectangles(BaseL2007):
     REMOTE = 'rectangles.zip'
-    SHA1 = 'b8d456b1f83bea5efebe76a47a9535adc4b72586  '
+    SHA1 = 'b8d456b1f83bea5efebe76a47a9535adc4b72586'
     REMOTE_SIZE = '2.7M'
     AMAT = 'rectangles'
     NAME = 'rectangles'
