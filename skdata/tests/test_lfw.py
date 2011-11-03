@@ -21,6 +21,7 @@ except ImportError:
     imsave = None
 
 from skdata import lfw
+from skdata import tasks
 
 from numpy.testing import assert_raises
 from nose import SkipTest
@@ -219,11 +220,12 @@ def test_fake_imgs():
         
         
 def test_img_classification_task():
-    dset = lwf.Original()
+    dset = lfw.Original()
     X, y = dset.img_classification_task(dtype='float')
-    tasks.assert_img_classification_task(X, y)
+    tasks.assert_img_classification(X, y)
+    
     
 def test_img_verification_task():
-    dset = lwf.Original()
+    dset = lfw.Original()
     X, Y, z = dset.img_verification_task(dtype='float')
-    tasks.assert_img_verification_task(X, Y, z)
+    tasks.assert_img_verification(X, Y, z)
