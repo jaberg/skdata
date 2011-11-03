@@ -41,6 +41,7 @@ FAKE_NAMES = [
     'Onur_Lopez',
 ]
 
+
 def namelike(fullpath):
     """Returns part of an image full path that has the name in it"""
     return fullpath[-18:-8]
@@ -59,7 +60,7 @@ class EmptyLFW(lfw.BaseLFW):
 
 class FakeLFW(lfw.BaseLFW):
     NAME = 'Fake'
-    IMAGEDIR = 'lfw_fake' # corresponds to lfw, lfw_funneled, lfw_aligned
+    IMAGEDIR = 'lfw_fake'  # corresponds to lfw, lfw_funneled, lfw_aligned
 
     def home(self, *names):
         return os.path.join(SCIKIT_LEARN_DATA, 'lfw', self.NAME, *names)
@@ -81,7 +82,8 @@ class FakeLFW(lfw.BaseLFW):
             n_faces = np_rng.randint(1, 5)
             counts[name] = n_faces
             for i in range(n_faces):
-                file_path = os.path.join(folder_name, name + '_%04d.jpg' % (i+1))
+                file_path = os.path.join(folder_name,
+                                         name + '_%04d.jpg' % (i + 1))
                 uniface = np_rng.randint(0, 255, size=(250, 250, 3))
                 try:
                     imsave(file_path, uniface)
@@ -110,14 +112,14 @@ class FakeLFW(lfw.BaseLFW):
                 for i in range(n_match):
                     name = random_state.choice(more_than_two)
                     first, second = random_state.sample(range(counts[name]), 2)
-                    f.write('%s\t%d\t%d\n' % (name, first+1, second+1))
+                    f.write('%s\t%d\t%d\n' % (name, first + 1, second + 1))
 
                 for i in range(n_match):
                     first_name, second_name = random_state.sample(FAKE_NAMES, 2)
                     first_index = random_state.choice(range(counts[first_name]))
                     second_index = random_state.choice(range(counts[second_name]))
-                    f.write('%s\t%d\t%s\t%d\n' % (first_name, first_index+1,
-                                                  second_name, second_index+1))
+                    f.write('%s\t%d\t%s\t%d\n' % (first_name, first_index + 1,
+                                                  second_name, second_index + 1))
             f.close()
         write_fake_pairs('pairsDevTrain.txt', 5, 1)
         write_fake_pairs('pairsDevTest.txt', 7, 1)
@@ -153,7 +155,7 @@ def test_fake_load():
 def test_fake_classification_task():
     fake = FakeLFW()
     paths, labels = fake.raw_classification_task()
-    
+
     assert len(paths) == len(labels)
     assert all(p.endswith('.jpg') for p in paths)
     assert 'int' in str(labels.dtype)
@@ -217,14 +219,14 @@ def test_fake_imgs():
         assert images[0].dtype == dtype
         assert images[0].ndim == 3
         assert images[0].shape == (250, 250, 3)
-        
-        
+
+
 def test_img_classification_task():
     dset = lfw.Original()
     X, y = dset.img_classification_task(dtype='float')
     tasks.assert_img_classification(X, y)
-    
-    
+
+
 def test_img_verification_task():
     dset = lfw.Original()
     X, Y, z = dset.img_verification_task(dtype='float')
