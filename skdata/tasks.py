@@ -1,16 +1,46 @@
 """Task API
 """
+import numpy as np
+
 import larray
+
 
 def assert_classification(X, y, N=None):
     assert X.ndim == 2
     assert y.ndim == 1
-    A, B = X.shape
+    A = len(X)  #xxx: replace with X.shape[0] if using shapes with unknowns?
     C, = y.shape
     assert A == C == (C if N is None else N)
     assert 'float' in str(X.dtype)
     assert 'int' in str(y.dtype), y.dtype
 
+
+def assert_img_classification(X, y, N=None):
+    assert X.ndim == 4
+    assert y.ndim == 1
+    A = len(X)  #xxx: replace with X.shape[0] if using shapes with unknowns? 
+    C, = y.shape
+    #todo:  if we get to handling shapes with 'unknowns', e.g. None's 
+    #then maybe here we could check that X.shape[2] is not None, e.g. the
+    #number of channels  of the images are all the same.  or maybe not?
+    assert A == C == (C if N is None else N)
+    assert 'float' in str(X.dtype)
+    assert 'int' in str(y.dtype), y.dtype
+    
+    
+def assert_img_verification(X, Y, z, N=None):
+    assert X.ndim == 4
+    assert Y.ndim == 4
+    assert z.ndim == 1
+    A = len(X)
+    B = len(Y) 
+    C, = y.shape
+    assert A == B == C == (C if N is None else N)
+    assert 'float' in str(X.dtype)
+    assert 'float' in str(Y.dtype)
+    assert 'int' in str(z.dtype), z.dtype
+    assert set(np.unique(z)) <= set([0,1])
+    
 
 def assert_classification_train_valid_test(train, valid, test):
     assert_classification(*train)
