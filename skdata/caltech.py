@@ -33,8 +33,12 @@ import shutil
 from glob import glob
 import hashlib
 
+import numpy as np
+
+import larray
 from data_home import get_data_home
-from utils import download, extract
+from utils import download, extract, int_labels
+from utils.image import ImgLoader
 
 
 class BaseCaltech(object):
@@ -145,6 +149,12 @@ class BaseCaltech(object):
 
         return meta
 
+    def image_path(self, dct):
+        return self.home(
+                self.SUBDIR,
+                dct['name'],
+                '%s_%04i.jpg'%(dct['name'], dct['number']))
+                
     # ------------------------------------------------------------------------
     # -- Dataset Interface: clean_up()
     # ------------------------------------------------------------------------
@@ -156,7 +166,21 @@ class BaseCaltech(object):
     # ------------------------------------------------------------------------
     # -- Standard Tasks
     # ------------------------------------------------------------------------
-    # TODO
+
+
+    def raw_classification_task(self):
+        """Return image_paths, labels"""
+        image_paths = [m['filename'] for m in self.meta]
+        names = np.asarray([m['name'] for m in self.meta])
+        labels = int_labels(names)
+        return image_paths, labels
+        
+
+    def img_classification_task(self, dtype='uint8'):
+        img_paths, labels = self.raw_classification_task()
+        imgs = larray.lmap(ImgLoader(dtype=dtype),
+                           img_paths)
+        return imgs, labels
 
 
 class Caltech101(BaseCaltech):
