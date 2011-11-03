@@ -7,7 +7,7 @@ import sys
 import os
 import shutil
 
-DISTNAME = 'scikit-data'
+DISTNAME = 'skdata'
 DESCRIPTION = ''
 LONG_DESCRIPTION = open('README.rst').read()
 MAINTAINER = 'James Bergstra'
@@ -20,19 +20,6 @@ VERSION = '0.1'
 import setuptools  # we are using a setuptools namespace
 from numpy.distutils.core import setup
 
-
-def configuration(parent_package='', top_path=None):
-    if os.path.exists('MANIFEST'):
-        os.remove('MANIFEST')
-
-    from numpy.distutils.misc_util import Configuration
-    config = Configuration(None, parent_package, top_path,
-        namespace_packages=['scikits'])
-
-    config.add_subpackage('scikits.data')
-    config.add_data_files('scikits/__init__.py')
-
-    return config
 
 if __name__ == "__main__":
 
@@ -58,7 +45,8 @@ if __name__ == "__main__":
         _old_stdout = sys.stdout
         try:
             sys.stdout = StringIO()  # supress noisy output
-            res = lib2to3.main.main("lib2to3.fixes", ['-x', 'import', '-w', local_path])
+            res = lib2to3.main.main("lib2to3.fixes",
+                                    ['-x', 'import', '-w', local_path])
         finally:
             sys.stdout = _old_stdout
 
@@ -68,8 +56,7 @@ if __name__ == "__main__":
     os.chdir(local_path)
     sys.path.insert(0, local_path)
 
-    setup(configuration=configuration,
-          name=DISTNAME,
+    setup(name=DISTNAME,
           maintainer=MAINTAINER,
           include_package_data=True,
           maintainer_email=MAINTAINER_EMAIL,
