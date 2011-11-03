@@ -223,11 +223,11 @@ def test_fake_imgs():
 
 def test_img_classification_task():
     dset = lfw.Original()
-    X, y = dset.img_classification_task(dtype='float')
+    X, y = dset.img_classification_task(dtype='float32')
     tasks.assert_img_classification(X, y)
 
 
 def test_img_verification_task():
     dset = lfw.Original()
-    X, Y, z = dset.img_verification_task(dtype='float')
+    X, Y, z = dset.img_verification_task(dtype='float32')
     tasks.assert_img_verification(X, Y, z)
