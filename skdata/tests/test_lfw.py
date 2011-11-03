@@ -149,9 +149,10 @@ def test_fake_load():
             'DevTest', 'DevTrain', 'fold_0', 'fold_1', 'fold_2']
 
 
-def test_fake_recognition_task():
+def test_fake_classification_task():
     fake = FakeLFW()
-    paths, labels = fake.raw_recognition_task()
+    paths, labels = fake.raw_classification_task()
+    
     assert len(paths) == len(labels)
     assert all(p.endswith('.jpg') for p in paths)
     assert 'int' in str(labels.dtype)
@@ -196,7 +197,7 @@ def test_fake_imgs():
     fake = FakeLFW()
     true_n_images = sum(fake.counts.values())
     # test the default case
-    images, labels = fake.img_recognition_task()
+    images, labels = fake.img_classification_task()
     assert images.dtype == 'uint8'
     assert images.ndim == 4
     assert images.shape == (true_n_images, 250, 250, 3)
@@ -207,7 +208,7 @@ def test_fake_imgs():
 
     # test specified dtypes
     for dtype in 'uint8', 'float32':
-        images, labels = fake.img_recognition_task(dtype=dtype)
+        images, labels = fake.img_classification_task(dtype=dtype)
         assert images.dtype == dtype
         assert images.ndim == 4
         assert images.shape == (true_n_images, 250, 250, 3)
@@ -215,3 +216,14 @@ def test_fake_imgs():
         assert images[0].dtype == dtype
         assert images[0].ndim == 3
         assert images[0].shape == (250, 250, 3)
+        
+        
+def test_img_classification_task():
+    dset = lwf.Original()
+    X, y = dset.img_classification_task(dtype='float')
+    tasks.assert_img_classification_task(X, y)
+    
+def test_img_verification_task():
+    dset = lwf.Original()
+    X, Y, z = dset.img_verification_task(dtype='float')
+    tasks.assert_img_verification_task(X, Y, z)
