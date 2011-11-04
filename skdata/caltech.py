@@ -116,10 +116,12 @@ class BaseCaltech(object):
     @property
     def meta(self):
         if hasattr(self, '_meta'):
+            self.names = sorted(os.listdir(self.home(self.SUBDIR)))
             return self._meta
         else:
             self.fetch(download_if_missing=True)
             self._meta = self._get_meta()
+            self.names = sorted(os.listdir(self.home(self.SUBDIR)))
             return self._meta
 
     def _get_meta(self):
@@ -148,6 +150,23 @@ class BaseCaltech(object):
                 ind += 1
 
         return meta
+
+    def get_splits(self, seed=0, ntrain=15, ntest=15, num_splits=10):
+        meta = self.meta
+        np.random.seed(seed)
+        self.splits = []
+        for split_id in range(num_splits):
+            split = {'train': [], 'test': []}
+            for name in self.names:
+                cat = [m for m in meta if m['name'] == name]
+                L = len(cat)
+                assert L >= ntrain + ntest, 'category %s too small' % name
+                perm = np.random.permutation(L)
+                for ind in perm[:ntrain]:
+                    split['train'].append(cat[ind]['id'])
+                for ind in perm[ntrain: ntrain + ntest]:
+                    split['test'].append(cat[ind]['id'])
+            self.splits.append(split)
 
     # ------------------------------------------------------------------------
     # -- Dataset Interface: clean_up()
