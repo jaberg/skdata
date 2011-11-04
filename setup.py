@@ -1,51 +1,82 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
 
-""" distribute- and pip-enabled setup.py for scikits.data """
+descr = """A collection of datasets available and associated tools"""
 
-from distribute_setup import use_setuptools
-use_setuptools()
-from setuptools import setup
+import sys
+import os
+import shutil
 
-import re
+DISTNAME = 'skdata'
+DESCRIPTION = ''
+LONG_DESCRIPTION = open('README.rst').read()
+MAINTAINER = 'James Bergstra'
+MAINTAINER_EMAIL = 'bergstra@rowland.harvard.edu'
+URL = ''
+LICENSE = 'new BSD'
+DOWNLOAD_URL = ''
+VERSION = '0.1'
+
+import setuptools  # we are using a setuptools namespace
+from numpy.distutils.core import setup
 
 
-def parse_requirements(file_name):
-    requirements = []
-    for line in open(file_name, 'r').read().split('\n'):
-        if re.match(r'(\s*#)|(\s*$)', line):
-            continue
-        if re.match(r'\s*-e\s+', line):
-            requirements.append(re.sub(r'\s*-e\s+.*#egg=(.*)$', r'\1', line))
-        elif re.match(r'\s*-f\s+', line):
+if __name__ == "__main__":
+
+    old_path = os.getcwd()
+    local_path = os.path.dirname(os.path.abspath(sys.argv[0]))
+    # python 3 compatibility stuff.
+    # Simplified version of scipy strategy: copy files into
+    # build/py3k, and patch them using lib2to3.
+    if sys.version_info[0] == 3:
+        try:
+            import lib2to3cache
+        except ImportError:
             pass
-        else:
-            requirements.append(line)
+        local_path = os.path.join(local_path, 'build', 'py3k')
+        if os.path.exists(local_path):
+            shutil.rmtree(local_path)
+        print("Copying source tree into build/py3k for 2to3 transformation"
+              "...")
 
-    return requirements
+        import lib2to3.main
+        from io import StringIO
+        print("Converting to Python3 via 2to3...")
+        _old_stdout = sys.stdout
+        try:
+            sys.stdout = StringIO()  # supress noisy output
+            res = lib2to3.main.main("lib2to3.fixes",
+                                    ['-x', 'import', '-w', local_path])
+        finally:
+            sys.stdout = _old_stdout
 
+        if res != 0:
+            raise Exception('2to3 failed, exiting ...')
 
-def parse_dependency_links(file_name):
-    dependency_links = []
-    for line in open(file_name, 'r').read().split('\n'):
-        if re.match(r'\s*-[ef]\s+', line):
-            dependency_links.append(re.sub(r'\s*-[ef]\s+', '', line))
+    os.chdir(local_path)
+    sys.path.insert(0, local_path)
 
-    return dependency_links
-
-
-setup(
-    name='scikits.data',
-
-    version='dev',
-
-    include_package_data=True,
-
-    scripts=['bin/datasets-fetch', 'bin/datasets-show',
-             'bin/datasets-clean-up'],
-
-    install_requires=parse_requirements('requirements.txt'),
-    dependency_links=parse_dependency_links('requirements.txt'),
-
-    test_suite="nose.collector",
-)
+    setup(name=DISTNAME,
+          maintainer=MAINTAINER,
+          include_package_data=True,
+          maintainer_email=MAINTAINER_EMAIL,
+          description=DESCRIPTION,
+          license=LICENSE,
+          url=URL,
+          version=VERSION,
+          download_url=DOWNLOAD_URL,
+          long_description=LONG_DESCRIPTION,
+          zip_safe=False,  # the package can run out of an .egg file
+          classifiers=[
+              'Intended Audience :: Science/Research',
+              'Intended Audience :: Developers',
+              'License :: OSI Approved',
+              'Programming Language :: C',
+              'Programming Language :: Python',
+              'Topic :: Software Development',
+              'Topic :: Scientific/Engineering',
+              'Operating System :: Microsoft :: Windows',
+              'Operating System :: POSIX',
+              'Operating System :: Unix',
+              'Operating System :: MacOS'
+             ]
+    )
