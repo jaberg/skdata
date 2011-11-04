@@ -115,14 +115,11 @@ class BaseCaltech(object):
 
     @property
     def meta(self):
-        if hasattr(self, '_meta'):
-            self.names = sorted(os.listdir(self.home(self.SUBDIR)))
-            return self._meta
-        else:
+        if not hasattr(self, '_meta'):
             self.fetch(download_if_missing=True)
             self._meta = self._get_meta()
-            self.names = sorted(os.listdir(self.home(self.SUBDIR)))
-            return self._meta
+        self.names = sorted(os.listdir(self.home(self.SUBDIR)))
+        return self._meta
 
     def _get_meta(self):
 
