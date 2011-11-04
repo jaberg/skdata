@@ -50,6 +50,7 @@ import utils.image
 
 logger = logging.getLogger(__name__)
 
+
 class BaseLFW(object):
     """This base class handles both the original and funneled datasets.
 
@@ -120,7 +121,6 @@ class BaseLFW(object):
             return self._meta
     meta = property(__get_meta)
 
-
     #
     # Helper routines
     #
@@ -130,14 +130,14 @@ class BaseLFW(object):
         pairs['DevTrain'] = self.parse_pairs('pairsDevTrain.txt')[0]
         pairs['DevTest'] = self.parse_pairs('pairsDevTest.txt')[0]
         for i, fold_i in enumerate(self.parse_pairs('pairs.txt')):
-            pairs['fold_%i'%i] = fold_i
+            pairs['fold_%i' % i] = fold_i
         assert i == getattr(self, 'N_PAIRS_SPLITS', i)
         meta = []
         for name in sorted(listdir(self.home(self.IMAGEDIR))):
             if isdir(self.home(self.IMAGEDIR, name)):
                 for filename in sorted(listdir(self.home(self.IMAGEDIR, name))):
                     number = int(filename[-8:-4])
-                    assert filename == '%s_%04i.jpg'%(name, number)
+                    assert filename == '%s_%04i.jpg' % (name, number)
                     dct = dict(name=name, number=number, pairs={})
                     for set_name, set_dct in pairs.items():
                         dct['pairs'][set_name] = set_dct.get((name, number), [])
@@ -175,7 +175,7 @@ class BaseLFW(object):
                     name, I, J = tmp
                     dct.setdefault((name, int(I)), []).append(i)
                     dct.setdefault((name, int(J)), []).append(i)
-                for i in xrange(n_match_per_split, 2*n_match_per_split):
+                for i in xrange(n_match_per_split, 2 * n_match_per_split):
                     tmp = lines_iter.next()
                     name1, I, name2, J = tmp
                     dct.setdefault((name1, int(I)), []).append(i)
@@ -190,8 +190,7 @@ class BaseLFW(object):
         return self.home(
                 self.IMAGEDIR,
                 dct['name'],
-                '%s_%04i.jpg'%(dct['name'], dct['number']))
-
+                '%s_%04i.jpg' % (dct['name'], dct['number']))
 
     #
     # Fetch interface (XXX is this a general interface?)
@@ -229,7 +228,7 @@ class BaseLFW(object):
             # download the tgz
             if not exists(archive_path):
                 if download_if_missing:
-                    logger.warn("Downloading LFW data (~200MB): %s => %s" %(
+                    logger.warn("Downloading LFW data (~200MB): %s => %s" % (
                             self.URL, archive_path))
                     downloader = urllib.urlopen(self.URL)
                     data = downloader.read()
@@ -241,7 +240,6 @@ class BaseLFW(object):
             logger.info("Decompressing the data archive to %s", self.home())
             tarfile.open(archive_path, "r:gz").extractall(path=self.home())
             remove(archive_path)
-
 
     #
     # Driver routines to be called by datasets.main
@@ -292,7 +290,7 @@ class BaseLFW(object):
     # img_... methods return lazily-loaded image lists
     #
 
-    def raw_recognition_task(self):
+    def raw_classification_task(self):
         """Return image_paths, labels"""
         image_paths = [self.image_path(m) for m in self.meta]
         names = np.asarray([m['name'] for m in self.meta])
@@ -318,8 +316,8 @@ class BaseLFW(object):
                 np.asarray(right_image_paths),
                 np.asarray(labels, dtype='int'))
 
-    def img_recognition_task(self, dtype='uint8'):
-        img_paths, labels = self.raw_recognition_task()
+    def img_classification_task(self, dtype='uint8'):
+        img_paths, labels = self.raw_classification_task()
         imgs = larray.lmap(
                 utils.image.ImgLoader(shape=(250, 250, 3), dtype=dtype),
                 img_paths)
@@ -362,4 +360,3 @@ def main_fetch():
 def main_show():
     raise NotImplementedError(
             "Please specify either lfw.Funneled or lfw.Original")
-
