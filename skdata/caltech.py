@@ -65,7 +65,13 @@ class BaseCaltech(object):
     'easy_install -U joblib'.
     """
 
-    def __init__(self, meta=None):
+    def __init__(self, meta=None, seed=0, ntrain=15, ntest=15, num_splits=10):
+
+        self.seed = seed
+        self.ntrain = ntrain
+        self.ntest = ntest
+        self.num_splits = num_splits
+
         if meta is not None:
             self._meta = meta
 
@@ -148,22 +154,40 @@ class BaseCaltech(object):
 
         return meta
 
-    def get_splits(self, seed=0, ntrain=15, ntest=15, num_splits=10):
+    @property
+    def splits(self):
+        """
+        generates splits and attaches them in the "splits" attribute
+
+        """
+        if not hasattr(self, '_splits'):
+            seed = self.seed
+            ntrain = self.ntrain
+            ntest = self.ntest
+            num_splits = self.num_splits
+            self._splits = self.generate_splits(seed, ntrain,
+                                                ntest, num_splits)
+        return self._splits
+
+    def generate_splits(self, seed, ntrain, ntest, num_splits):
         meta = self.meta
+        ntrain = self.ntrain
+        ntest = self.ntest
         np.random.seed(seed)
-        self.splits = []
+        splits = {}
         for split_id in range(num_splits):
-            split = {'train': [], 'test': []}
+            splits['train' + str(split_id)] = []
+            splits['test' + str(split_id)] = []
             for name in self.names:
                 cat = [m for m in meta if m['name'] == name]
                 L = len(cat)
                 assert L >= ntrain + ntest, 'category %s too small' % name
                 perm = np.random.permutation(L)
                 for ind in perm[:ntrain]:
-                    split['train'].append(cat[ind]['id'])
+                    splits['train' + str(split_id)].append(cat[ind]['id'])
                 for ind in perm[ntrain: ntrain + ntest]:
-                    split['test'].append(cat[ind]['id'])
-            self.splits.append(split)
+                    splits['test' + str(split_id)].append(cat[ind]['id'])
+        return splits
 
     # ------------------------------------------------------------------------
     # -- Dataset Interface: clean_up()
@@ -177,15 +201,19 @@ class BaseCaltech(object):
     # -- Standard Tasks
     # ------------------------------------------------------------------------
 
-    def raw_classification_task(self):
+    def raw_classification_task(self, split=None):
         """Return image_paths, labels"""
-        image_paths = [m['filename'] for m in self.meta]
-        names = np.asarray([m['name'] for m in self.meta])
+        if split:
+            inds = self.splits[split]
+        else:
+            inds = xrange(len(self.meta))
+        image_paths = [self.meta[ind]['filename'] for ind in inds]
+        names = np.asarray([self.meta[ind]['name'] for ind in inds])
         labels = int_labels(names)
         return image_paths, labels
 
-    def img_classification_task(self, dtype='uint8'):
-        img_paths, labels = self.raw_classification_task()
+    def img_classification_task(self, dtype='uint8', split=None):
+        img_paths, labels = self.raw_classification_task(split=split)
         imgs = larray.lmap(ImgLoader(ndim=3, dtype=dtype, mode='RGB'),
                            img_paths)
         return imgs, labels
