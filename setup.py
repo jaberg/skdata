@@ -57,6 +57,7 @@ if __name__ == "__main__":
 
     setup(name=DISTNAME,
           maintainer=MAINTAINER,
+          packages=setuptools.find_packages(),
           include_package_data=True,
           maintainer_email=MAINTAINER_EMAIL,
           description=DESCRIPTION,
@@ -65,7 +66,8 @@ if __name__ == "__main__":
           version=VERSION,
           download_url=DOWNLOAD_URL,
           long_description=LONG_DESCRIPTION,
-          zip_safe=False,  # the package can run out of an .egg file
+          zip_safe=True,  # the package can run out of an .egg file
+          install_requires=['numpy>=1.3.0'], # 'glumpy>=0.1.0'
           classifiers=[
               'Intended Audience :: Science/Research',
               'Intended Audience :: Developers',
