@@ -334,7 +334,7 @@ class BaseLFW(object):
         num = int(num)
         assert num >= 0
         rng = np.random.RandomState(seed)
-        for _ind in range(num+1):
+        for _ind in range(num+1):  #"simulate" choosing num permutations
             perm = rng.permutation(ntr + nt)
         if part == 'train':
             lpaths = lpaths[perm[: ntr]]
