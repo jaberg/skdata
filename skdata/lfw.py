@@ -333,9 +333,8 @@ class BaseLFW(object):
         assert part in ['train', 'test']
         num = int(num)
         assert num >= 0
-        np.random.seed(seed)
-        for _ind in range(num + 1):
-            perm = np.random.permutation(ntr + nt)
+        rng = np.random.RandomState(seed + num)
+        perm = rng.permutation(ntr + nt)
         if part == 'train':
             lpaths = lpaths[perm[: ntr]]
             rpaths = rpaths[perm[: ntr]]
@@ -357,6 +356,12 @@ class BaseLFW(object):
     def img_verification_task(self, split=None, dtype='uint8',
                               resplit=None, seed=0):
 
+        """
+            use resplit to specify a resplitting of the view data
+            e.g. resplit='train0' to get the training portion of the 0th split
+            seed is used to control seeding of random number generator for
+            resplitting generation.
+        """
         assert not (resplit is not None and split is not None)
 
         if resplit is not None:
