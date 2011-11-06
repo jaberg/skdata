@@ -333,8 +333,9 @@ class BaseLFW(object):
         assert part in ['train', 'test']
         num = int(num)
         assert num >= 0
-        rng = np.random.RandomState(seed + num)
-        perm = rng.permutation(ntr + nt)
+        rng = np.random.RandomState(seed)
+        for _ind in range(num+1):
+            perm = rng.permutation(ntr + nt)
         if part == 'train':
             lpaths = lpaths[perm[: ntr]]
             rpaths = rpaths[perm[: ntr]]
