@@ -231,3 +231,13 @@ def test_img_verification_task():
     dset = lfw.Original()
     X, Y, z = dset.img_verification_task(dtype='float32')
     tasks.assert_img_verification(X, Y, z)
+
+
+def test_img_verification_resplit():
+    dset = lfw.Original()
+    X, Y, z = dset.img_verification_task(resplit='train_1')
+    assert len(X) == 2200
+    assert (z[:10] == np.array([1, 0, 0, 0, 1, 1, 1, 0, 1, 1])).all()
+    X, Y, z = dset.img_verification_task(resplit='test_3')
+    assert len(X) == 1000
+    assert (z[:10] == np.array([1, 0, 1, 1, 0, 1, 0, 1, 1, 1])).all()
