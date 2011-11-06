@@ -359,7 +359,7 @@ class BaseLFW(object):
 
         """
             use resplit to specify a resplitting of the view data
-            e.g. resplit='train0' to get the training portion of the 0th split
+            e.g. resplit='train_0' to get the training portion of the 0th split
             seed is used to control seeding of random number generator for
             resplitting generation.
         """
