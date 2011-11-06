@@ -362,7 +362,7 @@ class BaseLFW(object):
             seed is used to control seeding of random number generator for
             resplitting generation.
         """
-        assert not (resplit is not None and split is not None)
+        assert resplit is None or split is None
 
         if resplit is not None:
             lpaths, rpaths, labels = self.raw_verification_task_resplit(resplit,
