@@ -334,7 +334,7 @@ class BaseLFW(object):
         num = int(num)
         assert num >= 0
         rng = np.random.RandomState(seed)
-        for _ind in range(num+1):  #"simulate" choosing num permutations
+        for _ind in range(num + 1):  # "simulate" choosing num + 1 permutations
             perm = rng.permutation(ntr + nt)
         if part == 'train':
             lpaths = lpaths[perm[: ntr]]
@@ -358,10 +358,10 @@ class BaseLFW(object):
                               resplit=None, seed=0):
 
         """
-            use resplit to specify a resplitting of the view data
+            use resplit to generate a resplitting of the view data
             e.g. resplit='train_0' to get the training portion of the 0th split
-            seed is used to control seeding of random number generator for
-            resplitting generation.
+            seed initializes random number generator for resplitting
+            generation. default seed=0 generates standard "canonical" splits.
         """
         assert resplit is None or split is None
 
