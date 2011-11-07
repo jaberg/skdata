@@ -316,6 +316,37 @@ class BaseLFW(object):
                 np.asarray(right_image_paths),
                 np.asarray(labels, dtype='int'))
 
+    def raw_verification_task_resplit(self, split, seed=0):
+        """
+           this function 'resplits' the View 1 data randomly, preserving pairs
+        """
+        lpathstr, rpathstr, labelstr = self.raw_verification_task('DevTrain')
+        lpathst, rpathst, labelst = self.raw_verification_task('DevTest')
+        lpaths = np.concatenate([lpathstr, lpathst])
+        rpaths = np.concatenate([rpathstr, rpathst])
+        labels = np.concatenate([labelstr, labelst])
+
+        ntr = len(labelstr)
+        nt = len(labelst)
+
+        part, num = split.split('_')
+        assert part in ['train', 'test']
+        num = int(num)
+        assert num >= 0
+        rng = np.random.RandomState(seed)
+        for _ind in range(num + 1):  # "simulate" choosing num + 1 permutations
+            perm = rng.permutation(ntr + nt)
+        if part == 'train':
+            lpaths = lpaths[perm[: ntr]]
+            rpaths = rpaths[perm[: ntr]]
+            labels = labels[perm[: ntr]]
+        else:
+            lpaths = lpaths[perm[ntr: ntr + nt]]
+            rpaths = rpaths[perm[ntr: ntr + nt]]
+            labels = labels[perm[ntr: ntr + nt]]
+
+        return lpaths, rpaths, labels
+
     def img_classification_task(self, dtype='uint8'):
         img_paths, labels = self.raw_classification_task()
         imgs = larray.lmap(
@@ -323,8 +354,24 @@ class BaseLFW(object):
                 img_paths)
         return imgs, labels
 
-    def img_verification_task(self, split='DevTrain', dtype='uint8'):
-        lpaths, rpaths, labels = self.raw_verification_task(split)
+    def img_verification_task(self, split=None, dtype='uint8',
+                              resplit=None, seed=0):
+
+        """
+            use resplit to generate a resplitting of the view data
+            e.g. resplit='train_0' to get the training portion of the 0th split
+            seed initializes random number generator for resplitting
+            generation. default seed=0 generates standard "canonical" splits.
+        """
+        assert resplit is None or split is None
+
+        if resplit is not None:
+            lpaths, rpaths, labels = self.raw_verification_task_resplit(resplit,
+                                                                     seed=seed)
+        else:
+            if split is None:
+                split = 'DevTrain'
+            lpaths, rpaths, labels = self.raw_verification_task(split)
         limgs = larray.lmap(
                 utils.image.ImgLoader(shape=(250, 250, 3), dtype=dtype),
                 lpaths)
