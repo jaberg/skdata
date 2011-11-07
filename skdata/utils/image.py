@@ -4,23 +4,29 @@ import logging
 logger = logging.getLogger(__name__)
 
 try:
-    try:
-        from scipy.misc import imread
-    except ImportError:
-        from scipy.misc.pilutil import imread
-    from scipy.misc import imresize
+    import Image
+    from scipy.misc import imresize, fromimage
 except ImportError:
     logger.warn("The Python Imaging Library (PIL)"
             " is required to load data from jpeg files.")
 
+
+def imread(name, flatten=0, mode=None):
+    im = Image.open(name)
+    if mode is not None and im.mode != mode:
+        im = im.convert(mode)
+    return fromimage(im, flatten=flatten)
+
+
 class ImgLoader(object):
-    def __init__(self, shape=None, ndim=None, dtype='uint8'):
+    def __init__(self, shape=None, ndim=None, dtype='uint8', mode=None):
         self._shape = shape
         if ndim is None:
             self._ndim = None if (shape is None) else len(shape)
         else:
             self._ndim = ndim
         self._dtype = dtype
+        self.mode = mode
 
     def rval_getattr(self, attr, objs):
         if attr == 'shape' and self._shape is not None:
@@ -32,7 +38,8 @@ class ImgLoader(object):
         raise AttributeError(attr)
 
     def __call__(self, file_path):
-        rval = np.asarray(imread(file_path), dtype=self._dtype)
+        rval = np.asarray(imread(file_path, mode=self.mode),
+                          dtype=self._dtype)
         if 'float' in str(self._dtype):
             rval /= 255.0
         if self._ndim is not None and self._ndim != rval.ndim:
@@ -52,8 +59,12 @@ load_bw_f32 = ImgLoader(ndim=2, dtype='float32')
 load_bw_u8 = ImgLoader(ndim=2, dtype='uint8')
 
 if 0:
-    def load_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
-                       color=False, slice_=(slice(70, 195), slice(78, 172)),
+    def load_lfw_pairs(subset='train',
+                       data_home=None,
+                       funneled=True,
+                       resize=0.5,
+                       color=False,
+                       slice_=(slice(70, 195), slice(78, 172)),
                        download_if_missing=False):
         """Loader for the Labeled Faces in the Wild (LFW) pairs dataset
 
@@ -71,7 +82,8 @@ if 0:
         the same person.
 
         In the official `README.txt`_ this task is described as the
-        "Restricted" task.  The "Unrestricted" variant is not currently supported.
+        "Restricted" task.  The "Unrestricted" variant is not currently
+        supported.
 
           .. _`README.txt`: http://vis-www.cs.umass.edu/lfw/README.txt
 
