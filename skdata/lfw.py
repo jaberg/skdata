@@ -32,16 +32,17 @@ detector from various online websites.
 # - self.descr should be used
 # - self.meta_const should be used to store the image shapes
 
+import logging
 import os
 from os import listdir, makedirs, remove
 from os.path import exists, isdir
 import shutil
 import sys
-
-import logging
-import numpy as np
-import urllib
 import tarfile
+import urllib
+
+import lockfile  # available from pypi
+import numpy as np
 
 from data_home import get_data_home
 import larray
@@ -209,37 +210,42 @@ class BaseLFW(object):
         if not exists(self.home()):
             makedirs(self.home())
 
-        # download the little metadata .txt files
-        for target_filename in self.PAIRS_FILENAMES:
-            target_filepath = self.home(target_filename)
-            if not exists(target_filepath):
-                if download_if_missing:
-                    url = self.PAIRS_BASE_URL + target_filename
-                    logger.warn("Downloading LFW metadata: %s => %s" % (
-                        url, target_filepath))
-                    downloader = urllib.urlopen(url)
-                    data = downloader.read()
-                    open(target_filepath, 'wb').write(data)
-                else:
-                    raise IOError("%s is missing" % target_filepath)
+        with lockfile.FileLock(self.home()) as lock:
 
-        if not exists(self.home(self.IMAGEDIR)):
-            archive_path = self.home('images.tgz')
-            # download the tgz
-            if not exists(archive_path):
-                if download_if_missing:
-                    logger.warn("Downloading LFW data (~200MB): %s => %s" % (
-                            self.URL, archive_path))
-                    downloader = urllib.urlopen(self.URL)
-                    data = downloader.read()
-                    # don't open file until download is complete
-                    open(archive_path, 'wb').write(data)
-                else:
-                    raise IOError("%s is missing" % target_filepath)
+            # download the little metadata .txt files
+            for target_filename in self.PAIRS_FILENAMES:
+                target_filepath = self.home(target_filename)
+                if not exists(target_filepath):
+                    if download_if_missing:
+                        url = self.PAIRS_BASE_URL + target_filename
+                        logger.warn("Downloading LFW metadata: %s => %s" % (
+                            url, target_filepath))
+                        downloader = urllib.urlopen(url)
+                        data = downloader.read()
+                        open(target_filepath, 'wb').write(data)
+                    else:
+                        raise IOError("%s is missing" % target_filepath)
 
-            logger.info("Decompressing the data archive to %s", self.home())
-            tarfile.open(archive_path, "r:gz").extractall(path=self.home())
-            remove(archive_path)
+            if not exists(self.home(self.IMAGEDIR)):
+                archive_path = self.home('images.tgz')
+                # download the tgz
+                if not exists(archive_path):
+                    if download_if_missing:
+                        logger.warn(
+                                "Downloading LFW data (~200MB): %s => %s" % (
+                                self.URL, archive_path))
+                        downloader = urllib.urlopen(self.URL)
+                        data = downloader.read()
+                        # don't open file until download is complete
+                        open(archive_path, 'wb').write(data)
+                    else:
+                        raise IOError("%s is missing" % target_filepath)
+
+                logger.info("Decompressing the data archive to %s",
+                        self.home())
+                tarfile.open(archive_path, "r:gz").extractall(
+                        path=self.home())
+                remove(archive_path)
 
     #
     # Driver routines to be called by datasets.main
