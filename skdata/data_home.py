@@ -23,7 +23,7 @@ import shutil
 DATA_HOME = os.path.expanduser(
         os.environ.get(
             'SCIKIT_DATA',
-            os.path.join('~', '.scikit-data')))
+            os.path.join('~', '.skdata')))
 
 def get_data_home():
     if not os.path.exists(DATA_HOME):
