@@ -356,7 +356,7 @@ class BaseLFW(object):
     def img_classification_task(self, dtype='uint8'):
         img_paths, labels = self.raw_classification_task()
         imgs = larray.lmap(
-                utils.image.ImgLoader(shape=(250, 250, 3), dtype=dtype),
+                utils.image.ImgLoader(shape=self.img_shape, dtype=dtype),
                 img_paths)
         return imgs, labels
 
@@ -379,10 +379,10 @@ class BaseLFW(object):
                 split = 'DevTrain'
             lpaths, rpaths, labels = self.raw_verification_task(split)
         limgs = larray.lmap(
-                utils.image.ImgLoader(shape=(250, 250, 3), dtype=dtype),
+                utils.image.ImgLoader(shape=self.img_shape, dtype=dtype),
                 lpaths)
         rimgs = larray.lmap(
-                utils.image.ImgLoader(shape=(250, 250, 3), dtype=dtype),
+                utils.image.ImgLoader(shape=self.img_shape, dtype=dtype),
                 rpaths)
         return limgs, rimgs, labels
 
@@ -391,18 +391,21 @@ class Original(BaseLFW):
     URL = "http://vis-www.cs.umass.edu/lfw/lfw.tgz"
     NAME = 'original'  # self.home() is <CACHE>/lfw/<NAME>
     IMAGEDIR = 'lfw'   # this matches what comes out of the tgz
+    img_shape = (250, 250, 3)
 
 
 class Funneled(BaseLFW):
     URL = "http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz"
     NAME = 'funneled'          # self.home() is <CACHE>/lfw/<NAME>
     IMAGEDIR = 'lfw_funneled'  # this matches what comes out of the tgz
+    img_shape = (250, 250, 3)
 
 
 class Aligned(BaseLFW):
     URL = "http://www.openu.ac.il/home/hassner/data/lfwa/lfwa.tar.gz"
     NAME = 'aligned'          # self.home() is <CACHE>/lfw/<NAME>
-    IMAGEDIR = 'lfw_aligned'  # this matches what comes out of the tgz
+    IMAGEDIR = 'lfw2'         # this matches what comes out of the tgz
+    img_shape = (250, 250)
 
 
 def main_fetch():
