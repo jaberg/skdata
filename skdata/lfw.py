@@ -210,7 +210,11 @@ class BaseLFW(object):
         if not exists(self.home()):
             makedirs(self.home())
 
-        with lockfile.FileLock(self.home()) as lock:
+        lock = lockfile.FileLock(self.home())
+        if lock.is_locked():
+            logger.warn('%s is locked, waiting for release' %
+                    self.home())
+        with lock as _lock:
 
             # download the little metadata .txt files
             for target_filename in self.PAIRS_FILENAMES:
