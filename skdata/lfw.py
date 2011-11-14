@@ -307,9 +307,55 @@ class BaseLFW(object):
         labels = utils.int_labels(names)
         return image_paths, labels
 
+    def raw_verification_task_view2(self, split_role, split_k):
+        """Return a train or test split from View 2
+
+        :param split_role: either 'train' or 'test'
+        :param split_k: an integer from 0 to 9 inclusive.
+
+        :param rtype: [optional] a callable that casts the return value (for
+                      internal use)
+
+        :returns: Return left_image_paths, right_image_paths, labels of LFW
+        "View 2" that is to be used for testing.
+
+        """
+        split_k = int(split_k)
+        if split_k not in range(10):
+            raise ValueError(split_k)
+        if split_role not in ('train', 'test'):
+            raise ValueError(split_role)
+        if split_role == 'test':
+            return self.raw_verification_task(split='fold_%i' % split_k)
+        else:
+            # -- split_role is 'train'
+            L, R, Y = [], [], []
+            for k in range(10):
+                if k == split_k:
+                    continue
+                Lk, Rk, Yk = self.raw_verification_task('fold_%i' % k)
+                L += list(Lk)
+                R += list(Rk)
+                Y += list(Yk)
+            return (np.asarray(L),
+                    np.asarray(R),
+                    np.asarray(Y, dtype='int'))
+
     def raw_verification_task(self, split='DevTrain'):
-        """Return left_image_paths, right_image_paths, labels"""
+        """Return left_image_paths, right_image_paths, labels
+
+        :param split: one of 'DevTrain', 'DevTest', 'fold_0', 'fold_1', ...
+                    'fold_9'.
+
+        DevTrain returns the "View 1" training data. DevTest returns the
+        "View 1" testing data.  If split is `fold_k`, then this function
+        returns the test data of the k'th split from the "View 2" set.
+        """
         paths = {}
+        if split not in ('DevTrain', 'DevTest',
+                'fold_0', 'fold_1', 'fold_2', 'fold_3', 'fold_4', 'fold_5',
+                'fold_6', 'fold_7', 'fold_8', 'fold_9'):
+            raise KeyError('invalid split', split)
         for m in self.meta:
             for pid in m['pairs'][split]:
                 paths.setdefault(pid, []).append(m)
@@ -364,6 +410,16 @@ class BaseLFW(object):
                 img_paths)
         return imgs, labels
 
+    def img_verification_task_from_raw(self, lpaths, rpaths, labels,
+            dtype='uint8'):
+        limgs = larray.lmap(
+                utils.image.ImgLoader(shape=self.img_shape, dtype=dtype),
+                lpaths)
+        rimgs = larray.lmap(
+                utils.image.ImgLoader(shape=self.img_shape, dtype=dtype),
+                rpaths)
+        return limgs, rimgs, labels
+
     def img_verification_task(self, split=None, dtype='uint8',
                               resplit=None, seed=0):
 
@@ -373,6 +429,10 @@ class BaseLFW(object):
             seed initializes random number generator for resplitting
             generation. default seed=0 generates standard "canonical" splits.
         """
+        # TODO: deprecate this function
+        #      It's simpler to use img_verification_task_from_raw(
+        #                * raw_verification_...) since there are now multiple
+        #      ways of specifying raw verification tasks.
         assert resplit is None or split is None
 
         if resplit is not None:
@@ -382,13 +442,9 @@ class BaseLFW(object):
             if split is None:
                 split = 'DevTrain'
             lpaths, rpaths, labels = self.raw_verification_task(split)
-        limgs = larray.lmap(
-                utils.image.ImgLoader(shape=self.img_shape, dtype=dtype),
-                lpaths)
-        rimgs = larray.lmap(
-                utils.image.ImgLoader(shape=self.img_shape, dtype=dtype),
-                rpaths)
-        return limgs, rimgs, labels
+
+        return self.img_verification_task_from_raw(lpaths, rpaths, labels,
+                dtype=dtype)
 
 
 class Original(BaseLFW):

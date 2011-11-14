@@ -247,3 +247,18 @@ def test_img_verification_resplit():
     assert (z[:10] == np.array([1, 1, 1, 1, 0, 0, 0, 0, 0, 1])).all()
     X, Y, z = dset.raw_verification_task_resplit('train_1', seed=1)
     assert (z[:10] == np.array([0, 0, 1, 1, 1, 0, 0, 1, 1, 0])).all()
+
+
+def test_raw_verification_task_view2():
+    dset = lfw.Original()
+    for k in range(10):
+        train = dset.raw_verification_task_view2('train', k)
+        test = dset.raw_verification_task_view2('test', k)
+        assert len(test[0]) == len(test[1]) == len(test[2])
+        assert len(test[0]) * 9 == len(train[0])
+        testset = set(zip(test[0], test[1]))
+        print 'K', k, len(testset)
+        for l, r, y in zip(*train):
+            assert (l, r) not in testset
+            assert (r, l) not in testset
+
