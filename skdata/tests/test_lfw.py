@@ -50,6 +50,7 @@ def namelike(fullpath):
 class EmptyLFW(lfw.BaseLFW):
     NAME = 'Empty'
     ARCHIVE_NAME = "i_dont_exist.tgz"
+    img_shape = (250, 250, 3)
 
     def home(self, *names):
         return os.path.join(SCIKIT_LEARN_DATA_EMPTY, 'lfw', self.NAME, *names)
@@ -61,6 +62,7 @@ class EmptyLFW(lfw.BaseLFW):
 class FakeLFW(lfw.BaseLFW):
     NAME = 'Fake'
     IMAGEDIR = 'lfw_fake'  # corresponds to lfw, lfw_funneled, lfw_aligned
+    img_shape = (250, 250, 3)
 
     def home(self, *names):
         return os.path.join(SCIKIT_LEARN_DATA, 'lfw', self.NAME, *names)
