@@ -176,17 +176,17 @@ class BaseCaltech(object):
         rng = np.random.RandomState(seed)
         splits = {}
         for split_id in range(num_splits):
-            splits['train' + str(split_id)] = []
-            splits['test' + str(split_id)] = []
+            splits['train_' + str(split_id)] = []
+            splits['test_' + str(split_id)] = []
             for name in self.names:
                 cat = [m for m in meta if m['name'] == name]
                 L = len(cat)
                 assert L >= ntrain + ntest, 'category %s too small' % name
                 perm = rng.permutation(L)
                 for ind in perm[:ntrain]:
-                    splits['train' + str(split_id)].append(cat[ind]['id'])
+                    splits['train_' + str(split_id)].append(cat[ind]['id'])
                 for ind in perm[ntrain: ntrain + ntest]:
-                    splits['test' + str(split_id)].append(cat[ind]['id'])
+                    splits['test_' + str(split_id)].append(cat[ind]['id'])
         return splits
 
     # ------------------------------------------------------------------------
