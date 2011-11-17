@@ -24,9 +24,7 @@ http://www.vision.caltech.edu/feifeili/Fei-Fei_GMBV04.pdf
 
 # License: Simplified BSD
 
-# XXX: standard categorization tasks (csv-based)
-
-
+import cPickle
 import os
 from os import path
 import shutil
@@ -124,35 +122,48 @@ class BaseCaltech(object):
         if not hasattr(self, '_meta'):
             self.fetch(download_if_missing=True)
             self._meta = self._get_meta()
-        self.names = sorted(os.listdir(self.home(self.SUBDIR)))
+            self.names = sorted(os.listdir(self.home(self.SUBDIR)))
         return self._meta
 
     def _get_meta(self):
+        try:
+            rval = cPickle.load(
+                    open(
+                        self.home(self.SUBDIR + '.meta.pkl')))
+            open(rval[0]['filename'])
+            return rval
+        except IOError:
+            # IOError may come either from a missing pkl file
+            # or from a missing image (rval[0]['filename']) but in both
+            # cases the response is to rebuild the metadata
+            names = sorted(os.listdir(self.home(self.SUBDIR)))
 
-        names = sorted(os.listdir(self.home(self.SUBDIR)))
+            meta = []
+            ind = 0
 
-        meta = []
-        ind = 0
+            for name in names:
 
-        for name in names:
+                pattern = self.home(self.SUBDIR, name, '*.jpg')
 
-            pattern = self.home(self.SUBDIR, name, '*.jpg')
+                img_filenames = sorted(glob(pattern))
 
-            img_filenames = sorted(glob(pattern))
+                for img_filename in img_filenames:
+                    img_data = open(img_filename, 'rb').read()
+                    sha1 = hashlib.sha1(img_data).hexdigest()
 
-            for img_filename in img_filenames:
-                img_data = open(img_filename, 'rb').read()
-                sha1 = hashlib.sha1(img_data).hexdigest()
+                    data = dict(name=name,
+                                id=ind,
+                                filename=img_filename,
+                                sha1=sha1)
 
-                data = dict(name=name,
-                            id=ind,
-                            filename=img_filename,
-                            sha1=sha1)
+                    meta.append(data)
+                    ind += 1
 
-                meta += [data]
-                ind += 1
+            cPickle.dump(
+                    meta,
+                    open(self.home(self.SUBDIR + '.meta.pkl'), 'w'))
 
-        return meta
+            return meta
 
     @property
     def splits(self):
@@ -208,8 +219,8 @@ class BaseCaltech(object):
         else:
             inds = xrange(len(self.meta))
         image_paths = [self.meta[ind]['filename'] for ind in inds]
-        names = np.asarray([self.meta[ind]['name'] for ind in inds])
-        labels = int_labels(names)
+        names = [self.meta[ind]['name'] for ind in inds]
+        labels = np.searchsorted(self.names, names)
         return image_paths, labels
 
     def img_classification_task(self, dtype='uint8', split=None):
