@@ -1,10 +1,16 @@
 """
 LazyArray
 """
-import sys
-import StringIO
-import numpy as np
+import cPickle
 import logging
+import os
+import StringIO
+import subprocess
+import sys
+import numpy as np
+
+from .data_home import get_data_home
+
 logger = logging.getLogger(__name__)
 
 class InferenceError(Exception):
@@ -29,12 +35,17 @@ def given_get(given, thing):
 
 class lazy(object):
     def __str__(self):
-        return pprint_str(self)
+        return lprint_str(self)
 
     def __print__(self):
         return self.__repr__()
 
     def clone(self, given):
+        """
+        Return a new object that will behave like self, but with new
+        inputs.  For any input `obj` to self, the clone should have
+        input `given_get(given, self.obj)`.
+        """
         raise NotImplementedError('override-me')
 
     def inputs(self):
@@ -46,9 +57,14 @@ class lazy(object):
 
 class larray(lazy):
     """
-    .shape
-    .ndim
-    .dtype
+    A class inheriting from larray is like `lazy` but promises
+    additionally to provide three attributes or properties:
+    - .shape
+    - .ndim
+    - .dtype
+    - .strides
+
+    These should be used to maintain consistency with numpy.
     """
     def loop(self):
         return loop(self)
@@ -123,7 +139,7 @@ class lmap(larray):
 
     def __array__(self):
         #XXX: use self.batch_len to produce this more efficiently
-        return numpy.asarray([self.fn(*[o[i] for o in self.objs])
+        return np.asarray([self.fn(*[o[i] for o in self.objs])
                 for i in xrange(len(self))])
 
     def __print__(self):
@@ -138,8 +154,9 @@ class lmap(larray):
 def lzip(*arrays):
     # XXX: make a version of this method that supports call_batch
     class fn(object):
+        __name__ = 'lzip'
         def __call__(self, *args):
-            return numpy.asarray(args)
+            return np.asarray(args)
         def rval_getattr(self, name, objs=None):
             if name == 'shape':
                 shps = [o.shape for o in objs]
@@ -250,7 +267,7 @@ def clone(thing, given):
     return _given[thing]
 
 
-def pprint(thing, prefix='', buf=None):
+def lprint(thing, prefix='', buf=None):
     if buf is None:
         buf = sys.stdout
     if hasattr(thing, '__print__'):
@@ -259,17 +276,14 @@ def pprint(thing, prefix='', buf=None):
         print >> buf, '%s%s'%(prefix, str(thing))
     if is_larray(thing):
         for ii in thing.inputs():
-            pprint(ii, prefix+'    ', buf)
+            lprint(ii, prefix+'    ', buf)
 
 
-def pprint_str(thing):
+def lprint_str(thing):
     sio = StringIO.StringIO()
-    pprint(thing, '', sio)
+    lprint(thing, '', sio)
     return sio.getvalue()
 
-#
-# Stuff to consider factoring out somewhere because of the imread dependency
-#
 
 def Flatten(object):
     def rval_getattr(self, attr, objs):
@@ -278,16 +292,160 @@ def Flatten(object):
             if None in shp:
                 return (None,)
             else:
-                return (numpy.prod(shp),)
+                return (np.prod(shp),)
         if attr == 'ndim':
             return 1
         if attr == 'dtype':
             return objs[0].dtype
         raise AttributeError(attr)
     def __call__(self, thing):
-        return numpy.flatten(thing)
+        return np.flatten(thing)
 
 def flatten_elements(seq):
     return lmap(Flatten(), seq)
 
+
+memmap_README = """\
+Memmap files created by LazyCacheMemmap
+
+  data.raw - memmapped array data file, no header
+  valid.raw - memmapped array validity file, no header
+  header.pkl - python pickle of meta-data (dtype, shape) for data.raw
+
+The validitiy file is a byte array that indicates which elements of
+data.raw are valid.  If valid.raw byte `i` is 1, then the `i`'th tensor
+slice of data.raw has been computed and is usable. If it is 0, then it
+has not been computed and the slice value is undefined. No other values
+should appear in the valid.raw array.
+"""
+
+class CacheMixin(object):
+    def populate(self, batchsize=1):
+        """
+        Populate a lazy array cache node by iterating over the source in
+        increments of `batchsize`.
+        """
+        if batchsize <= 0:
+            raise ValueError('non-positive batch size')
+        if batchsize == 1:
+            for i in xrange(self.shape[0]):
+                self[i]
+        else:
+            while i < self.shape[0]:
+                self[i:i + batchsize]
+                i += batchsize
+
+
+class cache_memmap(larray, CacheMixin):
+    """
+    Provide a lazily-filled cache of a larray (obj) via a memmap file
+    associated with (name).
+
+
+    The memmap will be stored in `basedir`/`name` which defaults to
+    `cache_memmap.ROOT`/`name`,
+    which defaults to '~/.skdata/memmaps'/`name`.
+    """
+
+    ROOT = os.path.join(get_data_home(), 'memmaps')
+
+    def __init__(self, obj, name, basedir=None, msg=None):
+        """
+        If new files are created, then `msg` will be written to README.msg
+        """
+        self.obj = obj
+
+        if basedir is None:
+            basedir = self.ROOT
+        self.dirname = dirname = os.path.join(basedir, name)
+        subprocess.call(['mkdir', '-p', dirname])
+
+        data_path = os.path.join(dirname, 'data.raw')
+        valid_path = os.path.join(dirname, 'valid.raw')
+        header_path = os.path.join(dirname, 'header.pkl')
+        logger.info('Creating memmap %s for features of shape %s' % (
+                data_path,
+                str(obj.shape)))
+
+        try:
+            dtype, shape = cPickle.load(open(header_path))
+            if dtype == obj.dtype and shape == obj.shape:
+                mode = 'r+'
+            else:
+                mode = 'w+'
+        except IOError:
+            mode = 'w+'
+
+        self.memmap = np.memmap(data_path,
+            dtype=obj.dtype,
+            mode=mode,
+            shape=obj.shape)
+
+        self.memmap_valid = np.memmap(valid_path,
+            dtype='int8',
+            mode=mode,
+            shape=(obj.shape[0],))
+
+        if mode == 'w+':
+            # initialize a new set of files
+            cPickle.dump((obj.dtype, obj.shape),
+                         open(header_path, 'w'))
+            # mark all memmap elements as uncomputed
+            self.memmap_valid[:] = 0
+
+            open(os.path.join(dirname, 'README.txt'), 'w').write(
+                memmap_README)
+            if msg is not None:
+                open(os.path.join(dirname, 'README.msg'), 'w').write(
+                    str(msg))
+
+        self.rows_computed = 0
+
+    @property
+    def shape(self):
+        return self.obj.shape
+
+    @property
+    def dtype(self):
+        return self.obj.dtype
+
+    @property
+    def ndim(self):
+        return self.obj.ndim
+
+    def inputs(self):
+        return [self.obj]
+
+    def clone(self, given):
+        raise NotImplementedError()
+        return self.__class__(
+            obj=given_get(given, self.obj),
+            dirname=self.dirname + '_clone')
+    # XXX: What if you clone more than once? This implementation would
+    #      cause interference
+
+    def __getitem__(self, item):
+        if isinstance(item, (int, np.int)):
+            if self.memmap_valid[item]:
+                return self.memmap[item]
+            else:
+                obj_item = self.obj[item]
+                self.memmap[item] = obj_item
+                self.memmap_valid[item] = 1
+                self.rows_computed += 1
+                return self.memmap[item]
+        else:
+            # could be a slice, an intlist, a tuple
+            v = self.memmap_valid[item]
+            assert v.ndim == 1
+            if np.all(v):
+                return self.memmap[item]
+            # otherwise at least some of the requested elements must be
+            # computed
+            # XXX: this brute-force recomputes all of the requested elements
+            self.rows_computed += v.sum()
+            values = self.obj[item]
+            self.memmap_valid[item] = 1
+            self.memmap[item] = values
+            return self.memmap[item]
 

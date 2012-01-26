@@ -1,3 +1,4 @@
+import tempfile
 import numpy as np
 from skdata import larray
 
@@ -14,10 +15,9 @@ def test_usage():
 
     paths = ['a', 'b', 'c', 'd']  # imagine some huge list of image paths
     rgb_imgs = larray.lmap(load_rgb, paths)
-    grey_imgs = larray.lmap(load_grey, paths)
-    paths_64x64 = larray.lmap(to_64x64, grey_imgs)
 
-    train_set = larray.reindex(rgb_imgs, np.random.permutation(len(paths))).loop()
+    train_set = larray.reindex(rgb_imgs, np.random.permutation(len(paths))
+                              ).loop()
 
     l10 = list(train_set[range(10)])
     print l10
@@ -36,11 +36,11 @@ def test_using_precompute():
         return img + '_64x64'
 
     paths = ['a', 'b', 'c', 'd']  # imagine some huge list of image paths
-    rgb_imgs = larray.lmap(load_rgb, paths)
     grey_imgs = larray.lmap(load_grey, paths)
     paths_64x64 = larray.lmap(to_64x64, grey_imgs)
 
-    train_set = larray.reindex(paths_64x64, np.random.permutation(len(paths))).loop()
+    train_set = larray.reindex(paths_64x64, np.random.permutation(len(paths))
+                              ).loop()
 
     # example user code starts here.
     # It is easy to memmap the __array__ of paths_64x64, but
@@ -64,12 +64,53 @@ def test_using_precompute():
             'from', 'stuff']
 
 
-def test_pprint():
+def test_lprint():
     paths = None
-    rgb_imgs = larray.lmap(test_pprint, paths)
-    rgb_imgs2 = larray.lmap(test_pprint, rgb_imgs)
-    s = larray.pprint_str(rgb_imgs2)
+    rgb_imgs = larray.lmap(test_lprint, paths)
+    rgb_imgs2 = larray.lmap(test_lprint, rgb_imgs)
+    s = larray.lprint_str(rgb_imgs2)
     print s
-    assert s == """lmap(test_pprint, ...)
-    lmap(test_pprint, ...)
+    assert s == """lmap(test_lprint, ...)
+    lmap(test_lprint, ...)
         None\n"""
+
+larray.cache_memmap.ROOT = tempfile.mkdtemp(prefix="skdata_test_memmap_root")
+
+def test_memmap_cache():
+    base0 = np.arange(10)
+    base1 = -np.arange(10)
+    base = np.vstack([base0, base1]).T
+    # base[0] = [0, 0]
+    # base[1] = [1, -1]
+    # ...
+    cpy = larray.lzip(base0, base1)
+    cached = larray.cache_memmap(cpy, 'name_foo')
+    assert cached.dtype == base.dtype
+    assert cached.shape == base.shape
+    def assert_np_eq(l, r):
+        assert np.all(l == r), (l, r)
+    assert_np_eq(cached.memmap_valid, 0)
+    assert cached.rows_computed == 0
+    assert_np_eq(cached[4], base[4])
+    assert_np_eq(cached.memmap_valid, [0, 0, 0, 0, 1, 0, 0, 0, 0, 0])
+    assert cached.rows_computed == 1
+    assert_np_eq(cached[1], base[1])
+    assert_np_eq(cached.memmap_valid, [0, 1, 0, 0, 1, 0, 0, 0, 0, 0])
+    assert_np_eq(cached[0:5], base[0:5])
+    n_computed = cached.rows_computed
+    assert_np_eq(cached.memmap_valid, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
+
+    # test that asking for existing stuff doen't mess anything up
+    # or compute any new rows
+    assert_np_eq(cached[0:5], base[0:5])
+    assert_np_eq(cached.memmap_valid, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
+    assert n_computed == cached.rows_computed
+
+    # test that we can ask for things off the end
+    assert_np_eq(cpy[8:16], base[8:16])
+    assert_np_eq(cached[8:16], base[8:16])
+    assert_np_eq(cached.memmap_valid, [1, 1, 1, 1, 1, 0, 0, 0, 1, 1])
+
+    cached.populate()
+    assert np.all(cached.memmap_valid)
+    assert_np_eq(cached.memmap, base)
