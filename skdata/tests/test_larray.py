@@ -76,41 +76,48 @@ def test_lprint():
 
 larray.cache_memmap.ROOT = tempfile.mkdtemp(prefix="skdata_test_memmap_root")
 
-def test_memmap_cache():
-    base0 = np.arange(10)
-    base1 = -np.arange(10)
-    base = np.vstack([base0, base1]).T
-    # base[0] = [0, 0]
-    # base[1] = [1, -1]
-    # ...
-    cpy = larray.lzip(base0, base1)
-    cached = larray.cache_memmap(cpy, 'name_foo')
-    assert cached.dtype == base.dtype
-    assert cached.shape == base.shape
-    def assert_np_eq(l, r):
-        assert np.all(l == r), (l, r)
-    assert_np_eq(cached.memmap_valid, 0)
-    assert cached.rows_computed == 0
-    assert_np_eq(cached[4], base[4])
-    assert_np_eq(cached.memmap_valid, [0, 0, 0, 0, 1, 0, 0, 0, 0, 0])
-    assert cached.rows_computed == 1
-    assert_np_eq(cached[1], base[1])
-    assert_np_eq(cached.memmap_valid, [0, 1, 0, 0, 1, 0, 0, 0, 0, 0])
-    assert_np_eq(cached[0:5], base[0:5])
-    n_computed = cached.rows_computed
-    assert_np_eq(cached.memmap_valid, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
+class TestCache(object):
+    def battery(self, cls):
+        base0 = np.arange(10)
+        base1 = -np.arange(10)
+        base = np.vstack([base0, base1]).T
+        # base[0] = [0, 0]
+        # base[1] = [1, -1]
+        # ...
+        cpy = larray.lzip(base0, base1)
+        cached = cls(cpy)
+        assert cached.dtype == base.dtype
+        assert cached.shape == base.shape
+        def assert_np_eq(l, r):
+            assert np.all(l == r), (l, r)
+        assert_np_eq(cached._valid, 0)
+        assert cached.rows_computed == 0
+        assert_np_eq(cached[4], base[4])
+        assert_np_eq(cached._valid, [0, 0, 0, 0, 1, 0, 0, 0, 0, 0])
+        assert cached.rows_computed == 1
+        assert_np_eq(cached[1], base[1])
+        assert_np_eq(cached._valid, [0, 1, 0, 0, 1, 0, 0, 0, 0, 0])
+        assert_np_eq(cached[0:5], base[0:5])
+        n_computed = cached.rows_computed
+        assert_np_eq(cached._valid, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
 
-    # test that asking for existing stuff doen't mess anything up
-    # or compute any new rows
-    assert_np_eq(cached[0:5], base[0:5])
-    assert_np_eq(cached.memmap_valid, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
-    assert n_computed == cached.rows_computed
+        # test that asking for existing stuff doen't mess anything up
+        # or compute any new rows
+        assert_np_eq(cached[0:5], base[0:5])
+        assert_np_eq(cached._valid, [1, 1, 1, 1, 1, 0, 0, 0, 0, 0])
+        assert n_computed == cached.rows_computed
 
-    # test that we can ask for things off the end
-    assert_np_eq(cpy[8:16], base[8:16])
-    assert_np_eq(cached[8:16], base[8:16])
-    assert_np_eq(cached.memmap_valid, [1, 1, 1, 1, 1, 0, 0, 0, 1, 1])
+        # test that we can ask for things off the end
+        assert_np_eq(cpy[8:16], base[8:16])
+        assert_np_eq(cached[8:16], base[8:16])
+        assert_np_eq(cached._valid, [1, 1, 1, 1, 1, 0, 0, 0, 1, 1])
 
-    cached.populate()
-    assert np.all(cached.memmap_valid)
-    assert_np_eq(cached.memmap, base)
+        cached.populate()
+        assert np.all(cached._valid)
+        assert_np_eq(cached._data, base)
+
+    def test_memmap_cache(self):
+        self.battery(lambda obj: larray.cache_memmap(obj, 'name_foo'))
+
+    def test_memory_cache(self):
+        self.battery(larray.cache_memory)

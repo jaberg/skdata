@@ -335,6 +335,65 @@ class CacheMixin(object):
                 self[i:i + batchsize]
                 i += batchsize
 
+    @property
+    def shape(self):
+        return self.obj.shape
+
+    @property
+    def dtype(self):
+        return self.obj.dtype
+
+    @property
+    def ndim(self):
+        return self.obj.ndim
+
+    def inputs(self):
+        return [self.obj]
+
+    def __getitem__(self, item):
+        if isinstance(item, (int, np.int)):
+            if self._valid[item]:
+                return self._data[item]
+            else:
+                obj_item = self.obj[item]
+                self._data[item] = obj_item
+                self._valid[item] = 1
+                self.rows_computed += 1
+                return self._data[item]
+        else:
+            # could be a slice, an intlist, a tuple
+            v = self._valid[item]
+            assert v.ndim == 1
+            if np.all(v):
+                return self._data[item]
+            # otherwise at least some of the requested elements must be
+            # computed
+            # XXX: this brute-force recomputes all of the requested elements
+            self.rows_computed += v.sum()
+            values = self.obj[item]
+            self._valid[item] = 1
+            self._data[item] = values
+            return self._data[item]
+
+
+class cache_memory(larray, CacheMixin):
+    """
+    Provide a lazily-filled cache of a larray (obj) via an in-memmory
+    array.
+    """
+
+    def __init__(self, obj):
+        """
+        If new files are created, then `msg` will be written to README.msg
+        """
+        self.obj = obj
+        self._data = np.empty(obj.shape, dtype=obj.dtype)
+        self._valid = np.zeros(len(obj), dtype='int8')
+        self.rows_computed = 0
+
+    def clone(self, given):
+        return self.__class__(obj=given_get(given, self.obj))
+
 
 class cache_memmap(larray, CacheMixin):
     """
@@ -376,12 +435,12 @@ class cache_memmap(larray, CacheMixin):
         except IOError:
             mode = 'w+'
 
-        self.memmap = np.memmap(data_path,
+        self._data = np.memmap(data_path,
             dtype=obj.dtype,
             mode=mode,
             shape=obj.shape)
 
-        self.memmap_valid = np.memmap(valid_path,
+        self._valid = np.memmap(valid_path,
             dtype='int8',
             mode=mode,
             shape=(obj.shape[0],))
@@ -391,30 +450,21 @@ class cache_memmap(larray, CacheMixin):
             cPickle.dump((obj.dtype, obj.shape),
                          open(header_path, 'w'))
             # mark all memmap elements as uncomputed
-            self.memmap_valid[:] = 0
+            self._valid[:] = 0
 
             open(os.path.join(dirname, 'README.txt'), 'w').write(
                 memmap_README)
             if msg is not None:
                 open(os.path.join(dirname, 'README.msg'), 'w').write(
                     str(msg))
+            warning = ( 'WARNING_THIS_DIR_WILL_BE_DELETED'
+                        '_BY_cache_memmap.delete_files()')
+            open(os.path.join(dirname, warning), 'w').close()
 
         self.rows_computed = 0
 
-    @property
-    def shape(self):
-        return self.obj.shape
-
-    @property
-    def dtype(self):
-        return self.obj.dtype
-
-    @property
-    def ndim(self):
-        return self.obj.ndim
-
-    def inputs(self):
-        return [self.obj]
+    def delete_files(self):
+        subprocess.call(['rm', '-Rf', self.dirname])
 
     def clone(self, given):
         raise NotImplementedError()
@@ -423,29 +473,3 @@ class cache_memmap(larray, CacheMixin):
             dirname=self.dirname + '_clone')
     # XXX: What if you clone more than once? This implementation would
     #      cause interference
-
-    def __getitem__(self, item):
-        if isinstance(item, (int, np.int)):
-            if self.memmap_valid[item]:
-                return self.memmap[item]
-            else:
-                obj_item = self.obj[item]
-                self.memmap[item] = obj_item
-                self.memmap_valid[item] = 1
-                self.rows_computed += 1
-                return self.memmap[item]
-        else:
-            # could be a slice, an intlist, a tuple
-            v = self.memmap_valid[item]
-            assert v.ndim == 1
-            if np.all(v):
-                return self.memmap[item]
-            # otherwise at least some of the requested elements must be
-            # computed
-            # XXX: this brute-force recomputes all of the requested elements
-            self.rows_computed += v.sum()
-            values = self.obj[item]
-            self.memmap_valid[item] = 1
-            self.memmap[item] = values
-            return self.memmap[item]
-
