@@ -71,6 +71,9 @@ class larray(lazy):
     def loop(self):
         return loop(self)
 
+    def __len__(self):
+        return self.shape[0]
+
 
 class lmap(larray):
     """
