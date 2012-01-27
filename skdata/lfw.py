@@ -214,7 +214,7 @@ class BaseLFW(object):
         if lock.is_locked():
             logger.warn('%s is locked, waiting for release' %
                     self.home())
-        with lock as _lock:
+        with lock:
 
             # download the little metadata .txt files
             for target_filename in self.PAIRS_FILENAMES:
