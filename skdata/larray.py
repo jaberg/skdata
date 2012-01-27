@@ -46,10 +46,12 @@ class lazy(object):
         inputs.  For any input `obj` to self, the clone should have
         input `given_get(given, self.obj)`.
         """
-        raise NotImplementedError('override-me')
+        raise NotImplementedError('override-me',
+                                  (self.__class__, 'clone'))
 
     def inputs(self):
-        raise NotImplementedError('override-me')
+        raise NotImplementedError('override-me',
+                                 (self.__class__, 'inputs'))
 
     def lazy_inputs(self):
         return [ii for ii in self.inputs() if is_larray(ii)]
