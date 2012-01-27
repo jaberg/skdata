@@ -378,7 +378,7 @@ class CacheMixin(object):
             return self._data[item]
 
 
-class cache_memory(larray, CacheMixin):
+class cache_memory(CacheMixin, larray):
     """
     Provide a lazily-filled cache of a larray (obj) via an in-memmory
     array.
@@ -397,7 +397,7 @@ class cache_memory(larray, CacheMixin):
         return self.__class__(obj=given_get(given, self.obj))
 
 
-class cache_memmap(larray, CacheMixin):
+class cache_memmap(CacheMixin, larray):
     """
     Provide a lazily-filled cache of a larray (obj) via a memmap file
     associated with (name).
