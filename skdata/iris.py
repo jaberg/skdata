@@ -1,5 +1,7 @@
 """
-Iris - a small non-synthetic dataset not requiring download.
+Iris - a small non-synthetic dataset for three-way classification not requiring download.
+
+http://archive.ics.uci.edu/ml/datasets/Iris
 
 """
 import csv
@@ -22,6 +24,9 @@ class Iris(BuildOnInit):
             petal_length: float
             petal_width: float
             name: one of 'setosa', 'versicolor', 'virginica'
+
+    There are 150 examples.
+
     """
     def build_meta(self):
         module_path = os.path.dirname(__file__)

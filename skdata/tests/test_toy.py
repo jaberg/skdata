@@ -1,5 +1,8 @@
 
 from skdata import toy
+from skdata.iris import Iris
+from skdata.diabetes import Diabetes
+from skdata.digits import Digits
 from skdata.tasks import assert_classification, assert_regression
 
 def check_classification_Xy(X, y, N=None):
@@ -11,7 +14,7 @@ def check_regression_XY(X, Y, N=None):
 
 
 def test_iris():
-    iris = toy.Iris()
+    iris = Iris()
     assert len(iris.meta) == 150
     assert iris.meta[0]['sepal_length'] == 5.1
     assert iris.meta[-1]['petal_width'] == 1.8
@@ -24,7 +27,7 @@ def test_iris():
 
 
 def test_digits():
-    digits = toy.Digits()
+    digits = Digits()
     assert len(digits.meta) == 1797, len(digits.meta)
     assert digits.descr  #ensure it's been loaded
     assert digits.meta[3]['img'].shape == (8, 8)
@@ -35,7 +38,7 @@ def test_digits():
 
 
 def test_diabetes():
-    diabetes = toy.Diabetes()
+    diabetes = Diabetes()
     assert len(diabetes.meta) == 442, len(diabetes.meta)
     X, y = diabetes.classification_task()
     check_classification_Xy(X, y, len(diabetes.meta))

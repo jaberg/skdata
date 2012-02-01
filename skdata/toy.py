@@ -39,57 +39,6 @@ class BuildOnInit(object):
         return {}
 
 
-class Digits(BuildOnInit):
-    """Dataset of small digit images (classification)
-
-    meta[i] is dict with
-        img: an 8x8 ndarray
-        label: int 0 <= label < 10
-    """
-    # XXX: is img JSON-encodable ?
-    def build_all(self):
-        module_path = os.path.dirname(__file__)
-        data = np.loadtxt(os.path.join(module_path, 'data', 'digits.csv.gz'),
-                          delimiter=',')
-        descr = open(os.path.join(module_path, 'descr', 'digits.rst')).read()
-        target = data[:, -1]
-        images = np.reshape(data[:, :-1], (-1, 8, 8))
-        assert len(images) == len(target)
-        itarget = map(int, target)
-        assert all(itarget == target)
-        meta = [dict(img=i, label=t) for i, t in zip(images, itarget)]
-        return meta, descr, {}
-
-    def classification_task(self):
-        X = np.asarray([m['img'].flatten() for m in self.meta])
-        y = np.asarray([m['label'] for m in self.meta])
-        return X, y
-
-
-class Diabetes(BuildOnInit):
-    """Dataset of diabetes results (classification)
-
-    meta[i] is dict with
-        data: ?
-        label: ?
-
-    """
-    # XXX:  what is this data?
-    def build_meta(self):
-        base_dir = os.path.join(os.path.dirname(__file__), 'data')
-        data = np.loadtxt(os.path.join(base_dir, 'diabetes_data.csv.gz'))
-        target = np.loadtxt(os.path.join(base_dir, 'diabetes_target.csv.gz'))
-        itarget = map(int, target)
-        assert all(itarget == target)
-        assert len(data) == len(target)
-        return [dict(d=d, l=l) for (d,l) in zip(data, itarget)]
-
-    def classification_task(self):
-        X = np.asarray([m['d'] for m in self.meta])
-        y = np.asarray([m['l'] for m in self.meta])
-        return X, y
-
-
 class Linnerud(BuildOnInit):
     """Dataset of exercise and physiological measurements (regression).
 
