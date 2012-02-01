@@ -3,6 +3,10 @@ from skdata import toy
 from skdata.iris import Iris
 from skdata.diabetes import Diabetes
 from skdata.digits import Digits
+# TODO: move these datasets into their own file too
+from skdata.toy import Linnerud
+from skdata.toy import Boston
+from skdata.toy import SampleImages
 from skdata.tasks import assert_classification, assert_regression
 
 def check_classification_Xy(X, y, N=None):
@@ -45,7 +49,7 @@ def test_diabetes():
 
 
 def test_linnerud():
-    linnerud = toy.Linnerud()
+    linnerud = Linnerud()
     assert len(linnerud.meta) == 20
     assert list(sorted(linnerud.meta[5].keys())) == [
             'chins', 'jumps', 'pulse', 'situps', 'waist', 'weight']
@@ -54,7 +58,7 @@ def test_linnerud():
 
 
 def test_boston():
-    boston = toy.Boston()
+    boston = Boston()
     assert len(boston.meta) == 506
     keys = ["CRIM","ZN","INDUS","CHAS","NOX","RM","AGE","DIS","RAD",
             "TAX","PTRATIO","B","LSTAT","MEDV"]
@@ -64,7 +68,7 @@ def test_boston():
 
 
 def test_sample_images():
-    si = toy.SampleImages()
+    si = SampleImages()
     assert len(si.meta) == 2, len(si.meta)
     images = si.images()
     assert len(images) == 2
