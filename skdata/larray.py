@@ -114,19 +114,21 @@ class lmap(larray):
         else:
             return len(self.objs[0])
 
-    def __get_shape(self):
+    @property
+    def shape(self):
         shape_0 = len(self)
-        shape_rest = self.fn.rval_getattr('shape', objs=self.objs)
-        return (shape_0,) + shape_rest
-    shape = property(__get_shape)
+        if hasattr(self.fn, 'rval_getattr'):
+            shape_rest = self.fn.rval_getattr('shape', objs=self.objs)
+            return (shape_0,) + shape_rest
+        raise UnknownShape() 
 
-    def __get_dtype(self):
+    @property
+    def dtype(self):
         return self.fn.rval_getattr('dtype', objs=self.objs)
-    dtype = property(__get_dtype)
 
-    def __get_ndim(self):
+    @property
+    def ndim(self):
         return 1 + self.fn.rval_getattr('ndim', objs=self.objs)
-    ndim = property(__get_ndim)
 
     def __getitem__(self, idx):
         if is_int_idx(idx):
