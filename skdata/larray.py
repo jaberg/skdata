@@ -16,6 +16,9 @@ logger = logging.getLogger(__name__)
 class InferenceError(Exception):
     """Information about a lazily-evaluated quantity could not be inferred"""
 
+class UnknownShape(InferenceError):
+    """Shape could not be inferred"""
+
 def is_int_idx(idx):
     #XXX: add numpy int types
     return isinstance(idx,
