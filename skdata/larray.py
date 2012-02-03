@@ -161,6 +161,44 @@ class lmap(larray):
     def inputs(self):
         return list(self.objs)
 
+
+class RvalGetattr(object):
+    """
+    See `lmap_info`
+    """
+    def __init__(self, info):
+        self.info = info
+
+    def __call__(self, name, objs=None):
+        try:
+            return self.info[name]
+        except KeyError:
+            raise InferenceError(name)
+
+
+def lmap_info(**kwargs):
+    """Decorator for providing information for lmap
+
+    >>> @lmap_info(shape=(10, 20), dtype='float32')
+    >>> def foo(i):
+    >>>     return np.zeros((10, 20), dtype='float32') + i
+    >>>
+    """
+
+    # -- a little hack of convenience
+    if 'shape' in kwargs:
+        if 'ndim' in kwargs:
+            assert len(kwargs['shape']) == kwargs['ndim']
+        else:
+            kwargs['ndim'] = len(kwargs['shape'])
+
+    def wrapper(f):
+        f.rval_getattr = RvalGetattr(kwargs)
+        return f
+
+    return wrapper
+
+
 def lzip(*arrays):
     # XXX: make a version of this method that supports call_batch
     class fn(object):
