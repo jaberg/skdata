@@ -442,7 +442,7 @@ class cache_memory(CacheMixin, larray):
     def clone(self, given):
         return self.__class__(obj=given_get(given, self.obj))
 
-
+    
 class cache_memmap(CacheMixin, larray):
     """
     Provide a lazily-filled cache of a larray (obj) via a memmap file
@@ -460,8 +460,8 @@ class cache_memmap(CacheMixin, larray):
         """
         If new files are created, then `msg` will be written to README.msg
         """
-        self.obj = obj
 
+        self.obj = obj
         if basedir is None:
             basedir = self.ROOT
         self.dirname = dirname = os.path.join(basedir, name)
@@ -470,32 +470,35 @@ class cache_memmap(CacheMixin, larray):
         data_path = os.path.join(dirname, 'data.raw')
         valid_path = os.path.join(dirname, 'valid.raw')
         header_path = os.path.join(dirname, 'header.pkl')
-        logger.info('Creating memmap %s for features of shape %s' % (
-                data_path,
-                str(obj.shape)))
 
         try:
             dtype, shape = cPickle.load(open(header_path))
-            if dtype == obj.dtype and shape == obj.shape:
+            if obj is None or (dtype == obj.dtype and shape == obj.shape):
                 mode = 'r+'
             else:
                 mode = 'w+'
         except IOError:
+            dtype = obj.dtype
+            shape = obj.shape
             mode = 'w+'
 
+        logger.info('Creating memmap %s for features of shape %s' % (
+                data_path,
+                str(shape)))
+
         self._data = np.memmap(data_path,
-            dtype=obj.dtype,
+            dtype=dtype,
             mode=mode,
-            shape=obj.shape)
+            shape=shape)
 
         self._valid = np.memmap(valid_path,
             dtype='int8',
             mode=mode,
-            shape=(obj.shape[0],))
+            shape=(shape[0],))
 
         if mode == 'w+':
             # initialize a new set of files
-            cPickle.dump((obj.dtype, obj.shape),
+            cPickle.dump((dtype, shape),
                          open(header_path, 'w'))
             # mark all memmap elements as uncomputed
             self._valid[:] = 0
