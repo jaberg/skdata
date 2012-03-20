@@ -85,15 +85,21 @@ class lmap(larray):
     fn can be a normal lambda expression, but it can also respond to the
     following attributes:
 
-    - call_batch
-
     - rval_getattr
         `fn.rval_getattr(name)` if it returns, must return the same thing as
         `getattr(fn(*args), name)` would return.
     """
-    #TODO: add kwarg to specify f_map implementation
-    #      that is drop-in for map(f, *args)
     def __init__(self, fn, obj0, *objs, **kwargs):
+        """
+        ragged - optional kwargs, defaults to False. Iff true, objs of
+            different lengths are allowed.
+
+        f_map - optional kwargs: defaults to None. If provided, it is used
+            to process input sub-sequences in one call.
+            `f_map(*args)` should return the same(*) thing as `map(fn, *args)`,
+            but the idea is that it would be faster.
+            (*) returning an ndarray instead of a list is allowed.
+        """
         ragged = kwargs.pop('ragged', False)
         f_map = kwargs.pop('f_map', None)
         if kwargs:
@@ -120,7 +126,7 @@ class lmap(larray):
         if hasattr(self.fn, 'rval_getattr'):
             shape_rest = self.fn.rval_getattr('shape', objs=self.objs)
             return (shape_0,) + shape_rest
-        raise UnknownShape() 
+        raise UnknownShape()
 
     @property
     def dtype(self):
@@ -137,26 +143,27 @@ class lmap(larray):
             try:
                 tmps = [o[idx] for o in self.objs]
             except TypeError:
-                # advanced indexing failed, try one element at a time
-                return [self.fn(*[o[i] for o in self.objs])
-                        for i in idx]
+                # this can happen if idx is for numpy advanced indexing
+                # and `o` isn't an ndarray.
+                # try one element at a time
+                tmps = [[o[i] for i in idx] for o in self.objs]
 
-            # we loaded our args by advanced indexing
+            # we loaded the subsequence of args
             if self.f_map:
                 return self.f_map(*tmps)
             else:
                 return map(self.fn, *tmps)
 
     def __array__(self):
-        #XXX: use self.batch_len to produce this more efficiently
-        return np.asarray([self.fn(*[o[i] for o in self.objs])
-                for i in xrange(len(self))])
+        return np.asarray(self[:])
 
     def __print__(self):
         return 'lmap(%s, ...)' % (self.fn.__name__,)
 
     def clone(self, given):
-        return lmap(self.fn, *[given_get(given, obj) for obj in self.objs])
+        return lmap(self.fn, *[given_get(given, obj) for obj in self.objs],
+                ragged=self.ragged,
+                f_map=self.f_map)
 
     def inputs(self):
         return list(self.objs)
