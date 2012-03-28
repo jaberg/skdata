@@ -5,6 +5,7 @@ descr = """A collection of datasets available and associated tools"""
 import sys
 import os
 import shutil
+import glob
 
 DISTNAME = 'skdata'
 DESCRIPTION = ''
@@ -68,6 +69,7 @@ if __name__ == "__main__":
           long_description=LONG_DESCRIPTION,
           zip_safe=True,  # the package can run out of an .egg file
           install_requires=['numpy>=1.3.0'], # 'glumpy>=0.1.0'
+          scripts=glob.glob(os.path.join("bin","*")),
           classifiers=[
               'Intended Audience :: Science/Research',
               'Intended Audience :: Developers',
