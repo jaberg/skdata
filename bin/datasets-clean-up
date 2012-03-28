@@ -5,5 +5,5 @@ logging.basicConfig(
         stream=sys.stderr,
         level=logging.INFO)
 
-import datasets.main
-datasets.main.main('erase')
+import skdata.main
+skdata.main.main('erase')

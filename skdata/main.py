@@ -53,6 +53,6 @@ def main(cmd):
         logger.error('Module name required (XXX: print Usage)')
         return 1
 
-    symbol = load_tokens(['datasets'] + argv1.split('.') + [runner])
+    symbol = load_tokens(['skdata'] + argv1.split('.') + [runner])
     logger.info('running: %s' % str(symbol))
     sys.exit(symbol())
