@@ -12,7 +12,9 @@ import urllib
 
 from PIL import Image
 
-from data_home import get_data_home
+from .data_home import get_data_home
+from .utils.image import ImgLoader
+from .larray import lmap
 
 
 logger = logging.getLogger(__name__)
@@ -94,6 +96,32 @@ class Brodatz(object):
                     ))
         return meta
 
+    @classmethod
+    def main_fetch(cls):
+        return cls().fetch(download_if_missing=True)
+
+    @classmethod
+    def main_clean_up(cls):
+        return cls().clean_up()
+
+    def images_larray(self, dtype='uint8'):
+        img_paths = [self.home(m['basename']) for m in self.meta]
+        print img_paths
+        imgs = lmap(ImgLoader(ndim=2, dtype=dtype, mode='L'),
+                           img_paths)
+        return imgs
+
+    @classmethod
+    def main_show(cls):
+        from utils.glviewer import glumpy_viewer, command, glumpy
+        self = cls()
+        imgs = self.images_larray('uint8')
+        Y = range(len(imgs))
+        glumpy_viewer(
+                img_array=imgs,
+                arrays_to_print=[Y],
+                cmap=glumpy.colormap.Grey)
+
 
 def gen_sha1_list():
     ds = Brodatz()
@@ -102,6 +130,18 @@ def gen_sha1_list():
         data = open(ds.home('D%i.gif' % image_num)).read()
         sha1 = hashlib.sha1(data).hexdigest()
         print >> foo, sha1
+
+
+def main_fetch():
+    Brodatz.main_fetch()
+
+
+def main_show():
+    Brodatz.main_show()
+
+
+def main_clean_up():
+    Brodatz.main_clean_up()
 
 
 if __name__ == '__main__':
