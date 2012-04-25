@@ -385,15 +385,24 @@ class CacheMixin(object):
 
     @property
     def shape(self):
-        return self.obj.shape
+        try:
+            return self._obj_shape
+        except:
+            return self.obj.shape
 
     @property
     def dtype(self):
-        return self.obj.dtype
+        try:
+            return self._obj_dtype
+        except:
+            return self.obj.dtype
 
     @property
     def ndim(self):
-        return self.obj.ndim
+        try:
+            return self._obj_ndim
+        except:
+            return self.obj.ndim
 
     def inputs(self):
         return [self.obj]
@@ -470,28 +479,43 @@ class cache_memmap(CacheMixin, larray):
         data_path = os.path.join(dirname, 'data.raw')
         valid_path = os.path.join(dirname, 'valid.raw')
         header_path = os.path.join(dirname, 'header.pkl')
-        logger.info('Creating memmap %s for features of shape %s' % (
-                data_path,
-                str(obj.shape)))
 
         try:
             dtype, shape = cPickle.load(open(header_path))
-            if dtype == obj.dtype and shape == obj.shape:
+            if obj is None or (dtype == obj.dtype and shape == obj.shape):
                 mode = 'r+'
+                logger.info('Re-using memmap %s with dtype %s, shape %s' % (
+                        data_path,
+                        str(dtype),
+                        str(shape)))
+                self._obj_shape = shape
+                self._obj_dtype = dtype
+                self._obj_ndim = len(shape)
             else:
                 mode = 'w+'
+                logger.warn("Problem re-using memmap: dtype/shape mismatch")
+                logger.info('Creating memmap %s with dtype %s, shape %s' % (
+                        data_path,
+                        str(dtype),
+                        str(obj.shape)))
         except IOError:
+            dtype = obj.dtype
+            shape = obj.shape
             mode = 'w+'
+            logger.info('Creating memmap %s with dtype %s, shape %s' % (
+                    data_path,
+                    str(dtype),
+                    str(obj.shape)))
 
         self._data = np.memmap(data_path,
-            dtype=obj.dtype,
+            dtype=dtype,
             mode=mode,
-            shape=obj.shape)
+            shape=shape)
 
         self._valid = np.memmap(valid_path,
             dtype='int8',
             mode=mode,
-            shape=(obj.shape[0],))
+            shape=(shape[0],))
 
         if mode == 'w+':
             # initialize a new set of files
