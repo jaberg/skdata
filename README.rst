@@ -118,7 +118,7 @@ Programs
 datasets-fetch
 -------------
 
-Usage: ``dataset-fetch <dataset_name>``
+Usage: ``datasets-fetch <dataset_name>``
 
 This program downloads the named dataset into the ``$SCIKITS_DATA`` directory.
 Typically this means downloading from original sources online.
@@ -137,7 +137,7 @@ To see more about how sub-modules use this mechanism, grep the code for ``main_f
 datasets-show
 -------------
 
-Usage: ``dataset-show <dataset_name>``
+Usage: ``datasets-show <dataset_name>``
 
 This program downloads the named dataset if necessary into the ``$SCIKITS_DATA`` directory,
 loads it, and launches a simple GUI program to visualize the elements of the
@@ -147,7 +147,7 @@ To see more about how sub-modules use this mechanism, grep the code for ``main_s
 datasets-erase
 -------------
 
-Usage: ``dataset-erase <dataset_name>``
+Usage: ``datasets-erase <dataset_name>``
 
 This program erases any data cached or downloaded in support of the named dataset.
 To see more about how sub-modules use this mechanism, grep the code for ``main_erase``.

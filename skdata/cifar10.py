@@ -135,11 +135,22 @@ class CIFAR10(object):
 
     def classification_task(self):
         #XXX: use .meta
+        self.meta # triggers load if necessary
         y = self._labels
         X = self.latent_structure_task()
         return X, y
 
+    def img_classification_task(self, dtype='uint8'):
+        #XXX: use .meta
+        self.meta # triggers load if necessary
+        y = self._labels
+        X = self._pixels.astype(dtype)
+        if 'float' in dtype:
+            X = X / 255.0
+        return X, y
+
     def latent_structure_task(self):
+        self.meta # triggers load if necessary
         return self._pixels.reshape((60000, 3072)).astype('float32') / 255
 
 

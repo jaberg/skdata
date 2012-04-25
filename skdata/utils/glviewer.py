@@ -69,7 +69,7 @@ def quit(state):
 def glumpy_viewer(img_array,
         arrays_to_print = [],
         commands=None,
-        cmap=glumpy.colormap.IceAndFire,
+        cmap=None,
         window_shape=(512, 512),
         ):
     """
@@ -89,22 +89,23 @@ def glumpy_viewer(img_array,
         n_imgs = None
 
     state = dict(
-            window=glumpy.Window(*window_shape),
             pos=0,
-            I=glumpy.Image(img_array[0], cmap=cmap),
+            fig=glumpy.figure(window_shape),
+            I=glumpy.Image(img_array[0], colormap=cmap),
             len=n_imgs
             )
 
-    window = state['window']  # put in scope of handlers for convenience
+    fig = state['fig']
     if commands is None:
         commands = _commands
 
-    @window.event
+    @fig.event
     def on_draw():
-        window.clear()
-        state['I'].blit(0,0,window.width,window.height)
+        fig.clear()
+        state['I'].draw(x=0, y=0, z=0,
+                width=fig.width, height=fig.height)
 
-    @window.event
+    @fig.event
     def on_key_press(symbol, modifiers):
         if chr(symbol) not in commands:
             print 'unused key', chr(symbol), modifiers
@@ -120,10 +121,9 @@ def glumpy_viewer(img_array,
             #print img_i.dtype
             #print img_i.max()
             #print img_i.min()
-            state['I'] = glumpy.Image(img_array[state['pos']], cmap=cmap)
+            state['I'] = glumpy.Image(img_array[state['pos']], colormap=cmap)
             print state['pos'], [o[state['pos']] for o in arrays_to_print]
-            window.draw()
+            fig.redraw()
 
-
-    window.mainloop()
+    glumpy.show()
 

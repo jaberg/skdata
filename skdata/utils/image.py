@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 try:
-    import Image
+    from PIL import Image
     from scipy.misc import imresize, fromimage
 except ImportError:
     logger.warn("The Python Imaging Library (PIL)"
