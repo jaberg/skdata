@@ -1,48 +1,46 @@
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en-us">
-<head>
-   <meta http-equiv="content-type" content="text/html; charset=utf-8" />
-   <title> {{ page.top }} {{ page.title }}</title>
-   <meta name="author" content="James Bergstra" /> 
+  <head>
+    <meta charset='utf-8' />
+    <meta http-equiv="X-UA-Compatible" content="chrome=1" />
+    <meta name="description" content="Scikit-data : data... for scikits." />
 
-   <link rel="start" href="/" />
+    <link rel="stylesheet" type="text/css" media="screen" href="stylesheets/stylesheet.css">
 
-    {% if page.keywords %}
-    <meta name="keywords" content="{{ page.keywords }}">
-    {% endif %}
+    <title>Scikit-data</title>
+  </head>
 
-    {% if page.feed %}
-    <link rel="alternate" type="application/atom+xml" href="{{ page.feed }}" title="RSS feed" />
-    {% endif %}
-
-   <link rel="stylesheet"
-   href="http://fonts.googleapis.com/css?family=Droid+Serif:regular,italic,bold,bolditalic"
-   type="text/css" />
-
-   <link rel="stylesheet"
-   href="http://fonts.googleapis.com/css?family=Droid+Sans:regular,bold"
-   type="text/css" />
-
-   <!-- syntax highlighting CSS -->
-   <!--<link rel="stylesheet" href="./files/css/syntax.css" type="text/css" /> -->
-
-   <!-- Homepage CSS -->
-   <!--
-   <link rel="stylesheet" href="./files/css/home.css" type="text/css" />
-   -->
-
-</head>
 <body id="{{ page.section }}">
-<div id="site">
+    <!-- HEADER -->
+    <div id="header_wrap" class="outer">
+        <header class="inner">
+          <a id="forkme_banner" href="https://github.com/jaberg/scikit-data">View on GitHub</a>
 
-  {{ content }}
+          <h1 id="project_title">Scikit-data</h1>
+          <h2 id="project_tagline">data... for scikits.</h2>
 
-  <div id="footer">
-    Site built with
-    <a href="https://github.com/mojombo/jekyll/" title="A static, minimalist CMS">Jekyll</a>
-  </div>
-</div>
+            <section id="downloads">
+              <a class="zip_download_link" href="https://github.com/jaberg/scikit-data/zipball/master">Download this project as a .zip file</a>
+              <a class="tar_download_link" href="https://github.com/jaberg/scikit-data/tarball/master">Download this project as a tar.gz file</a>
+            </section>
+        </header>
+    </div>
+    <!-- MAIN CONTENT -->
+    <div id="main_content_wrap" class="outer">
+      <section id="main_content" class="inner">
+
+      {{ content }}
+      </section>
+    </div>
+
+    <!-- FOOTER  -->
+    <div id="footer_wrap" class="outer">
+      <footer class="inner">
+        <p class="copyright">Scikit-data maintained by <a href="https://github.com/jaberg">jaberg</a></p>
+        <p>Published with <a href="http://pages.github.com">GitHub Pages</a></p>
+      </footer>
+    </div>
 
 <!-- Google Analytics script goes here -->
 </body>
