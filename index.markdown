@@ -15,6 +15,9 @@ as Python data structures, and provide convenient views for standard machine lea
 
 ## Installation
 
+The recommended installation method is to clone the master branch and
+install the development head:
+
 <pre><code>$ git clone https://github.com/jaberg/scikit-data
 $ cd scikit-data
 $ python setup.py develop</code></pre>
@@ -22,7 +25,8 @@ $ python setup.py develop</code></pre>
 
 ## Goal
 
-Standardize the representation of community benchmark data sets (including large and awkward ones),
+The goal with skdata is to standardize the representation
+of community benchmark data sets (including large and awkward ones),
 and facilitate the development of broadly applicable machine learning algorithm implementations.
 
 
