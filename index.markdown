@@ -15,11 +15,9 @@ as Python data structures, and provide convenient views for standard machine lea
 
 ## Installation
 
-<pre><code>
-$ git clone https://github.com/jaberg/scikit-data
+<pre><code>$ git clone https://github.com/jaberg/scikit-data
 $ cd scikit-data
-$ python setup.py develop
-</code></pre>
+$ python setup.py develop</code></pre>
 
 
 ## Goal
