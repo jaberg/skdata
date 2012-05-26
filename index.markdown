@@ -35,8 +35,8 @@ and facilitate the development of broadly applicable machine learning algorithm 
 The code of the library is currently usable (and frequently used), but the API
 should be considered to be unstable.
 
-Slowly, but surely, the data set modules are being re-factored to match the
-"View API"
+The data set modules are not currently implemented in a standard way, but they
+are being re-factored to match the "View API"
 ([docs](https://github.com/jaberg/scikit-data/wiki/View-API),
 [code](https://github.com/jaberg/scikit-data/blob/master/skdata/base.py)),
 and [add more data set modules](https://github.com/jaberg/scikit-data/wiki/How-to-Create-a-New-Dataset-Module).
