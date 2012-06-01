@@ -12,9 +12,9 @@ Installation
 
 Install this library like a standard Python library, by typing e.g.
 
-```
+``
 $ python setup.py develop
-```
+``
 
 
 Documentation
@@ -22,3 +22,8 @@ Documentation
 
 See http://jaberg.github.com/scikit-data/
 
+
+News
+----
+
+In addition to github issues, there is a [mailing list](https://groups.google.com/forum/#!forum/skdata).
