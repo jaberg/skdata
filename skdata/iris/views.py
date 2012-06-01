@@ -5,9 +5,11 @@ Experiment views on the Iris data set.
 
 import numpy as np
 from sklearn import cross_validation
+
 from .dataset import Iris
 from ..base import Task, Split
 from ..utils import int_labels
+from ..dslang import Average, Score, BestModel
 
 
 class KfoldClassification(object):
@@ -51,4 +53,7 @@ class KfoldClassification(object):
                         x=self.x[idxmap[test_idxs]],
                         y=self.y[idxmap[test_idxs]]),
                     ))
+
+
+        self.dsl = Average([Score(BestModel(s.train), s.test) for s in self.splits])
 
