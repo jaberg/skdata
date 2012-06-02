@@ -1,6 +1,6 @@
 ---
 layout: default
-title: Scikits.data
+title: skdata - home
 
 section: home
 
@@ -28,6 +28,9 @@ $ python setup.py develop</code></pre>
 The goal with skdata is to standardize the representation
 of community benchmark data sets (including large and awkward ones),
 and facilitate the development of broadly applicable machine learning algorithm implementations.
+Skdata is meant to interoperate with other Python machine learning software
+such as
+[sklearn](http://scikit-learn.org/stable/) and [pandas](http://pandas.pydata.org/).
 
 
 ## Status
