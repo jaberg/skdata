@@ -18,8 +18,8 @@ as Python data structures, and provide convenient views for standard machine lea
 The recommended installation method is to clone the master branch and
 install the development head:
 
-<pre><code>$ git clone https://github.com/jaberg/scikit-data
-$ cd scikit-data
+<pre><code>$ git clone https://github.com/jaberg/skdata
+$ cd skdata
 $ python setup.py develop</code></pre>
 
 
@@ -40,7 +40,7 @@ should be considered to be unstable.
 
 The data set modules are not currently implemented in a standard way, but they
 are being re-factored to match the "View API"
-([docs](https://github.com/jaberg/scikit-data/wiki/View-API),
-[code](https://github.com/jaberg/scikit-data/blob/master/skdata/base.py)),
-and [add more data set modules](https://github.com/jaberg/scikit-data/wiki/How-to-Create-a-New-Dataset-Module).
+([docs](https://github.com/jaberg/skdata/wiki/View-API),
+[code](https://github.com/jaberg/skdata/blob/master/skdata/base.py)),
+and [add more data set modules](https://github.com/jaberg/skdata/wiki/How-to-Create-a-New-Dataset-Module).
 
