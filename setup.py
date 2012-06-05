@@ -9,7 +9,7 @@ import glob
 
 DISTNAME = 'skdata'
 DESCRIPTION = ''
-LONG_DESCRIPTION = open('README.rst').read()
+LONG_DESCRIPTION = open('README.md').read()
 MAINTAINER = 'James Bergstra'
 MAINTAINER_EMAIL = 'bergstra@rowland.harvard.edu'
 URL = ''
