@@ -40,15 +40,25 @@ class ImgLoader(object):
     def __call__(self, file_path):
         rval = np.asarray(imread(file_path, mode=self.mode),
                           dtype=self._dtype)
-        if 'float' in str(self._dtype):
-            rval /= 255.0
         if self._ndim is not None and self._ndim != rval.ndim:
+            img = Image.open(file_path)
+            # loading triggers a failure if a decoder is not available
+            try:
+                img.load()
+            except:
+                print ('HINT: To install decoders in PIL in virtualenv on'
+                        ' ubuntu: '
+                        'http://ubuntuforums.org/showthread.php?t=1751455')
+                raise
+            # otherwise let the ndim error through
             raise ValueError('ndim', (self._ndim, rval.ndim))
         if self._shape is not None:
             assert self._ndim is not None
             for s0, s1 in zip(self._shape, rval.shape):
                 if s0 is not None and s0 != s1:
                     raise ValueError('shape', (self._shape, rval.shape))
+        if 'float' in str(self._dtype):
+            rval /= 255.0
         return rval
 
 # XXX: these loaders currently do not coerce the loaded images
