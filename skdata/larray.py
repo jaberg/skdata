@@ -158,7 +158,10 @@ class lmap(larray):
         return np.asarray(self[:])
 
     def __print__(self):
-        return 'lmap(%s, ...)' % (self.fn.__name__,)
+        if hasattr(self.fn, '__name__'):
+            return 'lmap(%s, ...)' % self.fn.__name__
+        else:
+            return 'lmap(%s, ...)' % str(self.fn)
 
     def clone(self, given):
         return lmap(self.fn, *[given_get(given, obj) for obj in self.objs],
