@@ -1,17 +1,11 @@
-"""
-Iris - a small non-synthetic dataset for three-way classification not requiring download.
 
-http://archive.ics.uci.edu/ml/datasets/Iris
-
-"""
 import csv
 import os
 
 import numpy as np
 
-import utils
+from ..toy import BuildOnInit
 
-from .toy import BuildOnInit
 
 class Iris(BuildOnInit):
     """Dataset of flower properties (classification)
@@ -30,9 +24,7 @@ class Iris(BuildOnInit):
     """
     def build_meta(self):
         module_path = os.path.dirname(__file__)
-        data_file = csv.reader(open(os.path.join(
-            module_path, 'data', 'iris.csv')))
-        fdescr = open(os.path.join(module_path, 'descr', 'iris.rst'))
+        data_file = csv.reader(open(os.path.join(module_path, 'iris.csv')))
         temp = data_file.next()
         n_samples = int(temp[0])
         n_features = int(temp[1])
@@ -48,13 +40,4 @@ class Iris(BuildOnInit):
             name=t)
                 for d, t in zip(data, target)]
         return meta
-
-
-    def classification_task(self):
-        X = [[m['sepal_length'], m['sepal_width'],
-            m['petal_length'], m['petal_width']]
-                for m in self.meta]
-        y = utils.int_labels([m['name'] for m in self.meta])
-        return np.asarray(X), np.asarray(y)
-
 
