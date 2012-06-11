@@ -514,10 +514,6 @@ class cache_memmap(CacheMixin, larray):
                     str(dtype),
                     str(obj.shape)))
 
-        logger.info('Creating memmap %s for features of shape %s' % (
-                data_path,
-                str(shape)))
-
         self._data = np.memmap(data_path,
             dtype=dtype,
             mode=mode,
