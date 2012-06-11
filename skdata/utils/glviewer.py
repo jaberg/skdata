@@ -71,6 +71,7 @@ def glumpy_viewer(img_array,
         commands=None,
         cmap=None,
         window_shape=(512, 512),
+        contrast_norm=None
         ):
     """
     Setup and start glumpy main loop to visualize Image array `img_array`.
@@ -82,6 +83,13 @@ def glumpy_viewer(img_array,
                       after a keypress changes the current position.
 
     """
+    if contrast_norm not in (None, 'each', 'all'):
+        raise ValueError('contrast_norm', contrast_norm)
+
+    if contrast_norm == 'all':
+        np.array(img_array, 'float32')
+        img_array -= img_array.min()
+        img_array /= max(img_array.max(), 1e-12)
 
     try:
         n_imgs = len(img_array)
@@ -90,7 +98,7 @@ def glumpy_viewer(img_array,
 
     state = dict(
             pos=0,
-            fig=glumpy.figure(window_shape),
+            fig=glumpy.figure((window_shape[1], window_shape[0])),
             I=glumpy.Image(img_array[0], colormap=cmap),
             len=n_imgs
             )
@@ -117,11 +125,21 @@ def glumpy_viewer(img_array,
             return
         else:
             img_i = img_array[state['pos']]
+            if contrast_norm == 'each':
+                # -- force copy
+                img_i = np.array(img_i, 'float32')
+                img_i -= img_i.min()
+                img_i /= max(img_i.max(), 1e-12)
+
             #print img_i.shape
             #print img_i.dtype
             #print img_i.max()
             #print img_i.min()
-            state['I'] = glumpy.Image(img_array[state['pos']], colormap=cmap)
+            state['I'] = glumpy.Image(img_i,
+                    colormap=cmap,
+                    vmin=0.0,
+                    vmax=1.0
+                    )
             print state['pos'], [o[state['pos']] for o in arrays_to_print]
             fig.redraw()
 
