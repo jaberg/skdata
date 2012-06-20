@@ -55,5 +55,6 @@ class KfoldClassification(object):
                     ))
 
 
-        self.dsl = Average([Score(BestModel(s.train), s.test) for s in self.splits])
+        self.dsl = Average([Score(BestModel(s.train), s.test)
+            for s in self.splits])
 
