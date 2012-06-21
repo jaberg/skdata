@@ -80,17 +80,13 @@ if __name__ == "__main__":
           zip_safe=True,  # the package can run out of an .egg file
           install_requires=open('requirements.txt').read().split('\n'),
           scripts=glob.glob(os.path.join("bin","*")),
-          package_data={
-              '': ['*.txt', '*.rst', '*.cvs', 'skdata/iris/iris.csv', 'iris/*.csv'],
-              'skdata': ['iris/*.csv'],
-              },
           classifiers=[
               'Intended Audience :: Science/Research',
               'Intended Audience :: Developers',
               'License :: OSI Approved',
               #'Programming Language :: C',
               'Programming Language :: Python',
-              #'Topic :: Software Development',
+              'Topic :: Software Development',
               'Topic :: Scientific/Engineering',
               'Operating System :: Microsoft :: Windows',
               'Operating System :: POSIX',
