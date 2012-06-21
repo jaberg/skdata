@@ -14,7 +14,7 @@ MAINTAINER = 'James Bergstra'
 MAINTAINER_EMAIL = 'james.bergstra@gmail.com'
 URL = 'http://jaberg.github.com/skdata/'
 LICENSE = 'new BSD'
-DOWNLOAD_URL = 'https://github.com/jaberg/scikit-data/tarball/master'
+DOWNLOAD_URL = 'https://github.com/jaberg/skdata/tarball/master'
 VERSION = '0.0.1'
 
 import setuptools  # we are using a setuptools namespace
