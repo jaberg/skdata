@@ -26,7 +26,7 @@ MAINTAINER_EMAIL = 'james.bergstra@gmail.com'
 URL = 'http://jaberg.github.com/skdata/'
 LICENSE = 'new BSD'
 DOWNLOAD_URL = 'https://github.com/jaberg/skdata/tarball/master'
-VERSION = '0.0.1'
+VERSION = '0.0.2'
 
 import setuptools  # we are using a setuptools namespace
 from numpy.distutils.core import setup
@@ -78,15 +78,22 @@ if __name__ == "__main__":
           download_url=DOWNLOAD_URL,
           long_description=LONG_DESCRIPTION,
           zip_safe=True,  # the package can run out of an .egg file
-          install_requires=['numpy>=1.3.0'], # 'glumpy>=0.1.0'
+          install_requires=[
+              'numpy>=1.3.0',
+              'sklearn',
+              # 'glumpy>=0.1.0',  # -- optional
+              ],
           scripts=glob.glob(os.path.join("bin","*")),
+          package_data={
+              '': ['*.txt', '*.rst', '*.cu', '*.cuh', '*.c', '*.sh']
+              },
           classifiers=[
               'Intended Audience :: Science/Research',
               'Intended Audience :: Developers',
               'License :: OSI Approved',
-              'Programming Language :: C',
+              #'Programming Language :: C',
               'Programming Language :: Python',
-              'Topic :: Software Development',
+              #'Topic :: Software Development',
               'Topic :: Scientific/Engineering',
               'Operating System :: Microsoft :: Windows',
               'Operating System :: POSIX',
