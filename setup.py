@@ -9,7 +9,18 @@ import glob
 
 DISTNAME = 'skdata'
 DESCRIPTION = 'Data Sets for Machine Learning in Python'
-LONG_DESCRIPTION = open('README.md').read()
+LONG_DESCRIPTION = """
+Skdata is a library of datasets for empirical computer science. Lots of
+disciplines such as machine learning, natural language processing, and computer
+vision have data sets.  This module makes the most popular and standard datasets
+(even the big awkward ones) easy to access from Python programs.
+
+
+Thanks
+------
+
+This work was supported in part by the National Science Foundation (IIS-0963668).
+"""
 MAINTAINER = 'James Bergstra'
 MAINTAINER_EMAIL = 'james.bergstra@gmail.com'
 URL = 'http://jaberg.github.com/skdata/'
