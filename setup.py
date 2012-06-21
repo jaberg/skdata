@@ -8,18 +8,17 @@ import shutil
 import glob
 
 DISTNAME = 'skdata'
-DESCRIPTION = ''
+DESCRIPTION = 'Data Sets for Machine Learning in Python'
 LONG_DESCRIPTION = open('README.md').read()
 MAINTAINER = 'James Bergstra'
-MAINTAINER_EMAIL = 'bergstra@rowland.harvard.edu'
-URL = ''
+MAINTAINER_EMAIL = 'james.bergstra@gmail.com'
+URL = 'http://jaberg.github.com/skdata/'
 LICENSE = 'new BSD'
-DOWNLOAD_URL = ''
-VERSION = '0.1'
+DOWNLOAD_URL = 'https://github.com/jaberg/scikit-data/tarball/master'
+VERSION = '0.0.1'
 
 import setuptools  # we are using a setuptools namespace
 from numpy.distutils.core import setup
-
 
 if __name__ == "__main__":
 
