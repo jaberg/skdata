@@ -21,7 +21,8 @@ def main_fetch():
 
 
 def main_show():
-    """Use glumpy to launch a data set viewer.
+    """
+    Use glumpy to launch a data set viewer.
     """
     self = CIFAR10()
     Y = [m['label'] for m in self.meta]

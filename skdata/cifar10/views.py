@@ -1,6 +1,6 @@
 
 from .dataset import CIFAR10
-from ..dslang import Task, Split, BestModel, Score
+from ..dslang import Task, BestModel, Score
 
 
 class OfficialImageClassificationTask(object):
@@ -26,10 +26,15 @@ class OfficialImageClassificationTask(object):
         train = Task('image_classification', x=x[:50000], y=y[:50000])
         test = Task('image_classification', x=x[50000:], y=y[50000:])
 
-        split = Split(train, test)
-
         self.dataset = dataset
-        self.splits = [split]
-
         self.protocol = Score(BestModel(train), test)
+        self.train = train
+        self.test = test
+
+
+class OfficialVectorClassificationTask(OfficialImageClassificationTask):
+    def __init__(self, x_dtype='float32', y_dtype='int'):
+        OfficialImageClassificationTask.__init__(self, x_dtype, y_dtype)
+        self.train.x.shape = (len(self.train.x), 32 * 32 * 3)
+        self.test.x.shape = (len(self.test.x), 32 * 32 * 3)
 

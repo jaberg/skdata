@@ -14,7 +14,7 @@ import shutil
 
 import numpy as np
 
-from data_home import get_data_home
+from ..data_home import get_data_home
 
 logger = logging.getLogger(__name__)
 
@@ -174,6 +174,7 @@ class MNIST(object):
                 dest = self.home(os.path.basename(url))
                 logger.info('opening %s' % dest)
                 arrays[role] = read(gzip.open(dest, 'rb'), debug=True)
+                arrays[role].flags['WRITEABLE'] = False
             # cache the arrays in memory, the aren't that big (12M total)
             MNIST.arrays = arrays
         assert arrays['train_images'].shape == (60000, 28, 28)
@@ -189,47 +190,3 @@ class MNIST(object):
         assert i + j + 2 == 70000, (i, j)
         return meta
 
-    def classification_task(self):
-        Y = [m['label'] for m in self.meta]
-        X = self.latent_structure_task()
-        return X, np.asarray(Y)
-
-    def latent_structure_task(self):
-        self.meta  # read arrays
-        X = np.empty((70000, 28**2), dtype='float32')
-        self.arrays['train_images'].reshape((60000, 28**2))
-        X[:60000] = self.arrays['train_images'].reshape((60000, 28**2))
-        X[60000:] = self.arrays['test_images'].reshape((10000, 28**2))
-        X /= 255   # put features onto (0.0, 1.0) range
-        return X
-
-    @classmethod
-    def main_fetch(cls):
-        return cls().fetch(download_if_missing=True)
-
-    @classmethod
-    def main_clean_up(cls):
-        return cls().clean_up()
-
-    @classmethod
-    def main_show(cls):
-        from utils.glviewer import glumpy_viewer, command, glumpy
-        self = cls()
-        Y = [m['label'] for m in self.meta]
-        glumpy_viewer(
-                img_array=cls.arrays['train_images'],
-                arrays_to_print=[Y],
-                cmap=glumpy.colormap.Grey)
-
-
-def main_fetch():
-    MNIST.main_fetch()
-
-
-def main_show():
-    MNIST.main_show()
-
-
-def main_clean_up():
-    logger.setLevel(logging.INFO)
-    MNIST.main_clean_up()
