@@ -30,13 +30,6 @@ URL = 'http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'
 LABELS = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog',
           'horse', 'ship', 'truck']
 
-# XXX: Consider modifying this file to use mem-mapped data
-#      Modify fetch to unpickle the arrays, and write a mem-mappable numpy
-#      array.  Consider memmapping the float32 version of the data rather than
-#      the uint8, since that's the case where memory gets more important.
-
-# XXX: Make this class an immutable singleton, so data can be re-used between
-# instances.
 class CIFAR10(object):
     """
 
@@ -118,6 +111,11 @@ class CIFAR10(object):
             assert n_loaded == len(labels)
             CIFAR10._pixels = pixels
             CIFAR10._labels = labels
+
+            # -- mark memory as read-only to prevent accidental modification
+            pixels.flags['WRITEABLE'] = False
+            labels.flags['WRITEABLE'] = False
+
             assert LABELS == self.unpickle('batches.meta')['label_names']
         meta = [dict(
                     id=i,
