@@ -3,6 +3,9 @@
 AST elements of a DSL for describing cross-validation experiment protocols.
 
 """
+import numpy as np
+
+from .base import Task, Split
 
 class Average(object):
     def __init__(self, values):
@@ -32,15 +35,8 @@ class RetrainClassifier(object):
 
 
 #
-#lfw_official = Average([
-#    (Score(RetrainClassifier(BestModel(v1), s.train), s.test)
-#    for s in v2.splits])
 #
-#lfw_more_data = AverageTestScore([(BestModel(MergeTasks(s.train, v1.train, v1.test))
-#    for s in v2.splits])
 #
-
-import numpy as np
 
 class Visitor(object):
 
