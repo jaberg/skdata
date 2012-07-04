@@ -20,8 +20,8 @@ import shutil
 
 import numpy as np
 
-from data_home import get_data_home
-import utils.download_and_extract
+from ..data_home import get_data_home
+from ..utils.download_and_extract import download_and_extract
 
 logger = logging.getLogger(__name__)
 
@@ -29,11 +29,6 @@ URL = 'http://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz'
 
 LABELS = ['airplane', 'automobile', 'bird', 'cat', 'deer', 'dog', 'frog',
           'horse', 'ship', 'truck']
-
-# XXX: Consider modifying this file to use mem-mapped data
-#      Modify fetch to unpickle the arrays, and write a mem-mappable numpy
-#      array.  Consider memmapping the float32 version of the data rather than
-#      the uint8, since that's the case where memory gets more important.
 
 class CIFAR10(object):
     """
@@ -86,7 +81,7 @@ class CIFAR10(object):
             else:
                 raise IOError(self.home())
 
-        utils.download_and_extract(URL, self.home())
+        download_and_extract(URL, self.home())
 
     def clean_up(self):
         logger.info('recursively erasing %s' % self.home())
@@ -116,6 +111,11 @@ class CIFAR10(object):
             assert n_loaded == len(labels)
             CIFAR10._pixels = pixels
             CIFAR10._labels = labels
+
+            # -- mark memory as read-only to prevent accidental modification
+            pixels.flags['WRITEABLE'] = False
+            labels.flags['WRITEABLE'] = False
+
             assert LABELS == self.unpickle('batches.meta')['label_names']
         meta = [dict(
                     id=i,
@@ -132,41 +132,3 @@ class CIFAR10(object):
         fo.close()
         return data
 
-    def classification_task(self):
-        #XXX: use .meta
-        self.meta # triggers load if necessary
-        y = self._labels
-        X = self.latent_structure_task()
-        return X, y
-
-    def img_classification_task(self, dtype='uint8'):
-        #XXX: use .meta
-        self.meta # triggers load if necessary
-        y = self._labels
-        X = self._pixels.astype(dtype)
-        if 'float' in dtype:
-            X = X / 255.0
-        return X, y
-
-    def latent_structure_task(self):
-        self.meta # triggers load if necessary
-        return self._pixels.reshape((60000, 3072)).astype('float32') / 255
-
-
-def main_fetch():
-    CIFAR10().fetch(True)
-
-
-def main_show():
-    self = CIFAR10()
-    from utils.glviewer import glumpy_viewer, glumpy
-    Y = [m['label'] for m in self.meta]
-    glumpy_viewer(
-            img_array=CIFAR10._pixels,
-            arrays_to_print=[Y],
-            cmap=glumpy.colormap.Grey,
-            window_shape=(32 * 2, 32 * 2))
-
-
-def main_clean_up():
-    CIFAR10().clean_up()

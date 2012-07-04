@@ -1,4 +1,7 @@
+"""
+
 Iris Plants Database
+====================
 
 Notes
 -----
@@ -57,3 +60,11 @@ References
    - See also: 1988 MLC Proceedings, 54-64.  Cheeseman et al"s AUTOCLASS II
      conceptual clustering system finds 3 classes in the data.
    - Many, many more ...
+
+"""
+
+from dataset import Iris
+
+# enable syntax iris.KfoldClassification
+from views import KfoldClassification
+

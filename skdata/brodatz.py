@@ -106,7 +106,6 @@ class Brodatz(object):
 
     def images_larray(self, dtype='uint8'):
         img_paths = [self.home(m['basename']) for m in self.meta]
-        print img_paths
         imgs = lmap(ImgLoader(ndim=2, dtype=dtype, mode='L'),
                            img_paths)
         return imgs

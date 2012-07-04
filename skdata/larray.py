@@ -158,7 +158,10 @@ class lmap(larray):
         return np.asarray(self[:])
 
     def __print__(self):
-        return 'lmap(%s, ...)' % (self.fn.__name__,)
+        if hasattr(self.fn, '__name__'):
+            return 'lmap(%s, ...)' % self.fn.__name__
+        else:
+            return 'lmap(%s, ...)' % str(self.fn)
 
     def clone(self, given):
         return lmap(self.fn, *[given_get(given, obj) for obj in self.objs],
@@ -392,15 +395,24 @@ class CacheMixin(object):
 
     @property
     def shape(self):
-        return self.obj.shape
+        try:
+            return self._obj_shape
+        except:
+            return self.obj.shape
 
     @property
     def dtype(self):
-        return self.obj.dtype
+        try:
+            return self._obj_dtype
+        except:
+            return self.obj.dtype
 
     @property
     def ndim(self):
-        return self.obj.ndim
+        try:
+            return self._obj_ndim
+        except:
+            return self.obj.ndim
 
     def inputs(self):
         return [self.obj]
@@ -482,16 +494,28 @@ class cache_memmap(CacheMixin, larray):
             dtype, shape = cPickle.load(open(header_path))
             if obj is None or (dtype == obj.dtype and shape == obj.shape):
                 mode = 'r+'
+                logger.info('Re-using memmap %s with dtype %s, shape %s' % (
+                        data_path,
+                        str(dtype),
+                        str(shape)))
+                self._obj_shape = shape
+                self._obj_dtype = dtype
+                self._obj_ndim = len(shape)
             else:
                 mode = 'w+'
+                logger.warn("Problem re-using memmap: dtype/shape mismatch")
+                logger.info('Creating memmap %s with dtype %s, shape %s' % (
+                        data_path,
+                        str(dtype),
+                        str(obj.shape)))
         except IOError:
             dtype = obj.dtype
             shape = obj.shape
             mode = 'w+'
-
-        logger.info('Creating memmap %s for features of shape %s' % (
-                data_path,
-                str(shape)))
+            logger.info('Creating memmap %s with dtype %s, shape %s' % (
+                    data_path,
+                    str(dtype),
+                    str(obj.shape)))
 
         self._data = np.memmap(data_path,
             dtype=dtype,
