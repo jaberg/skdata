@@ -86,8 +86,7 @@ class CIFAR10(object):
             else:
                 raise IOError(self.home())
 
-        utils.download_and_extract.download_and_extract(
-                URL, self.home())
+        utils.download_and_extract(URL, self.home())
 
     def clean_up(self):
         logger.info('recursively erasing %s' % self.home())
