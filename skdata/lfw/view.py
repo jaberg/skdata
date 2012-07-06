@@ -12,7 +12,6 @@ from skdata.utils import ImgLoader
 from skdata.larray import lmap
 
 import dataset
-DATASET_NAMES = ['Original', 'Funneled', 'Aligned']
 
 
 class BaseView2(object):
@@ -26,41 +25,7 @@ class BaseView2(object):
 
         # -- build/fetch dataset
         ds = self.DATASET_CLASS()
-        ds.fetch()
-
-        # -- load the pairs/labels txt file
-        fname = ds.home('pairs.txt')
-        pairs = np.loadtxt(fname, dtype=str, delimiter='\n')
-        header = pairs[0].split()
-        n_folds, n_pairs = map(int, header)
-        n_pairs *= 2  # n_pairs 'same' + n_pairs 'different'
-
-        # -- parse the folds
-        folds = [[] for _ in xrange(n_folds)]
-        i = 1
-        for fold_i in xrange(n_folds):
-
-            for _ in xrange(n_pairs):
-
-                txt = pairs[i].split()
-                # -- same
-                if len(txt) == 3:
-                    left = '%s/%s_%04d.jpg' % (txt[0], txt[0], int(txt[1]))
-                    right = '%s/%s_%04d.jpg' % (txt[0], txt[0], int(txt[2]))
-                    label = +1
-                # -- different
-                elif len(txt) == 4:
-                    left = '%s/%s_%04d.jpg' % (txt[0], txt[0], int(txt[1]))
-                    right = '%s/%s_%04d.jpg' % (txt[2], txt[2], int(txt[3]))
-                    label = -1
-                # --
-                else:
-                    raise RuntimeError("line not understood")
-                folds[fold_i] += [(left, right, label)]
-
-                i += 1
-
-            assert len(folds[fold_i]) == n_pairs
+        folds = ds.view2_folds
 
         # -- lazy array helper function
         if ds.COLOR:
@@ -141,10 +106,13 @@ class BaseView2(object):
         self.splits = splits
 
 
-# -- Class Factory
-for ds_name in DATASET_NAMES:
-    name = '%sView2' % ds_name
-    klass = type(name, (BaseView2, ),
-                 BaseView2.__dict__.copy())
-    klass.DATASET_CLASS = getattr(dataset, ds_name) 
-    globals()[name] = klass
+class OriginalView2(BaseView2):
+    DATASET_CLASS = dataset.Original
+
+
+class FunneledView2(BaseView2):
+    DATASET_CLASS = dataset.Funneled
+
+
+class AlignedView2(BaseView2):
+    DATASET_CLASS = dataset.Aligned

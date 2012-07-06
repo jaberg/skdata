@@ -1,8 +1,10 @@
-
 from skdata import lfw
 
+DATASET_NAMES = ['Original', 'Funneled', 'Aligned']
+
+
 def test_view2_smoke_shape():
-    for ds_name in lfw.view.DATASET_NAMES:
+    for ds_name in DATASET_NAMES:
         view2 = getattr(lfw.view, '%sView2' % ds_name)()
         assert len(view2.x) == 6000
         assert len(view2.y) == 6000

@@ -159,6 +159,7 @@ class BaseLFW(object):
 
         log.info('Building metadata...')
 
+        # -- Filenames
         pattern = self.home('images', self.IMAGE_SUBDIR, '*', '*.jpg')
         fnames = sorted(glob(pattern))
         n_images = len(fnames)
@@ -180,6 +181,51 @@ class BaseLFW(object):
     def clean_up(self):
         if path.isdir(self.home()):
             shutil.rmtree(self.home())
+
+    # ------------------------------------------------------------------------
+    # -- LFW Specific
+    # ------------------------------------------------------------------------
+
+    @property
+    def view2_folds(self):
+
+        self.fetch()
+
+        # -- View2: load the pairs/labels txt file
+        fname = self.home('pairs.txt')
+        pairs = np.loadtxt(fname, dtype=str, delimiter='\n')
+        header = pairs[0].split()
+        n_folds, n_pairs = map(int, header)
+        n_pairs *= 2  # n_pairs 'same' + n_pairs 'different'
+
+        # parse the folds
+        view2_folds = [[] for _ in xrange(n_folds)]
+        i = 1
+        for fold_i in xrange(n_folds):
+
+            for _ in xrange(n_pairs):
+
+                txt = pairs[i].split()
+                # same
+                if len(txt) == 3:
+                    left = '%s/%s_%04d.jpg' % (txt[0], txt[0], int(txt[1]))
+                    right = '%s/%s_%04d.jpg' % (txt[0], txt[0], int(txt[2]))
+                    label = +1
+                # different
+                elif len(txt) == 4:
+                    left = '%s/%s_%04d.jpg' % (txt[0], txt[0], int(txt[1]))
+                    right = '%s/%s_%04d.jpg' % (txt[2], txt[2], int(txt[3]))
+                    label = -1
+                #
+                else:
+                    raise RuntimeError("line not understood")
+                view2_folds[fold_i] += [(left, right, label)]
+
+                i += 1
+
+            assert len(view2_folds[fold_i]) == n_pairs
+
+        return view2_folds
 
 
 class Original(BaseLFW):
