@@ -53,41 +53,37 @@ class BaseView2(object):
             split_x_fn = deepcopy(test_x_fn)
             test_x = lmap(load_pair, test_x_fn)
 
-            test_y_fn = test_fold[:, 2]
-            split_y_fn = deepcopy(test_y_fn)
-            test_y = lmap(load_pair, test_y_fn)
+            test_y = test_fold[:, 2]
+            split_y = deepcopy(test_y)
 
             if all_x_fn is None:
                 all_x_fn = split_x_fn
-                all_y_fn = split_y_fn
+                all_y = split_y
             else:
                 all_x_fn = np.concatenate((all_x_fn, split_x_fn))
-                all_y_fn = np.concatenate((all_y_fn, split_y_fn))
+                all_y = np.concatenate((all_y, split_y))
 
             # -- train (filenames)
             train_x_fn = None
-            train_y_fn = None
+            train_y = None
             for j, train_fold in enumerate(folds):
                 if j == i:
                     continue
                 train_fold = np.array(train_fold)
                 _train_x_fn = train_fold[:, :2]
-                _train_y_fn = train_fold[:, 2]
+                _train_y = train_fold[:, 2]
                 if train_x_fn is None:
                     train_x_fn = _train_x_fn
-                    train_y_fn = _train_y_fn
+                    train_y = _train_y
                 else:
                     train_x_fn = np.concatenate((train_x_fn, _train_x_fn))
-                    train_y_fn = np.concatenate((train_y_fn, _train_y_fn))
+                    train_y = np.concatenate((train_y, _train_y))
 
             split_x_fn = np.concatenate((split_x_fn, train_x_fn))
-            split_y_fn = np.concatenate((split_y_fn, train_y_fn))
+            split_y = np.concatenate((split_y, train_y))
 
             split_x = lmap(load_pair, train_x_fn)
-            split_y = lmap(load_pair, train_y_fn)
-
             train_x = lmap(load_pair, train_x_fn)
-            train_y = lmap(load_pair, train_y_fn)
 
             split = dotdict(
                 x=split_x,
