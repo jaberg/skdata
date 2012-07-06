@@ -18,7 +18,7 @@ class OfficialImageClassificationTask(object):
         if y_dtype == 'str':
             y = np.asarray(dataset.LABELS)[y]
 
-        x = self._pixels.astype(x_dtype)
+        x = dataset._pixels.astype(x_dtype)
         if 'float' in x_dtype:
             # N.B. working in-place could invalidate the original data set
             x = x / 255.0
