@@ -12,7 +12,7 @@ from skdata.larray import lmap
 from dataset import SVHNCroppedDigits
 
 
-class SVHNCroppedDigitsStratifiedKFoldView1(object):
+class CroppedDigitsStratifiedKFoldView1(object):
 
     def __init__(self, k=10):
 
@@ -41,7 +41,7 @@ class SVHNCroppedDigitsStratifiedKFoldView1(object):
         self.splits = splits
 
 
-class SVHNCroppedDigitsView2(object):
+class CroppedDigitsView2(object):
 
     def __init__(self):
 

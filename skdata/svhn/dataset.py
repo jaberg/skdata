@@ -56,7 +56,7 @@ from skdata.utils import download
 BASE_URL = "http://ufldl.stanford.edu/housenumbers/"
 
 
-class SVHNCroppedDigits(object):
+class CroppedDigits(object):
     """XXX
 
     Notes
