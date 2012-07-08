@@ -39,11 +39,14 @@ class OfficialImageClassificationTask(object):
         self.train = train
         self.test = test
 
-
 class OfficialVectorClassificationTask(OfficialImageClassificationTask):
     def __init__(self, x_dtype='float32', y_dtype='int', n_train=50000):
         OfficialImageClassificationTask.__init__(self,
                 x_dtype, y_dtype, n_train)
         self.train.x.shape = (len(self.train.x), 32 * 32 * 3)
         self.test.x.shape = (len(self.test.x), 32 * 32 * 3)
+
+
+OfficialImageClassification = OfficialImageClassificationTask
+OfficialVectorClassification = OfficialVectorClassificationTask
 
