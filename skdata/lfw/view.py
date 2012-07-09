@@ -53,7 +53,7 @@ class BaseView2(object):
             split_x_fn = deepcopy(test_x_fn)
             test_x = lmap(load_pair, test_x_fn)
 
-            test_y = test_fold[:, 2]
+            test_y = test_fold[:, 2].astype(int)
             split_y = deepcopy(test_y)
 
             if all_x_fn is None:
@@ -71,7 +71,7 @@ class BaseView2(object):
                     continue
                 train_fold = np.array(train_fold)
                 _train_x_fn = train_fold[:, :2]
-                _train_y = train_fold[:, 2]
+                _train_y = train_fold[:, 2].astype(int)
                 if train_x_fn is None:
                     train_x_fn = _train_x_fn
                     train_y = _train_y
