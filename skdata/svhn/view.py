@@ -6,10 +6,11 @@
 import numpy as np
 from scipy import io
 
-from skdata.utils import dotdict
-from skdata.larray import lmap
+from ..utils import dotdict
+from ..larray import lmap
+from ..dslang import Task
 
-from dataset import SVHNCroppedDigits
+from dataset import CroppedDigits
 
 
 class CroppedDigitsStratifiedKFoldView1(object):
@@ -18,7 +19,7 @@ class CroppedDigitsStratifiedKFoldView1(object):
 
         from sklearn.cross_validation import StratifiedKFold
 
-        ds = SVHNCroppedDigits()
+        ds = CroppedDigits()
 
         mat = io.loadmat(ds.meta['train']['filename'])
         x = np.rollaxis(mat['X'], -1)
@@ -43,21 +44,28 @@ class CroppedDigitsStratifiedKFoldView1(object):
 
 class CroppedDigitsView2(object):
 
-    def __init__(self):
+    def __init__(self, x_dtype='float32', n_train=None):
 
-        ds = SVHNCroppedDigits()
+        ds = CroppedDigits()
 
         train_mat = io.loadmat(ds.meta['train']['filename'])
         train_x = np.rollaxis(train_mat['X'], -1).astype(np.float32)
         train_y = train_mat['y'].ravel().astype(np.float32)
+        train = Task(x=train_x, y=train_y)
 
         test_mat = io.loadmat(ds.meta['test']['filename'])
         test_x = np.rollaxis(test_mat['X'], -1).astype(np.float32)
         test_y = test_mat['y'].ravel().astype(np.float32)
+        test = Task(x=test_x, y=test_y)
 
         split = dotdict()
-        split['train'] = dotdict(x=train_x, y=train_y)
-        split['test'] = dotdict(x=test_x, y=test_y)
+        split['train'] = train
+        split['test'] = test
 
         self.dataset = ds
         self.splits = [split]
+        self.train = train
+        self.test = test
+
+        # XXX missing protocol
+
