@@ -16,7 +16,7 @@ identified persons.
 
 Both Face Verification and Face Recognition are tasks that are typically
 performed on the output of a model trained to perform Face Detection. The
-most popular model for Face Detection is called Viola-Johns and is
+most popular model for Face Detection is called Viola-Jones and is
 implemented in the OpenCV library. The LFW faces were extracted by this face
 detector from various online websites.
 """
@@ -35,22 +35,14 @@ detector from various online websites.
 
 import os
 from os import path
-from os import listdir, makedirs, remove
-from os.path import exists, isdir
 from glob import glob
 import shutil
-#import sys
-import tarfile
-import urllib
 
 import lockfile
 import numpy as np
 
 from skdata.data_home import get_data_home
 from skdata.utils import download, download_and_extract
-#import larray
-#import utils
-#import utils.image
 
 import logging
 logging.basicConfig(level=logging.INFO)
