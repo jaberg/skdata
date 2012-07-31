@@ -19,6 +19,17 @@ class Score(object):
 
 
 class BestModel(object):
+    """
+    Return the best model for a given task.
+    """
+    def __init__(self, task):
+        self.task = task
+
+
+class BestModelByCrossValidation(object):
+    """
+    Return the best model on `split.test` by training on `split.train`.
+    """
     def __init__(self, split):
         self.split = split
 
@@ -33,6 +44,17 @@ class RetrainClassifier(object):
         self.model = model
         self.task = task
 
+
+class TestModel(object):
+    """
+    Similar to Score() but returns model rather than score.
+
+    The intent is for the visitor to measure test error and record it
+    somewhere as a side-effect within the protocol graph.
+    """
+    def __init__(self, model, task):
+        self.model = model
+        self.task = task
 
 #
 #
@@ -63,9 +85,18 @@ class Visitor(object):
         split = self.evaluate(node.split, memo)
         raise NotImplementedError('implement me')
 
+    def on_Train(self, node, memo):
+        task = self.evaluate(node.task, memo)
+        raise NotImplementedError('implement me')
+
     def on_Task(self, node, memo):
         return node
 
     def on_Split(self, node, memo):
         return node
+
+    def on_TestModel(self, node, memo):
+        model = self.evaluate(node.model, memo)
+        task = self.evaluate(node.task, memo)
+        raise NotImplementedError('implement me')
 
