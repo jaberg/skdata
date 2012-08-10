@@ -1,6 +1,7 @@
 """
 LazyArray
 """
+import atexit
 import cPickle
 import logging
 import os
@@ -386,10 +387,11 @@ class CacheMixin(object):
         if batchsize <= 0:
             raise ValueError('non-positive batch size')
         if batchsize == 1:
-            for i in xrange(self.shape[0]):
+            for i in xrange(len(self)):
                 self[i]
         else:
-            while i < self.shape[0]:
+            i = 0
+            while i < len(self):
                 self[i:i + batchsize]
                 i += batchsize
 
@@ -461,7 +463,7 @@ class cache_memory(CacheMixin, larray):
     def clone(self, given):
         return self.__class__(obj=given_get(given, self.obj))
 
-    
+
 class cache_memmap(CacheMixin, larray):
     """
     Provide a lazily-filled cache of a larray (obj) via a memmap file
@@ -475,7 +477,7 @@ class cache_memmap(CacheMixin, larray):
 
     ROOT = os.path.join(get_data_home(), 'memmaps')
 
-    def __init__(self, obj, name, basedir=None, msg=None):
+    def __init__(self, obj, name, basedir=None, msg=None, del_atexit=False):
         """
         If new files are created, then `msg` will be written to README.msg
         """
@@ -545,13 +547,15 @@ class cache_memmap(CacheMixin, larray):
 
         self.rows_computed = 0
 
+        if del_atexit:
+            atexit.register(self.delete_files)
+
     def delete_files(self):
+        logger.info('deleting cache_memmap at %s' % self.dirname)
         subprocess.call(['rm', '-Rf', self.dirname])
 
     def clone(self, given):
         raise NotImplementedError()
-        return self.__class__(
-            obj=given_get(given, self.obj),
-            dirname=self.dirname + '_clone')
-    # XXX: What if you clone more than once? This implementation would
-    #      cause interference
+        # XXX: careful to ensure that any instance can be cloned multiple
+        # times, and the clones can themselves be cloned recursively.
+
