@@ -272,12 +272,16 @@ class loop(larray):
 
 
 class reindex(larray):
+    """
+    Lazily re-index list-like `obj` so that
+    `self[i]` means `obj[imap[i]]`
+    """
     def __init__(self, obj, imap):
         self.obj = obj
         self.imap = np.asarray(imap)
         if 'int' not in str(self.imap.dtype):
             #XXX: diagnostic info
-            raise TypeError()
+            raise TypeError(imap.dtype)
 
     def __len__(self):
         return len(self.imap)
