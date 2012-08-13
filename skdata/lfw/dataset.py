@@ -51,6 +51,8 @@ log = logging.getLogger(__name__)
 # skdata and not be imposed on the caller (like in http://goo.gl/7xEeB)
 
 
+NAMELEN = 32
+
 PAIRS_BASE_URL = "http://vis-www.cs.umass.edu/lfw/"
 PAIRS_FILENAMES = [
     ('pairsDevTrain.txt', '082b7adb005fd30ad35476c18943ce66ab8ff9ff'),
@@ -178,46 +180,63 @@ class BaseLFW(object):
     # -- LFW Specific
     # ------------------------------------------------------------------------
 
-    @property
-    def view2_folds(self):
+    def parse_pairs_file(self, filename):
+        """
+        Return recarray of n_folds x n_labels x n_pairs x 2
 
+        There are 2 labels: label 0 means same, label 1 means different
+
+        Each element of the recarray has two fields: 'name' and 'inum'.
+        - The name is the name of the person in the LFW picture.
+        - The inum is the number indicating which LFW picture of the person
+          should be used.
+        """
         self.fetch()
 
-        # -- View2: load the pairs/labels txt file
-        fname = self.home('pairs.txt')
-        pairs = np.loadtxt(fname, dtype=str, delimiter='\n')
-        header = pairs[0].split()
-        n_folds, n_pairs = map(int, header)
-        n_pairs *= 2  # n_pairs 'same' + n_pairs 'different'
+        # -- load the pairs/labels txt file into one string per line
+        lines = np.loadtxt(filename, dtype=str, delimiter='\n')
+        header = lines[0].split()
+        header_tokens = map(int, header)
+        if len(header_tokens) == 2:
+            n_folds, n_pairs = header_tokens
+        elif len(header_tokens) == 1:
+            n_folds, n_pairs = (1,) + header_tokens
+        else:
+            raise ValueError('Failed to parse header', header_tokens)
 
-        # parse the folds
-        view2_folds = [[] for _ in xrange(n_folds)]
-        i = 1
+        # -- checks number of lines by side-effect
+        elems = lines[1:].reshape(n_folds, 2, n_pairs)
+        rval = np.recarray((n_folds, 2, n_pairs, 2),
+                dtype=np.dtype([('name', 'S%i' % NAMELEN), ('inum', np.int32)]))
+
         for fold_i in xrange(n_folds):
+            # parse the same-name lines
+            for pair_i in xrange(n_pairs):
+                name, inum0, inum1 = elems[fold_i, 0, pair_i].split()
+            assert len(name) < 32
+            rval[fold_i, 0, pair_i, 0] = name, inum0
+            rval[fold_i, 0, pair_i, 1] = name, inum1
 
-            for _ in xrange(n_pairs):
+            # parse the different-name lines
+            for pair_i in xrange(n_pairs):
+                name0, inum0, name1, inum1 = elems[fold_i, 1, pair_i].split()
+            rval[fold_i, 0, pair_i, 0] = name0, inum0
+            rval[fold_i, 0, pair_i, 1] = name1, inum1
 
-                txt = pairs[i].split()
-                # same
-                if len(txt) == 3:
-                    left = '%s/%s_%04d.jpg' % (txt[0], txt[0], int(txt[1]))
-                    right = '%s/%s_%04d.jpg' % (txt[0], txt[0], int(txt[2]))
-                    label = +1
-                # different
-                elif len(txt) == 4:
-                    left = '%s/%s_%04d.jpg' % (txt[0], txt[0], int(txt[1]))
-                    right = '%s/%s_%04d.jpg' % (txt[2], txt[2], int(txt[3]))
-                    label = -1
-                #
-                else:
-                    raise RuntimeError("line not understood")
-                view2_folds[fold_i] += [(left, right, label)]
+        return rval
 
-                i += 1
+    @property
+    def pairsDevTrain(self):
+        return self.parse_pairs_file(self.home('pairsDevTrain.txt'))
 
-            assert len(view2_folds[fold_i]) == n_pairs
+    @property
+    def pairsDevTest(self):
+        return self.parse_pairs_file(self.home('pairsDevTest.txt'))
 
-        return view2_folds
+    @property
+    def pairsView2(self):
+        return self.parse_pairs_file(self.home('pairs.txt'))
+
 
 
 class Original(BaseLFW):
