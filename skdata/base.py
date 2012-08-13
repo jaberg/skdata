@@ -33,8 +33,9 @@ class Task(object):
     more portable between tasks.
 
     """
-    def __init__(self, semantics=None, **kwargs):
+    def __init__(self, semantics=None, name=None, **kwargs):
         self.semantics = semantics
+        self.name = name
         self.__dict__.update(kwargs)
 
 
