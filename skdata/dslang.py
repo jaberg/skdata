@@ -34,11 +34,6 @@ class BestModelByCrossValidation(object):
         self.split = split
 
 
-class MergeTasks(object):
-    def __init__(self, *tasks):
-        self.tasks = tasks
-
-
 class RetrainClassifier(object):
     def __init__(self, model, task):
         self.model = model
