@@ -92,6 +92,7 @@ class FullProtocol(object):
 
         # -- build/fetch dataset
         ds = self.DATASET_CLASS()
+        ds.meta
 
         paths_labels_dev_train = paths_labels(ds.pairsDevTrain)
         paths_labels_dev_test = paths_labels(ds.pairsDevTest)
@@ -101,10 +102,13 @@ class FullProtocol(object):
             paths_labels_dev_test.flatten(),
             paths_labels_view2.flatten()])
 
-        self.img_paths = sorted_paths(all_paths_labels)
+        rel_paths = sorted_paths(all_paths_labels)
+
+        self.image_paths = [ds.home('images', ds.IMAGE_SUBDIR, pth)
+                for pth in rel_paths]
 
         def lookup(pairs):
-            return paths_labels_lookup(paths_labels(pairs), self.img_paths)
+            return paths_labels_lookup(paths_labels(pairs), rel_paths)
 
         self.dev_train = lookup(ds.pairsDevTrain)
         self.dev_test = lookup(ds.pairsDevTest)
@@ -116,11 +120,11 @@ class FullProtocol(object):
         else:
             loader = ImgLoader(ndim=2, dtype=np.float32, mode='L')
 
-        self.img_pixels = lmap(loader, self.img_paths)
+        self.dataset = ds
+        self.image_pixels = lmap(loader, self.image_paths)
         self.paths_labels_dev_train = paths_labels_dev_train
         self.paths_labels_dev_test = paths_labels_dev_test
         self.paths_labels_view2 = paths_labels_view2
-
 
     @property
     def protocol(self):
@@ -130,7 +134,7 @@ class FullProtocol(object):
                     lidx=obj['lpathidx'],
                     ridx=obj['rpathidx'],
                     y=obj['label'],
-                    images=self.img_pixels,
+                    images=self.image_pixels,
                     name=name)
 
         model = BestModelByCrossValidation(
@@ -149,7 +153,7 @@ class FullProtocol(object):
                         for j in range(10) if j != i]),
                     y=np.concatenate([self.view2[j]['label']
                         for j in range(10) if j != i]),
-                    images=self.img_pixels,
+                    images=self.image_pixels,
                     name='view2_train_%i' % i,
                     )
             v2i_model = RetrainClassifier(model, v2i_trn)
@@ -173,89 +177,70 @@ class Aligned(FullProtocol):
 
 class BaseView2(FullProtocol):
 
+    """
+    self.dataset - a dataset.BaseLFW subclass instance
+    self.x all image pairs in view2
+    self.y all image pair labels in view2
+    self.splits : list of 10 View2 splits, each one has
+        splits[i].x : all of the image pairs in View2
+        splits[i].y : all labels of splits[i].x
+        splits[i].train.x : subset of splits[i].x
+        splits[i].train.y : subset of splits[i].x
+        splits[i].test.x : subset of splits[i].x
+        splits[i].test.y : subset of splits[i].x
+    """
+
+    def load_pair(self, idxpair):
+        lidx, ridx, label = idxpair
+
+        # XXX
+        # WTF why does loading this as a numpy int32 cause it
+        # to try to load a path '/' whereas int() make it load the right path?
+        l = self.image_pixels[int(lidx)]
+        r = self.image_pixels[int(ridx)]
+        return np.asarray([l, r])
+
     def __init__(self):
         FullProtocol.__init__(self)
+        view2 = self.view2
 
-        if self.DATASET_CLASS is None:
-            raise NotImplementedError("This is an abstract class")
-
-        # -- build/fetch dataset
-        ds = self.DATASET_CLASS()
-        folds = ds.pairsView2
-
-        # -- lazy array helper function
-        if ds.COLOR:
-            loader = ImgLoader(ndim=3, dtype=np.float32, mode='RGB')
-        else:
-            loader = ImgLoader(ndim=2, dtype=np.float32, mode='L')
-
-        def load_pair(pair):
-            left_fname = ds.home('images', ds.IMAGE_SUBDIR, pair[0])
-            left = loader(left_fname)
-            right_fname = ds.home('images', ds.IMAGE_SUBDIR, pair[1])
-            right = loader(right_fname)
-            return np.array((left, right), dtype=np.float32)
-
-        # -- for each fold build a lazy "split"
+        all_x = lmap(self.load_pair, view2.flatten())
+        all_y = self.view2.flatten()['label']
         splits = []
-        all_x_fn = None
-        all_y_fn = None
-        for i, test_fold in enumerate(folds):
+        for fold_i, test_fold in enumerate(view2):
 
             # -- test
-            test_fold = np.array(test_fold)
+            test_x = lmap(self.load_pair, test_fold)
+            test_y = test_fold['label']
+            assert len(test_x) == 600
 
-            test_x_fn = test_fold[:, :2]
-            split_x_fn = deepcopy(test_x_fn)
-            test_x = lmap(load_pair, test_x_fn)
+            train_x = lmap(self.load_pair,
+                    np.concatenate([
+                        fold
+                        for fold_j, fold in enumerate(view2)
+                        if fold_j != fold_i]))
+            assert len(train_x) == 5400
+            train_y = np.concatenate([
+                fold['label']
+                for fold_j, fold in enumerate(view2)
+                if fold_j != fold_i])
 
-            test_y = test_fold[:, 2].astype(int)
-            split_y = deepcopy(test_y)
+            splits.append(
+                    dotdict(
+                        x=all_x,
+                        y=all_y,
+                        train=dotdict(x=train_x, y=train_y),
+                        test=dotdict(x=test_x, y=test_y),
+                        )
+                    )
 
-            if all_x_fn is None:
-                all_x_fn = split_x_fn
-                all_y = split_y
-            else:
-                all_x_fn = np.concatenate((all_x_fn, split_x_fn))
-                all_y = np.concatenate((all_y, split_y))
-
-            # -- train (filenames)
-            train_x_fn = None
-            train_y = None
-            for j, train_fold in enumerate(folds):
-                if j == i:
-                    continue
-                train_fold = np.array(train_fold)
-                _train_x_fn = train_fold[:, :2]
-                _train_y = train_fold[:, 2].astype(int)
-                if train_x_fn is None:
-                    train_x_fn = _train_x_fn
-                    train_y = _train_y
-                else:
-                    train_x_fn = np.concatenate((train_x_fn, _train_x_fn))
-                    train_y = np.concatenate((train_y, _train_y))
-
-            split_x_fn = np.concatenate((split_x_fn, train_x_fn))
-            split_y = np.concatenate((split_y, train_y))
-
-            split_x = lmap(load_pair, train_x_fn)
-            train_x = lmap(load_pair, train_x_fn)
-
-            split = dotdict(
-                x=split_x,
-                y=split_y,
-                train=dotdict(x=train_x, y=train_y),
-                test=dotdict(x=test_x, y=test_y),
-                )
-            splits += [split]
-
-        all_x = lmap(load_pair, all_x_fn)
-        all_y = lmap(load_pair, all_y_fn)
-
-        self.dataset = ds
         self.x = all_x
         self.y = all_y
         self.splits = splits
+
+    @property
+    def protocol(self):
+        raise NotImplementedError()
 
 
 class OriginalView2(BaseView2):
