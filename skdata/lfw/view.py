@@ -86,7 +86,7 @@ class FullProtocol(object):
 
     DATASET_CLASS = None
 
-    def __init__(self):
+    def __init__(self, x_dtype='uint8', x_height=250, x_width=250):
         if self.DATASET_CLASS is None:
             raise NotImplementedError("This is an abstract class")
 
@@ -116,9 +116,10 @@ class FullProtocol(object):
 
         # -- lazy array helper function
         if ds.COLOR:
-            loader = ImgLoader(ndim=3, dtype=np.float32, mode='RGB')
+            ndim, mode, shape = (3, 'RGB', (x_height, x_width, 3))
         else:
-            loader = ImgLoader(ndim=2, dtype=np.float32, mode='L')
+            ndim, mode, shape = (2, 'L', (x_height, x_width))
+        loader = ImgLoader(ndim=ndim, dtype=x_dtype, mode=mode, shape=shape)
 
         self.dataset = ds
         self.image_pixels = lmap(loader, self.image_paths)
