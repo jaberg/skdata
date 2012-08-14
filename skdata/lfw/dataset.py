@@ -206,7 +206,7 @@ class BaseLFW(object):
         if len(header_tokens) == 2:
             n_folds, n_pairs = header_tokens
         elif len(header_tokens) == 1:
-            n_folds, n_pairs = (1,) + header_tokens
+            n_folds, n_pairs = [1] + header_tokens
         else:
             raise ValueError('Failed to parse header', header_tokens)
 
