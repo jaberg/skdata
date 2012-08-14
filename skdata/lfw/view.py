@@ -22,8 +22,8 @@ def paths_labels(pairs):
     n_folds, n_labels, n_pairs, n_per_pair = pairs.shape
     assert n_per_pair == 2
 
-    def foo(l, r):
-        (lname, lnum), (rname, rnum)
+    def foo(lr):
+        (lname, lnum), (rname, rnum) = lr
         lpath = '%s/%s_%04d.jpg' % (lname, lname, lnum)
         rpath = '%s/%s_%04d.jpg' % (rname, rname, rnum)
         assert len(lpath) < (3 * dataset.NAMELEN)
