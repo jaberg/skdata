@@ -4,6 +4,7 @@
 # License: Simplified BSD
 
 from copy import deepcopy
+import logging; logger = logging.getLogger(__name__)
 
 import numpy as np
 
