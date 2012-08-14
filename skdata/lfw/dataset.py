@@ -134,9 +134,15 @@ class BaseLFW(object):
             sha1 = self.SHA1
             output_dirname = self.home('images')
             if not path.exists(output_dirname):
-                if not path.exists(output_dirname):
-                    os.makedirs(output_dirname)
+                os.makedirs(output_dirname)
+
+            # -- various disruptions might cause this to fail
+            #    but if any process gets as far as writing the completion
+            #    marker, then it should be all good.
+            done_marker = os.path.join(output_dirname, 'completion_marker')
+            if not path.exists(done_marker):
                 download_and_extract(url, output_dirname, sha1=sha1)
+                open(done_marker, 'w').close()
 
     # ------------------------------------------------------------------------
     # -- Dataset Interface: meta
