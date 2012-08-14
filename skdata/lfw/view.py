@@ -201,8 +201,8 @@ class BaseView2(FullProtocol):
         r = self.image_pixels[int(ridx)]
         return np.asarray([l, r])
 
-    def __init__(self):
-        FullProtocol.__init__(self)
+    def __init__(self, *args, **kwargs):
+        FullProtocol.__init__(self, *args, **kwargs)
         view2 = self.view2
 
         all_x = lmap(self.load_pair, view2.flatten())
