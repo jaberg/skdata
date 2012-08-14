@@ -249,11 +249,9 @@ class BaseLFW(object):
         return self.parse_pairs_file(self.home('pairs.txt'))
 
 
-
 class Original(BaseLFW):
     URL = "http://vis-www.cs.umass.edu/lfw/lfw.tgz"
     SHA1 = '1aeea1f6b1cfabc8a0e103d974b590fda315e147'
-    NAME = 'original'
     IMAGE_SUBDIR = 'lfw'
     COLOR = True
 
@@ -261,7 +259,6 @@ class Original(BaseLFW):
 class Funneled(BaseLFW):
     URL = "http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz"
     SHA1 = '7f5c008acbd96597ee338fbb2d6c0045979783f7'
-    NAME = 'funneled'
     IMAGE_SUBDIR = 'lfw_funneled'
     COLOR = True
 
@@ -269,6 +266,5 @@ class Funneled(BaseLFW):
 class Aligned(BaseLFW):
     URL = "http://www.openu.ac.il/home/hassner/data/lfwa/lfwa.tar.gz"
     SHA1 = '38ecda590870e7dc91fb1040759caccddbe25375'
-    NAME = 'aligned'
     IMAGE_SUBDIR = 'lfw2'
     COLOR = False
