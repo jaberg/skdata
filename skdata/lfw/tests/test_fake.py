@@ -51,6 +51,7 @@ class EmptyLFW(dataset.BaseLFW):
     ARCHIVE_NAME = "i_dont_exist.tgz"
     img_shape = (250, 250, 3)
     COLOR = True
+    IMAGE_SUBDIR = 'image_subdir'
 
     def home(self, *names):
         return os.path.join(SCIKIT_LEARN_DATA_EMPTY, 'lfw', self.name, *names)
@@ -146,9 +147,8 @@ def teardown_module():
     FakeLFW().clean_up()
 
 
-@raises(IOError)
 def test_empty_load():
-    EmptyLFW().meta
+    assert len(EmptyLFW().meta) == 0
 
 
 def test_fake_load():
@@ -164,30 +164,21 @@ def test_fake_load():
 
 def test_fake_verification_task():
     fake = FakeLFW()
-    for split in (None, 'DevTrain', 'DevTest', 'fold_0', 'fold_1', 'fold_2'):
-        if split is None:
-            lpaths, rpaths, labels = fake.raw_verification_task()
-        else:
-            lpaths, rpaths, labels = fake.raw_verification_task(split=split)
 
-        if split is None or split == 'DevTrain':
-            assert len(labels) == 5 * 2
-        elif split == 'DevTest':
-            assert len(labels) == 7 * 2
-        elif split.startswith('fold'):
-            assert len(labels) == 4 * 2
+    assert fake.pairsDevTrain.shape == (1, 2, 5, 2), fake.pairsDevTrain.shape
+    assert fake.pairsDevTest.shape == (1, 2, 7, 2)
+    assert fake.pairsView2.shape == (3, 2, 4, 2)
 
-        assert len(lpaths) == len(labels)
-        assert len(rpaths) == len(labels)
-        assert 'int' in str(labels.dtype)
-        for l, r, t in zip(lpaths, rpaths, labels):
-            assert t in (0, 1)
-            if t == 0:
-                assert namelike(l) != namelike(r)
-            else:
-                assert namelike(l) == namelike(r)
+    for i in range(5):
+        (lname, lnum) = fake.pairsDevTrain[0, 0, i, 0]
+        (rname, rnum) = fake.pairsDevTrain[0, 0, i, 1]
+        assert lname == rname
 
-    assert_raises(KeyError, fake.raw_verification_task, split='invalid')
+    for i in range(5):
+        (lname, lnum) = fake.pairsDevTrain[0, 1, i, 0]
+        (rname, rnum) = fake.pairsDevTrain[0, 1, i, 1]
+        assert lname != rname
+
 
 
 def test_fake_imgs():
@@ -204,29 +195,4 @@ def test_fake_imgs():
     assert img0.ndim == 3
     assert img0.shape == (250, 250, 3)
 
-
-def test_img_classification_task():
-    dset = lfw.Original()
-    X, y = dset.img_classification_task(dtype='float32')
-    tasks.assert_img_classification(X, y)
-
-
-def test_img_verification_task():
-    dset = lfw.Original()
-    X, Y, z = dset.img_verification_task(dtype='float32')
-    tasks.assert_img_verification(X, Y, z)
-
-
-def test_raw_verification_task_view2():
-    dset = lfw.Original()
-    for k in range(10):
-        train = dset.raw_verification_task_view2('train', k)
-        test = dset.raw_verification_task_view2('test', k)
-        assert len(test[0]) == len(test[1]) == len(test[2])
-        assert len(test[0]) * 9 == len(train[0])
-        testset = set(zip(test[0], test[1]))
-        print 'K', k, len(testset)
-        for l, r, y in zip(*train):
-            assert (l, r) not in testset
-            assert (r, l) not in testset
 

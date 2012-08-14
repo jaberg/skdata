@@ -213,14 +213,12 @@ class BaseView2(FullProtocol):
             # -- test
             test_x = lmap(self.load_pair, test_fold)
             test_y = test_fold['label']
-            assert len(test_x) == 600
 
             train_x = lmap(self.load_pair,
                     np.concatenate([
                         fold
                         for fold_j, fold in enumerate(view2)
                         if fold_j != fold_i]))
-            assert len(train_x) == 5400
             train_y = np.concatenate([
                 fold['label']
                 for fold_j, fold in enumerate(view2)
