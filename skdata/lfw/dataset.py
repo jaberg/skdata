@@ -89,6 +89,11 @@ class BaseLFW(object):
 
             ...
 
+    The meta-data is dictionaries (one-per-image) with keys:
+    * filename
+    * name
+    * image_number
+
     """
 
     def __init__(self):
