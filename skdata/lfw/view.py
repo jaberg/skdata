@@ -26,13 +26,15 @@ def paths_labels(pairs):
         (lname, lnum), (rname, rnum)
         lpath = '%s/%s_%04d.jpg' % (lname, lname, lnum)
         rpath = '%s/%s_%04d.jpg' % (rname, rname, rnum)
+        assert len(lpath) < (3 * dataset.NAMELEN)
+        assert len(rpath) < (3 * dataset.NAMELEN)
         label = 1 if lname == rname else -1
         return lpath, rpath, label
 
     rval = np.recarray(n_folds * n_labels * n_pairs,
             dtype=np.dtype([
-                ('lpath', 'S' + 3 * dataset.NAMELEN),
-                ('rpath', 'S' + 3 * dataset.NAMELEN),
+                ('lpath', 'S' + str(3 * dataset.NAMELEN)),
+                ('rpath', 'S' + str(3 * dataset.NAMELEN)),
                 ('label', np.int8)]))
     rval[:] = map(foo, pairs.reshape((-1, 2)))
     return rval.reshape((n_folds, n_labels * n_pairs))

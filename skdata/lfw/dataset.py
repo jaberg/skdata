@@ -51,7 +51,7 @@ log = logging.getLogger(__name__)
 # skdata and not be imposed on the caller (like in http://goo.gl/7xEeB)
 
 
-NAMELEN = 32
+NAMELEN = 48
 
 PAIRS_BASE_URL = "http://vis-www.cs.umass.edu/lfw/"
 PAIRS_FILENAMES = [
@@ -207,21 +207,26 @@ class BaseLFW(object):
         # -- checks number of lines by side-effect
         elems = lines[1:].reshape(n_folds, 2, n_pairs)
         rval = np.recarray((n_folds, 2, n_pairs, 2),
-                dtype=np.dtype([('name', 'S%i' % NAMELEN), ('inum', np.int32)]))
+                dtype=np.dtype([('name', 'S%i' % NAMELEN),
+                    ('inum', np.int32)]))
 
         for fold_i in xrange(n_folds):
             # parse the same-name lines
             for pair_i in xrange(n_pairs):
                 name, inum0, inum1 = elems[fold_i, 0, pair_i].split()
-            assert len(name) < 32
-            rval[fold_i, 0, pair_i, 0] = name, inum0
-            rval[fold_i, 0, pair_i, 1] = name, inum1
+                assert len(name) < NAMELEN
+                rval[fold_i, 0, pair_i, 0] = name, int(inum0)
+                rval[fold_i, 0, pair_i, 1] = name, int(inum1)
+
+                assert rval[fold_i, 0, pair_i, 0]['name'] == name
 
             # parse the different-name lines
             for pair_i in xrange(n_pairs):
                 name0, inum0, name1, inum1 = elems[fold_i, 1, pair_i].split()
-            rval[fold_i, 0, pair_i, 0] = name0, inum0
-            rval[fold_i, 0, pair_i, 1] = name1, inum1
+                assert len(name0) < NAMELEN
+                assert len(name1) < NAMELEN
+                rval[fold_i, 1, pair_i, 0] = name0, int(inum0)
+                rval[fold_i, 1, pair_i, 1] = name1, int(inum1)
 
         return rval
 
