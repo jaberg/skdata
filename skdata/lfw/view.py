@@ -64,13 +64,25 @@ def paths_labels_lookup(paths_labels, path_list):
                 ('lpathidx', np.int32),
                 ('rpathidx', np.int32),
                 ('label', np.int8)]))
-    rval['lpathidx'] = np.searchsorted(path_list, path_labels['lpath'])
-    rval['rpathidx'] = np.searchsorted(path_list, path_labels['rpath'])
-    rval['label'] = path_labels['label']
+    rval['lpathidx'] = np.searchsorted(path_list, paths_labels['lpath'])
+    rval['rpathidx'] = np.searchsorted(path_list, paths_labels['rpath'])
+    rval['label'] = paths_labels['label']
     return rval
 
 
 class FullProtocol(object):
+
+    """
+    image_pixels:
+        lazy array of grey or rgb images as pixels, all images in
+        dataset.
+
+    view2: integer recarray of shape (10, 600) whose fields are:
+        'lpathidx': index of left image in image_pixels
+        'rpathidx': index of right image in image_pixels
+        'label':    -1 or 1
+
+    """
 
     DATASET_CLASS = None
 
