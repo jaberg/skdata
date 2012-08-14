@@ -39,7 +39,9 @@ def paths_labels(pairs):
                 ('lpath', 'S' + str(3 * dataset.NAMELEN)),
                 ('rpath', 'S' + str(3 * dataset.NAMELEN)),
                 ('label', np.int8)]))
-    rval[:] = map(foo, pairs.reshape((-1, 2)))
+    # -- interleave the labels, so that indexing just the first few
+    #    examples will return a stratified sample.
+    rval[:] = map(foo, pairs.transpose(0, 2, 1, 3).reshape((-1, 2)))
     return rval.reshape((n_folds, n_labels * n_pairs))
 
 
