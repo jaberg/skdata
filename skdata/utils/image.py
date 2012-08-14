@@ -61,6 +61,7 @@ class ImgLoader(object):
             rval /= 255.0
         return rval
 
+
 # XXX: these loaders currently do not coerce the loaded images
 #      to be e.g. rgb or bw. Should they?
 load_rgb_f32 = ImgLoader(ndim=3, dtype='float32')

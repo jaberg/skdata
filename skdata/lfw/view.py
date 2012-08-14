@@ -91,17 +91,33 @@ class FullProtocol(object):
 
     DATASET_CLASS = None
 
-    def __init__(self, x_dtype='uint8', x_height=250, x_width=250):
+    def __init__(self, x_dtype='uint8', x_height=250, x_width=250,
+            max_n_per_class=None,
+            channel_major=False):
         if self.DATASET_CLASS is None:
             raise NotImplementedError("This is an abstract class")
 
         # -- build/fetch dataset
-        ds = self.DATASET_CLASS()
-        ds.meta
+        self.dataset = self.DATASET_CLASS()
+        self.dataset.meta
 
-        paths_labels_dev_train = paths_labels(ds.pairsDevTrain)
-        paths_labels_dev_test = paths_labels(ds.pairsDevTest)
-        paths_labels_view2 = paths_labels(ds.pairsView2)
+        pairsDevTrain = self.dataset.pairsDevTrain
+        pairsDevTest = self.dataset.pairsDevTest
+        pairsView2 = self.dataset.pairsView2
+
+        if max_n_per_class is not None:
+            pairsDevTrain = pairsDevTrain[:, :, :max_n_per_class]
+            pairsDevTest = pairsDevTest[:, :, :max_n_per_class]
+            pairsView2 = pairsView2[:, :, :max_n_per_class]
+
+        logging.info('pairsDevTrain shape %s' % str(pairsDevTrain.shape))
+        logging.info('pairsDevTest shape %s' % str(pairsDevTest.shape))
+        logging.info('pairsView2 shape %s' % str(pairsView2.shape))
+
+        paths_labels_dev_train = paths_labels(pairsDevTrain)
+        paths_labels_dev_test = paths_labels(pairsDevTest)
+        paths_labels_view2 = paths_labels(pairsView2)
+
         all_paths_labels = np.concatenate([
             paths_labels_dev_train.flatten(),
             paths_labels_dev_test.flatten(),
@@ -109,24 +125,25 @@ class FullProtocol(object):
 
         rel_paths = sorted_paths(all_paths_labels)
 
-        self.image_paths = [ds.home('images', ds.IMAGE_SUBDIR, pth)
+        self.image_paths = [
+                self.dataset.home('images', self.dataset.IMAGE_SUBDIR, pth)
                 for pth in rel_paths]
 
         def lookup(pairs):
-            return paths_labels_lookup(paths_labels(pairs), rel_paths)
+            rval = paths_labels_lookup(paths_labels(pairs), rel_paths)
+            return rval
 
-        self.dev_train = lookup(ds.pairsDevTrain)
-        self.dev_test = lookup(ds.pairsDevTest)
-        self.view2 = lookup(ds.pairsView2)
+        self.dev_train = lookup(pairsDevTrain)
+        self.dev_test = lookup(pairsDevTest)
+        self.view2 = lookup(pairsView2)
 
         # -- lazy array helper function
-        if ds.COLOR:
+        if self.dataset.COLOR:
             ndim, mode, shape = (3, 'RGB', (x_height, x_width, 3))
         else:
             ndim, mode, shape = (2, 'L', (x_height, x_width))
         loader = ImgLoader(ndim=ndim, dtype=x_dtype, mode=mode, shape=shape)
 
-        self.dataset = ds
         self.image_pixels = lmap(loader, self.image_paths)
         self.paths_labels_dev_train = paths_labels_dev_train
         self.paths_labels_dev_test = paths_labels_dev_test
