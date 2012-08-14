@@ -12,6 +12,8 @@ from skdata.utils import dotdict
 from skdata.utils import ImgLoader
 from skdata.larray import lmap
 
+from skdata import dslang
+
 import dataset
 
 
@@ -132,23 +134,23 @@ class FullProtocol(object):
     def protocol(self):
 
         def task(obj, name):
-            return Task('image_match_indexed',
+            return dslang.Task('image_match_indexed',
                     lidx=obj['lpathidx'],
                     ridx=obj['rpathidx'],
                     y=obj['label'],
                     images=self.image_pixels,
                     name=name)
 
-        model = BestModelByCrossValidation(
-                Split(
-                    task(self.dev_train[0], 'devTrain'),
-                    task(self.dev_test[0], 'devTest')))
+        model = dslang.BestModelByCrossValidation(
+                dslang.Split(
+                    task(self.dev_train[0], name='devTrain'),
+                    task(self.dev_test[0], name='devTest')))
 
         v2_scores = []
 
-        for i, v2i_tst in enumerate(view2):
+        for i, v2i_tst in enumerate(self.view2):
             v2i_tst = task(self.view2[i], 'view2_test_%i' % i)
-            v2i_trn = Task('image_match_indexed',
+            v2i_trn = dslang.Task('image_match_indexed',
                     lidx=np.concatenate([self.view2[j]['lpathidx']
                         for j in range(10) if j != i]),
                     ridx=np.concatenate([self.view2[j]['rpathidx']
@@ -158,11 +160,10 @@ class FullProtocol(object):
                     images=self.image_pixels,
                     name='view2_train_%i' % i,
                     )
-            v2i_model = RetrainClassifier(model, v2i_trn)
-            v2_scores.append(Score(v2i_model, v2i_tst,
-                name='view2 test error %i' % i))
+            v2i_model = dslang.RetrainClassifier(model, v2i_trn)
+            v2_scores.append(dslang.Score(v2i_model, v2i_tst))
 
-        return Average(v2_scores, name='final view2 test error')
+        return dslang.Average(v2_scores)
 
 
 class Original(FullProtocol):
