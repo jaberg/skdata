@@ -20,7 +20,7 @@ try:
 except ImportError:
     imsave = None
 
-from skdata import lfw
+from skdata.lfw import dataset, view
 from skdata import tasks
 
 from numpy.testing import assert_raises
@@ -47,25 +47,25 @@ def namelike(fullpath):
     return fullpath[-18:-8]
 
 
-class EmptyLFW(lfw.BaseLFW):
-    NAME = 'Empty'
+class EmptyLFW(dataset.BaseLFW):
     ARCHIVE_NAME = "i_dont_exist.tgz"
     img_shape = (250, 250, 3)
+    COLOR = True
 
     def home(self, *names):
-        return os.path.join(SCIKIT_LEARN_DATA_EMPTY, 'lfw', self.NAME, *names)
+        return os.path.join(SCIKIT_LEARN_DATA_EMPTY, 'lfw', self.name, *names)
 
     def fetch(self, download_if_missing=True):
         return
 
 
-class FakeLFW(lfw.BaseLFW):
-    NAME = 'Fake'
-    IMAGEDIR = 'lfw_fake'  # corresponds to lfw, lfw_funneled, lfw_aligned
+class FakeLFW(dataset.BaseLFW):
+    IMAGE_SUBDIR = 'lfw_fake'  # corresponds to lfw, lfw_funneled, lfw_aligned
     img_shape = (250, 250, 3)
+    COLOR = True
 
     def home(self, *names):
-        return os.path.join(SCIKIT_LEARN_DATA, 'lfw', self.NAME, *names)
+        return os.path.join(SCIKIT_LEARN_DATA, 'lfw', self.name, *names)
 
     def fetch(self, download_if_missing=True):
         if not os.path.exists(self.home()):
@@ -77,7 +77,7 @@ class FakeLFW(lfw.BaseLFW):
         # generate some random jpeg files for each person
         counts = FakeLFW.counts = {}
         for name in FAKE_NAMES:
-            folder_name = self.home(self.IMAGEDIR, name)
+            folder_name = self.home('images', self.IMAGE_SUBDIR, name)
             if not os.path.exists(folder_name):
                 os.makedirs(folder_name)
 
@@ -128,6 +128,14 @@ class FakeLFW(lfw.BaseLFW):
         write_fake_pairs('pairs.txt', 4, 3)
 
 
+class FP_Empty(view.FullProtocol):
+    DATASET_CLASS = EmptyLFW
+
+
+class FP_Fake(view.FullProtocol):
+    DATASET_CLASS = FakeLFW
+
+
 def setup_module():
     """Test fixture run once and common to all tests of this module"""
     FakeLFW().fetch()
@@ -150,24 +158,8 @@ def test_fake_load():
         counts_copy[m['name']] -= 1
     assert all(c == 0 for c in counts_copy.values())
 
-    assert list(sorted(m['pairs'].keys())) == [
-            'DevTest', 'DevTrain', 'fold_0', 'fold_1', 'fold_2']
-
-
-def test_fake_classification_task():
-    fake = FakeLFW()
-    paths, labels = fake.raw_classification_task()
-
-    assert len(paths) == len(labels)
-    assert all(p.endswith('.jpg') for p in paths)
-    assert 'int' in str(labels.dtype)
-
-    #assert that names and labels correspond 1-1
-    sig_l = {}
-    sig_p = {}
-    for p, l in zip(paths, labels):
-        assert sig_l.setdefault(l, namelike(p)) == namelike(p)
-        assert sig_p.setdefault(namelike(p), l) == l
+    for m in fake.meta:
+        assert m['filename'].endswith('.jpg')
 
 
 def test_fake_verification_task():
@@ -199,28 +191,18 @@ def test_fake_verification_task():
 
 
 def test_fake_imgs():
-    fake = FakeLFW()
-    true_n_images = sum(fake.counts.values())
+    fp = FP_Fake()
     # test the default case
-    images, labels = fake.img_classification_task()
-    assert images.dtype == 'uint8'
-    assert images.ndim == 4
-    assert images.shape == (true_n_images, 250, 250, 3)
+    images = fp.image_pixels
+    assert images.dtype == 'uint8', images.dtype
+    assert images.ndim == 4, images.ndim
+    assert images.shape == (17, 250, 250, 3), images.shape
 
-    assert images[0].dtype == 'uint8'
-    assert images[0].ndim == 3
-    assert images[0].shape == (250, 250, 3)
-
-    # test specified dtypes
-    for dtype in 'uint8', 'float32':
-        images, labels = fake.img_classification_task(dtype=dtype)
-        assert images.dtype == dtype
-        assert images.ndim == 4
-        assert images.shape == (true_n_images, 250, 250, 3)
-
-        assert images[0].dtype == dtype
-        assert images[0].ndim == 3
-        assert images[0].shape == (250, 250, 3)
+    img0 = images[0]
+    assert isinstance(img0, np.ndarray)
+    assert img0.dtype == 'uint8'
+    assert img0.ndim == 3
+    assert img0.shape == (250, 250, 3)
 
 
 def test_img_classification_task():
