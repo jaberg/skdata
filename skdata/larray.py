@@ -439,13 +439,39 @@ class CacheMixin(object):
             assert v.ndim == 1
             if np.all(v):
                 return self._data[item]
-            # otherwise at least some of the requested elements must be
-            # computed
-            # XXX: this brute-force recomputes all of the requested elements
+
+            # -- Quick and dirty, yes.
+            # -- Accurate, ?
+            try:
+                list(item)
+                is_int_list = True
+            except:
+                is_int_list = False
+
+            if np.sum(v) == 0:
+                # -- we need to re-compute everything in item
+                sub_item = item
+            elif is_int_list:
+                # -- in this case advanced indexing has been used
+                #    and only some of the elements need to be recomputed
+                assert self._valid.max() <= 1
+                item = np.asarray(item)
+                assert 'int' in str(item.dtype)
+                sub_item = item[v == 0]
+            elif isinstance(item, slice):
+                # -- in this case slice indexing has been used
+                #    and only some of the elements need to be recomputed
+                #    so we are converting the slice to an int_list
+                idxs_of_v = np.arange(len(self._valid))[item]
+                sub_item = idxs_of_v[v == 0]
+            else:
+                sub_item = item
+
             self.rows_computed += v.sum()
-            values = self.obj[item]
-            self._valid[item] = 1
-            self._data[item] = values
+            sub_values = self.obj[sub_item]  # -- retrieve missing elements
+            self._valid[sub_item] = 1
+            self._data[sub_item] = sub_values
+            assert np.all(self._valid[item])
             return self._data[item]
 
 
