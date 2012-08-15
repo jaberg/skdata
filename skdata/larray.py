@@ -424,7 +424,7 @@ class CacheMixin(object):
         return [self.obj]
 
     def __getitem__(self, item):
-        if isinstance(item, (int, np.int)):
+        if isinstance(item, (int, np.integer)):
             if self._valid[item]:
                 return self._data[item]
             else:
