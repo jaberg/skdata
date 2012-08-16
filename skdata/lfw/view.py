@@ -12,8 +12,6 @@ from skdata.utils import dotdict
 from skdata.utils import ImgLoader
 from skdata.larray import lmap
 
-from skdata import dslang
-
 import dataset
 
 
@@ -149,27 +147,25 @@ class FullProtocol(object):
         self.paths_labels_dev_test = paths_labels_dev_test
         self.paths_labels_view2 = paths_labels_view2
 
-    @property
-    def protocol(self):
+    def protocol(self, algo):
 
         def task(obj, name):
-            return dslang.Task('image_match_indexed',
+            return algo.task('image_match_indexed',
                     lidx=obj['lpathidx'],
                     ridx=obj['rpathidx'],
                     y=obj['label'],
                     images=self.image_pixels,
                     name=name)
 
-        model = dslang.BestModelByCrossValidation(
-                dslang.Split(
-                    task(self.dev_train[0], name='devTrain'),
-                    task(self.dev_test[0], name='devTest')))
+        model = algo.best_model(
+                    train=task(self.dev_train[0], name='devTrain'),
+                    valid=task(self.dev_test[0], name='devTest'))
 
         v2_scores = []
 
         for i, v2i_tst in enumerate(self.view2):
             v2i_tst = task(self.view2[i], 'view2_test_%i' % i)
-            v2i_trn = dslang.Task('image_match_indexed',
+            v2i_trn = algo.task('image_match_indexed',
                     lidx=np.concatenate([self.view2[j]['lpathidx']
                         for j in range(10) if j != i]),
                     ridx=np.concatenate([self.view2[j]['rpathidx']
@@ -179,10 +175,10 @@ class FullProtocol(object):
                     images=self.image_pixels,
                     name='view2_train_%i' % i,
                     )
-            v2i_model = dslang.RetrainClassifier(model, v2i_trn)
-            v2_scores.append(dslang.Score(v2i_model, v2i_tst))
+            v2i_model = algo.retrain_classifier(model, v2i_trn)
+            v2_scores.append(algo.score(v2i_model, v2i_tst))
 
-        return dslang.Average(v2_scores)
+        return np.mean(v2_scores)
 
 
 class Original(FullProtocol):
