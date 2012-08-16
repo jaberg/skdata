@@ -157,11 +157,15 @@ class FullProtocol(object):
                     images=self.image_pixels,
                     name=name)
 
-        model = algo.best_model(
+        model, trn_err, val_err, promising = algo.best_model(
                     train=task(self.dev_train[0], name='devTrain'),
-                    valid=task(self.dev_test[0], name='devTest'))
+                    valid=task(self.dev_test[0], name='devTest'),
+                    return_promising=True)
 
-        v2_scores = []
+        if not promising:
+            return
+
+        v2_losses = []
 
         for i, v2i_tst in enumerate(self.view2):
             v2i_tst = task(self.view2[i], 'view2_test_%i' % i)
@@ -176,9 +180,9 @@ class FullProtocol(object):
                     name='view2_train_%i' % i,
                     )
             v2i_model = algo.retrain_classifier(model, v2i_trn)
-            v2_scores.append(algo.score(v2i_model, v2i_tst))
+            v2_losses.append(algo.loss(v2i_model, v2i_tst))
 
-        return np.mean(v2_scores)
+        return np.mean(v2_losses)
 
 
 class Original(FullProtocol):

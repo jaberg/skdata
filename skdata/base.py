@@ -79,16 +79,43 @@ class LearningAlgo(object):
 
     The idea is that a protocol driver will call these methods in a particular
     order with appropriate tasks, splits, etc. and a subclass of this instance
-    will thereby perform an experiment.
+    will thereby perform an experiment by side effect on `self`.
     """
 
     def task(self, *args, **kwargs):
         return Task(*args, **kwargs)
 
-    def best_model(self, train, valid=None):
+    def best_model(self, train, valid=None, return_promising=False):
+        """
+        Train a model from task `train` optionally optimizing for
+        cross-validated performance on `valid`.
+
+        If `return_promising` is False, this function returns a tuple:
+
+            (model, train_error, valid_error)
+
+        In which
+            model is an opaque model for the task,
+            train_error is a scalar loss criterion on the training task
+            valid_error is a scalar loss criterion on the validation task.
+
+        If `return_promising` is True, this function returns
+
+            (model, train_error, valid_error, promising)
+
+        The `promising` term is a boolean flag indicating whether the model
+        seemed to work (1) or if it appeared to be degenerate (0).
+
+        """
         raise NotImplementedError('implement me')
 
-    def score(self, model, task):
+    def loss(self, model, task):
+        """
+        Return scalar-valued training criterion of `model` on `task`.
+
+        This function can modify `self` but it should not semantically modify
+        `model` or `task`.
+        """
         raise NotImplementedError('implement me')
 
     # -- as an example of weird methods an algo might be required to implement
