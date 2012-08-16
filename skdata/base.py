@@ -123,5 +123,11 @@ class LearningAlgo(object):
     #    LFW.  Generally there is no need for this base class to list such
     #    special-case functions.
     def retrain_classifier(self, model, train, valid=None):
+        """
+        To the extent that `model` includes a feature extractor that is distinct from
+        a classifier, re-train the classifier only. This unusual step is
+        required in the original View1 / View2 LFW protocol. It is included
+        here as encouragement to add dataset-specific steps in LearningAlgo subclasses.
+        """
         raise NotImplementedError('implement me')
 
