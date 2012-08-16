@@ -72,3 +72,29 @@ class View(object):
         self.dataset = dataset
 
 
+class LearningAlgo(object):
+    """
+    A base class for learning algorithms that can be driven by the protocol()
+    functions that are sometimes included in View subclasses.
+
+    The idea is that a protocol driver will call these methods in a particular
+    order with appropriate tasks, splits, etc. and a subclass of this instance
+    will thereby perform an experiment.
+    """
+
+    def task(self, *args, **kwargs):
+        return Task(*args, **kwargs)
+
+    def best_model(self, train, valid=None):
+        raise NotImplementedError('implement me')
+
+    def score(self, model, task):
+        raise NotImplementedError('implement me')
+
+    # -- as an example of weird methods an algo might be required to implement
+    #    to accommodate bizarre protocols, see this one, which is required by
+    #    LFW.  Generally there is no need for this base class to list such
+    #    special-case functions.
+    def retrain_classifier(self, model, train, valid=None):
+        raise NotImplementedError('implement me')
+
