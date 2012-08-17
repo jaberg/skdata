@@ -472,7 +472,24 @@ class CacheMixin(object):
             self.rows_computed += v.sum()
             sub_values = self.obj[sub_item]  # -- retrieve missing elements
             self._valid[sub_item] = 1
-            self._data[sub_item] = sub_values
+            try:
+                self._data[sub_item] = sub_values
+            except:
+                logger.error('data dtype %s' % str(self._data.dtype))
+                logger.error('data shape %s' % str(self._data.shape))
+
+                logger.error('sub_item str %s' % str(sub_item))
+                logger.error('sub_item type %s' % type(sub_item))
+                logger.error('sub_item len %s' % len(sub_item))
+                logger.error('sub_item shape %s' % getattr(sub_item, 'shape',
+                    None))
+
+                logger.error('sub_values str %s' % str(sub_values))
+                logger.error('sub_values type %s' % type(sub_values))
+                logger.error('sub_values len %s' % len(sub_values))
+                logger.error('sub_values shape %s' % getattr(sub_values, 'shape',
+                    None))
+                raise
             assert np.all(self._valid[item])
             return self._data[item]
 
