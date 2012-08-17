@@ -540,8 +540,10 @@ class cache_memmap(CacheMixin, larray):
                 logger.warn("Problem re-using memmap: dtype/shape mismatch")
                 logger.info('Creating memmap %s with dtype %s, shape %s' % (
                         data_path,
-                        str(dtype),
+                        str(obj.dtype),
                         str(obj.shape)))
+                dtype = obj.dtype
+                shape = obj.shape
         except IOError:
             dtype = obj.dtype
             shape = obj.shape
