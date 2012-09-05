@@ -23,9 +23,7 @@ class UnknownShape(InferenceError):
 
 
 def is_int_idx(idx):
-    #XXX: add numpy int types
-    return isinstance(idx,
-            (int,))
+    return isinstance(idx, (int, np.integer))
 
 
 def is_larray(thing):
