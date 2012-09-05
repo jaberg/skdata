@@ -105,6 +105,9 @@ class lmap(larray):
         """
         ragged = kwargs.pop('ragged', False)
         f_map = kwargs.pop('f_map', None)
+        if f_map is None:
+            f_map = getattr(fn, 'f_map', None)
+
         if kwargs:
             raise TypeError('unrecognized kwarg', kwargs.keys())
 
