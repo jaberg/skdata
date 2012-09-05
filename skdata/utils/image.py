@@ -38,6 +38,8 @@ class ImgLoader(object):
         raise AttributeError(attr)
 
     def f_map(self, file_paths):
+        if isinstance(file_paths, str):
+            raise TypeError(file_paths)
         if self._shape:
             rval = np.empty((len(file_paths),) + self._shape, dtype='uint8')
         else:
