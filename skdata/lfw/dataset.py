@@ -45,7 +45,6 @@ from skdata.data_home import get_data_home
 from skdata.utils import download, download_and_extract
 
 import logging
-logging.basicConfig(level=logging.INFO)
 log = logging.getLogger(__name__)
 # XXX: logging config (e.g. formatting, etc.) should be factored out in
 # skdata and not be imposed on the caller (like in http://goo.gl/7xEeB)
