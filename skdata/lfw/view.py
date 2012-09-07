@@ -148,6 +148,10 @@ class FullProtocol(object):
         self.paths_labels_view2 = paths_labels_view2
 
     def protocol(self, algo):
+        for dummy in self.protocol_iter(algo):
+            pass
+
+    def protocol_iter(self, algo):
 
         def task(obj, name):
             return algo.task('image_match_indexed',
@@ -157,15 +161,15 @@ class FullProtocol(object):
                     images=self.image_pixels,
                     name=name)
 
-        model, trn_err, val_err, promising = algo.best_model(
-                    train=task(self.dev_train[0], name='devTrain'),
-                    valid=task(self.dev_test[0], name='devTest'),
-                    return_promising=True)
+        model = algo.best_model(
+            train=task(self.dev_train[0], name='devTrain'),
+            valid=task(self.dev_test[0], name='devTest'),
+            )
 
-        if not promising:
-            return
+        yield ('model validation complete', model)
 
         v2_losses = []
+        algo.generalization_error_k_fold = []
 
         for i, v2i_tst in enumerate(self.view2):
             v2i_tst = task(self.view2[i], 'view2_test_%i' % i)
@@ -181,8 +185,14 @@ class FullProtocol(object):
                     )
             v2i_model = algo.retrain_classifier(model, v2i_trn)
             v2_losses.append(algo.loss(v2i_model, v2i_tst))
+            algo.generalization_error_k_fold.append(dict(
+                train_task_name=v2i_trn.name,
+                test_task_name=v2i_tst.name,
+                test_error_rate=v2_losses[-1],
+                ))
+        algo.generalization_error = np.mean(v2_losses)
 
-        return np.mean(v2_losses)
+        yield 'model testing complete'
 
 
 class Original(FullProtocol):
