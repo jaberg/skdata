@@ -45,9 +45,16 @@ class ImgLoader(object):
         else:
             rval = [None] * len(file_paths)
         for ii, file_path in enumerate(file_paths):
-            rval[ii] = np.asarray(
+            img_ii = np.asarray(
                 imread(file_path, mode=self.mode),
                 dtype='uint8')
+            # -- broadcast pixels over channels if channels have been
+            #    requested (_shape has len 3) and are not present
+            #    (img_ii.ndim == 2)
+            if img_ii.ndim == 2 and rval.ndim == 4:
+                rval[ii] =  img_ii[:, :, np.newaxis]
+            else:
+                rval[ii] =  img_ii
         rval = rval.astype(self._dtype)
         if 'float' in str(self._dtype):
             rval /= 255.0
