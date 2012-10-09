@@ -140,13 +140,15 @@ class FullProtocol(object):
         if self.dataset.COLOR:
             ndim, mode, shape = (3, 'RGB', (x_height, x_width, 3))
         else:
-            ndim, mode, shape = (2, 'L', (x_height, x_width))
+            ndim, mode, shape = (3, 'L', (x_height, x_width, 1))
         loader = ImgLoader(ndim=ndim, dtype=x_dtype, mode=mode, shape=shape)
 
         self.image_pixels = lmap(loader, self.image_paths)
         self.paths_labels_dev_train = paths_labels_dev_train
         self.paths_labels_dev_test = paths_labels_dev_test
         self.paths_labels_view2 = paths_labels_view2
+
+        assert str(self.image_pixels[0].dtype) == x_dtype
 
     def protocol(self, algo):
         for dummy in self.protocol_iter(algo):
