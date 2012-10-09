@@ -149,6 +149,7 @@ class FullProtocol(object):
         self.paths_labels_view2 = paths_labels_view2
 
         assert str(self.image_pixels[0].dtype) == x_dtype
+        assert self.image_pixels[0].ndim == 3
 
     def protocol(self, algo):
         for dummy in self.protocol_iter(algo):
