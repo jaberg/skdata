@@ -5,7 +5,7 @@ logger = logging.getLogger(__name__)
 
 try:
     from PIL import Image
-    from scipy.misc import imresize, fromimage
+    from scipy.misc import fromimage
 except ImportError:
     logger.warn("The Python Imaging Library (PIL)"
             " is required to load data from jpeg files.")

@@ -3,8 +3,7 @@
 
 # License: Simplified BSD
 
-from copy import deepcopy
-import logging; logger = logging.getLogger(__name__)
+import logging
 
 import numpy as np
 
@@ -13,6 +12,8 @@ from skdata.utils import ImgLoader
 from skdata.larray import lmap
 
 import dataset
+
+logger = logging.getLogger(__name__)
 
 
 def paths_labels(pairs):
