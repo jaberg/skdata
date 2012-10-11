@@ -45,9 +45,11 @@ class ImgLoader(object):
         else:
             rval = [None] * len(file_paths)
         for ii, file_path in enumerate(file_paths):
-            img_ii = np.asarray(
-                imread(file_path, mode=self.mode),
-                dtype='uint8')
+            im_ii = imread(file_path, mode=self.mode)
+            if len(im_ii.shape) not in (2, 3):
+                raise IOError('Failed to decode %s' % file_path)
+            img_ii = np.asarray(im_ii, dtype='uint8')
+            assert len(img_ii.shape) in (2, 3)
             # -- broadcast pixels over channels if channels have been
             #    requested (_shape has len 3) and are not present
             #    (img_ii.ndim == 2)
