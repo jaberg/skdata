@@ -170,6 +170,9 @@ class FullProtocol(object):
             valid=task(self.dev_test[0], name='devTest'),
             )
 
+        algo.forget_task('devTrain')
+        algo.forget_task('devTest')
+
         yield ('model validation complete', model)
 
         v2_losses = []
@@ -194,6 +197,8 @@ class FullProtocol(object):
                 test_task_name=v2i_tst.name,
                 test_error_rate=v2_losses[-1],
                 ))
+            algo.forget_task('view2_test_%i' % i)
+            algo.forget_task('view2_train_%i' % i)
         algo.generalization_error = np.mean(v2_losses)
 
         yield 'model testing complete'

@@ -131,3 +131,13 @@ class LearningAlgo(object):
         """
         raise NotImplementedError('implement me')
 
+
+    def forget_task(self, task_name):
+        """
+        Signal that it is OK to delete any features / statistics etc related
+        specifically to task `task_name`.  This can be safely ignored
+        for small data sets but deleting such intermediate results can
+        be crucial to keeping memory use under control.
+        """
+        pass
+
