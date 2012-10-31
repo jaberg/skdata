@@ -60,6 +60,9 @@ class StratifiedImageClassification(object):
     def __init__(self, dtype, n_train, n_valid, n_test, shuffle_seed=123,
             channel_major=False):
 
+        if str(dtype) != 'uint8':
+            raise NotImplementedError(dtype)
+
         self.n_classes = n_classes = 10
         assert n_train + n_valid <= 50000
         assert n_test <= 10000
@@ -73,6 +76,8 @@ class StratifiedImageClassification(object):
         tst_images = cf10._pixels[50000:]
         tst_labels = cf10._labels[50000:]
 
+        assert str(cf10._pixels.dtype) == 'uint8'
+
         # -- now carve it up so that we have balanced classes for fitting and
         #    validation
         logger.debug('re-indexing dataset')
@@ -85,6 +90,9 @@ class StratifiedImageClassification(object):
             test[label] = tst_images[tst_labels == label]
             assert len(train[label]) == len(trn_labels) / n_classes
             assert len(test[label]) == len(tst_labels) / n_classes
+
+        del trn_images, trn_labels
+        del tst_images, tst_labels
 
         if np.any(np.asarray([n_train, n_valid, n_test]) % len(label_set)):
             raise NotImplementedError('size not muptiple of 10',
@@ -128,6 +136,7 @@ class StratifiedImageClassification(object):
             # -- hack to put it here, but it works for now
             if X.ndim > 1 and channel_major:
                 X = X.transpose(0, 3, 1, 2).copy()
+
             return X
 
         self.dataset = cf10
@@ -138,24 +147,34 @@ class StratifiedImageClassification(object):
         self.tst_images = shuffle(tst_images, 2)
         self.tst_labels = shuffle(tst_labels, 2)
 
+
+        for images in self.trn_images, self.val_images, self.tst_images:
+            assert str(images.dtype) == dtype, (images.dtype, dtype)
+
     def protocol(self, algo):
 
         # XXX: task should be idx, not images
 
-        task_trn = Task('image_classification',
-                x=self.trn_images,
-                y=self.trn_labels,
-                n_classes=self.n_classes)
+        task_trn = Task(
+            'image_classification',
+            name='trn',
+            x=self.trn_images,
+            y=self.trn_labels,
+            n_classes=self.n_classes)
 
-        task_val = Task('image_classification',
-                x=self.val_images,
-                y=self.val_labels,
-                n_classes=self.n_classes)
+        task_val = Task(
+            'image_classification',
+            name='val',
+            x=self.val_images,
+            y=self.val_labels,
+            n_classes=self.n_classes)
 
-        task_tst = Task('image_classification',
-                x=self.tst_images,
-                y=self.tst_labels,
-                n_classes=self.n_classes)
+        task_tst = Task(
+            'image_classification',
+            name='tst',
+            x=self.tst_images,
+            y=self.tst_labels,
+            n_classes=self.n_classes)
 
         model = algo.best_model(train=task_trn, valid=task_val)
 
