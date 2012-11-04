@@ -178,6 +178,6 @@ class StratifiedImageClassification(object):
 
         model = algo.best_model(train=task_trn, valid=task_val)
 
-        algo.loss(model, task_tst)
+        return algo.loss(model, task_tst)
 
 
