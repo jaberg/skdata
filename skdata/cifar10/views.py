@@ -1,4 +1,5 @@
 import logging
+from sklearn.cross_validation import StratifiedShuffleSplit
 
 import numpy as np
 
@@ -57,127 +58,85 @@ OfficialVectorClassification = OfficialVectorClassificationTask
 
 
 class StratifiedImageClassification(object):
+    """
+    Data set is partitioned at top level into a testing set (tst) and a model selection set (sel).
+    The selection set is subdivided into a fitting set (fit) and a validation set (val).
+
+    The evaluation protocol is to fit a classifier to the (fit) set, and judge
+    it on (val). The best model on (val) is re-trained on the entire selection
+    set, and finally evaluated on the test set.
+
+    """
     def __init__(self, dtype, n_train, n_valid, n_test, shuffle_seed=123,
             channel_major=False):
 
-        if str(dtype) != 'uint8':
-            raise NotImplementedError(dtype)
 
-        self.n_classes = n_classes = 10
         assert n_train + n_valid <= 50000
         assert n_test <= 10000
 
         cf10 = CIFAR10()
         cf10.meta  # -- trigger data load
+        if str(dtype) != str(cf10._pixels.dtype):
+            raise NotImplementedError(dtype)
 
         # -- divide up the dataset as it was meant: train / test
-        trn_images = cf10._pixels[:50000]
-        trn_labels = cf10._labels[:50000]
-        tst_images = cf10._pixels[50000:]
-        tst_labels = cf10._labels[50000:]
 
-        assert str(cf10._pixels.dtype) == 'uint8'
-
-        # -- now carve it up so that we have balanced classes for fitting and
-        #    validation
-        logger.debug('re-indexing dataset')
-
-        train = {}
-        test = {}
-        label_set = range(10)
-        for label in label_set:
-            train[label] = trn_images[trn_labels == label]
-            test[label] = tst_images[tst_labels == label]
-            assert len(train[label]) == len(trn_labels) / n_classes
-            assert len(test[label]) == len(tst_labels) / n_classes
-
-        del trn_images, trn_labels
-        del tst_images, tst_labels
-
-        if np.any(np.asarray([n_train, n_valid, n_test]) % len(label_set)):
-            raise NotImplementedError('size not muptiple of 10',
-                    (n_train, n_valid, n_test))
+        if shuffle_seed:
+            rng = np.random.RandomState(shuffle_seed)
         else:
-            trn_K = n_train // len(label_set)
-            val_K = n_valid // len(label_set)
-            tst_K = n_test // len(label_set)
-            trn_images = np.concatenate([train[label][:trn_K]
-                for label in label_set])
-            trn_labels = np.concatenate([[label] * trn_K
-                for label in label_set])
+            rng = None
 
-            assert len(trn_images) == len(trn_labels)
-            assert trn_images.shape == (n_train, 32, 32, 3)
-            assert trn_labels.shape == (n_train,)
+        ((fit_idxs, val_idxs),) = StratifiedShuffleSplit(
+            y=cf10._labels[:50000],
+            n_iterations=1,
+            test_size=n_valid,
+            train_size=n_train,
+            indices=True,
+            random_state=rng)
 
-            val_images = np.concatenate([train[label][trn_K:trn_K + val_K]
-                for label in label_set])
-            val_labels = np.concatenate([[label] * val_K
-                for label in label_set])
+        sel_idxs = np.concatenate([fit_idxs, val_idxs])
 
-            assert len(val_images) == len(val_labels)
-            assert val_images.shape == (n_valid, 32, 32, 3)
-            assert val_labels.shape == (n_valid,)
-
-            tst_images = np.concatenate([test[label][:tst_K]
-                for label in label_set])
-            tst_labels = np.concatenate([[label] * tst_K
-                for label in label_set])
-
-            assert len(tst_images) == len(tst_labels)
-            assert tst_images.shape == (n_test, 32, 32, 3)
-            assert tst_labels.shape == (n_test,)
-
-        logger.debug('done re-indexing dataset')
-        def shuffle(X, s):
-            if shuffle_seed:
-                np.random.RandomState(shuffle_seed + s).shuffle(X)
-
-            # -- hack to put it here, but it works for now
-            if X.ndim > 1 and channel_major:
-                X = X.transpose(0, 3, 1, 2).copy()
-
-            return X
+        if n_test < 10000:
+            ((ign_idxs, tst_idxs),) = StratifiedShuffleSplit(
+                y=cf10._labels[50000:],
+                n_iterations=1,
+                test_size=n_test,
+                indices=True,
+                random_state=rng)
+            tst_idxs += 50000
+            del ign_idxs
+        else:
+            tst_idxs = np.arange(50000, 60000)
 
         self.dataset = cf10
-        self.trn_images = shuffle(trn_images, 0)
-        self.trn_labels = shuffle(trn_labels, 0)
-        self.val_images = shuffle(val_images, 1)
-        self.val_labels = shuffle(val_labels, 1)
-        self.tst_images = shuffle(tst_images, 2)
-        self.tst_labels = shuffle(tst_labels, 2)
-
-
-        for images in self.trn_images, self.val_images, self.tst_images:
-            assert str(images.dtype) == dtype, (images.dtype, dtype)
+        self.n_classes = 10
+        self.fit_idxs = fit_idxs
+        self.val_idxs = val_idxs
+        self.sel_idxs = sel_idxs
+        self.tst_idxs = tst_idxs
 
     def protocol(self, algo):
 
-        # XXX: task should be idx, not images
+        def task(name, idxs):
+            return Task(
+                'indexed_image_classification',
+                name=name,
+                idxs=idxs,
+                all_pixels=self.dataset._pixels,
+                all_labels=self.dataset._labels,
+                n_classes=self.n_classes)
 
-        task_trn = Task(
-            'image_classification',
-            name='trn',
-            x=self.trn_images,
-            y=self.trn_labels,
-            n_classes=self.n_classes)
+        task_fit = task('fit', self.fit_idxs)
+        task_val = task('val', self.val_idxs)
+        task_sel = task('sel', self.sel_idxs)
+        task_tst = task('tst', self.tst_idxs)
 
-        task_val = Task(
-            'image_classification',
-            name='val',
-            x=self.val_images,
-            y=self.val_labels,
-            n_classes=self.n_classes)
 
-        task_tst = Task(
-            'image_classification',
-            name='tst',
-            x=self.tst_images,
-            y=self.tst_labels,
-            n_classes=self.n_classes)
+        model1 = algo.best_model(train=task_fit, valid=task_val)
+        yield ('model validation complete', model1)
 
-        model = algo.best_model(train=task_trn, valid=task_val)
-
-        return algo.loss(model, task_tst)
+        model2 = algo.best_model(train=task_sel)
+        algo.loss(model2, task_tst)
+        yield ('model testing complete', model2)
 
 
