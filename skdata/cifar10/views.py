@@ -59,8 +59,9 @@ OfficialVectorClassification = OfficialVectorClassificationTask
 
 class StratifiedImageClassification(object):
     """
-    Data set is partitioned at top level into a testing set (tst) and a model selection set (sel).
-    The selection set is subdivided into a fitting set (fit) and a validation set (val).
+    Data set is partitioned at top level into a testing set (tst) and a model
+    selection set (sel).  The selection set is subdivided into a fitting set
+    (fit) and a validation set (val).
 
     The evaluation protocol is to fit a classifier to the (fit) set, and judge
     it on (val). The best model on (val) is re-trained on the entire selection
@@ -116,13 +117,18 @@ class StratifiedImageClassification(object):
         self.tst_idxs = tst_idxs
 
     def protocol(self, algo):
+        for _ in self.protocol_iter(algo):
+            pass
+        return algo
+
+    def protocol_iter(self, algo):
 
         def task(name, idxs):
             return Task(
                 'indexed_image_classification',
                 name=name,
                 idxs=idxs,
-                all_pixels=self.dataset._pixels,
+                all_images=self.dataset._pixels,
                 all_labels=self.dataset._labels,
                 n_classes=self.n_classes)
 
