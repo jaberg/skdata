@@ -1,38 +1,64 @@
 
-from .dataset import MNIST
 import numpy as np
-from numpy import newaxis
 
-from ..dslang import Task, BestModel, Score
+from .dataset import MNIST
+from ..dslang import Task
 
 class OfficialImageClassification(object):
     def __init__(self, x_dtype='uint8', y_dtype='int'):
         self.dataset = dataset = MNIST()
         dataset.meta  # -- trigger load if necessary
 
-        train = Task('image_classification',
-                x=dataset.arrays['train_images']
-                    [:, :, :, newaxis].astype(x_dtype),
-                y=dataset.arrays['train_labels'].astype(y_dtype))
+        all_images = np.vstack((dataset.arrays['train_images'],
+                                dataset.arrays['test_images']))
+        all_labels = np.concatenate([dataset.arrays['train_labels'],
+                                     dataset.arrays['test_labels']])
 
-        test = Task('image_classification',
-                x=dataset.arrays['test_images']
-                    [:, :, :, newaxis].astype(x_dtype),
-                y=dataset.arrays['test_labels'].astype(y_dtype))
+        if len(all_images) != 70000:
+            raise ValueError()
+        if len(all_labels) != 70000:
+            raise ValueError()
 
-        if str(x_dtype).startswith('float'):
-            train.x = train.x / 255
-            test.x = test.x / 255
+        # TODO: add random shuffling options like in cifar10
+        # XXX: ensure this is read-only view
+        self.sel_idxs = np.arange(60000)
+        self.tst_idxs = np.arange(60000, 70000)
+        self.fit_idxs = np.arange(50000)
+        self.val_idxs = np.arange(50000, 60000)
 
-        self.protocol = Score(BestModel(train), test)
-        self.train = train
-        self.test = test
+        # XXX: ensure this is read-only view
+        self.all_images = all_images[:, :, :, np.newaxis].astype(x_dtype)
+        self.all_labels = all_labels.astype(y_dtype)
+
+        self.n_classes = 10
+
+    def protocol(self, algo):
+        for _ in self.protocol_iter(algo):
+            pass
+        return algo
+
+    def protocol_iter(self, algo):
+
+        def task(name, idxs):
+            return Task(
+                'indexed_image_classification',
+                name=name,
+                idxs=idxs,
+                all_images=self.all_images,
+                all_labels=self.all_labels,
+                n_classes=self.n_classes)
+
+        task_fit = task('fit', self.fit_idxs)
+        task_val = task('val', self.val_idxs)
+        task_sel = task('sel', self.sel_idxs)
+        task_tst = task('tst', self.tst_idxs)
 
 
-class OfficialVectorClassification(OfficialImageClassification):
-    def __init__(self, x_dtype='float32', y_dtype='int'):
-        OfficialImageClassification.__init__(self, x_dtype, y_dtype)
-        self.train.x.shape = (len(self.train.x), 28 * 28)
-        self.test.x.shape = (len(self.test.x), 28 * 28)
+        model1 = algo.best_model(train=task_fit, valid=task_val)
+        yield ('model validation complete', model1)
+
+        model2 = algo.best_model(train=task_sel)
+        algo.loss(model2, task_tst)
+        yield ('model testing complete', model2)
 
 

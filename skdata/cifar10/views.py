@@ -4,7 +4,7 @@ from sklearn.cross_validation import StratifiedShuffleSplit
 import numpy as np
 
 from .dataset import CIFAR10
-from ..dslang import Task, BestModel, Score
+from ..dslang import Task
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +41,6 @@ class OfficialImageClassificationTask(object):
             test.x /= 255.0
 
         self.dataset = dataset
-        self.protocol = Score(BestModel(train), test)
         self.train = train
         self.test = test
 
