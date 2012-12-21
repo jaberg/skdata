@@ -62,3 +62,32 @@ class OfficialImageClassification(object):
         yield ('model testing complete', model2)
 
 
+class OfficialVectorClassification(OfficialImageClassification):
+
+    def __init__(self, *args, **kwargs):
+        OfficialImageClassification.__init__(self, *args, **kwargs)
+        self.all_vectors = self.all_images.reshape(len(self.all_images), -1)
+
+    def protocol_iter(self, algo):
+
+        def task(name, idxs):
+            return Task(
+                'indexed_vector_classification',
+                name=name,
+                idxs=idxs,
+                all_vectors=self.all_vectors,
+                all_labels=self.all_labels,
+                n_classes=self.n_classes)
+
+        task_fit = task('fit', self.fit_idxs)
+        task_val = task('val', self.val_idxs)
+        task_sel = task('sel', self.sel_idxs)
+        task_tst = task('tst', self.tst_idxs)
+
+
+        model1 = algo.best_model(train=task_fit, valid=task_val)
+        yield ('model validation complete', model1)
+
+        model2 = algo.best_model(train=task_sel)
+        algo.loss(model2, task_tst)
+        yield ('model testing complete', model2)
