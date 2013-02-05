@@ -32,6 +32,14 @@ between scene luminance and pixel value. Therefore this image set is best
 suited for projects where well-defined edges are of more importance than
 strict linearity.
 
+
+Loading Patches
+---------------
+
+The van Hateren data set is typically used as a source of natural image
+patches [citations needed, but see for example work on sparse coding and RBM
+and autoencoder dictionary learning]
+
 """
 
 # Copyright (C) 2012
@@ -45,69 +53,137 @@ import numpy as np
 
 from skdata.data_home import get_data_home
 from skdata.utils import download
+from skdata.utils import random_patches
 
-BASE_URL = 'http://pirsquared.org/research/vhatdb/imc/'
 
-class NaturalImages(object):
+class Calibrated(object):
+    """
+
+    Attributes
+    ----------
+
+    self.meta - a list of dictionaries of the form
+        {
+        'basename': <something like 'imk04118.imc'>
+        'md5': the desired md5 checksum for that file,
+        'calibrated': True,
+        'image_shape': (1024, 1536),
+        'image_dtype': 'uint16'
+        }
+
+    """
+
+    BASE_URL = 'http://pirsquared.org/research/vhatdb/imc/'
 
     imshape = (1024, 1536)
 
-    def __init__(self):
+    def __init__(self, n_item_limit=None):
         self.name = self.__class__.__name__
+        self.n_item_limit = n_item_limit
 
     def home(self, *suffix_paths):
-        return os.path.join(get_data_home(), self.name, *suffix_paths)
+        return os.path.join(get_data_home(), 'vanhateren', self.name,
+                            *suffix_paths)
 
-    def image_basename(ind, calibrated):
-        return ('imk%0.5d' % (ind)) + ('.imc' if calibrated else '.iml')
+    @property
+    def meta(self):
+        if not hasattr(self, '_meta'):
+            self.fetch(download_if_missing=True)
+            self._meta = self._get_meta()
+        return self._meta
 
-    def fetch(
-        self,
-        download_if_missing=True,
-        calibrated=True,
-        n_images_limit=4213,
-        ):
+    def _get_meta(self):
+        meta = []
+        for line in open(self.home('md5sums')):
+            md5hash, basename = line.strip().split()
+            basename = basename[1:]
+            if 'HEADER' in basename:
+                continue
+            meta.append({'basename': basename,
+                         'md5': md5hash,
+                         'calibrated': True,
+                         'image_shape': (1024, 1536),
+                         'image_dtype': 'uint16',
+                        })
+        return meta
 
+    def fetch(self, download_if_missing=True):
         if not download_if_missing:
             return
-
-        if not calibrated:
-            raise NotImplementedError()
-
         if not os.path.exists(self.home()):
             os.makedirs(self.home())
 
-        download(BASE_URL + 'md5sums', self.home('md5sums'))
+        def checkmd5md5():
+            md5sums = open(self.home('md5sums'), 'rb').read()
+            md5md5 = hashlib.md5(md5sums).hexdigest()
+            if md5md5 != 'da55092603cb2628e91e759aec79f654':
+                print 'Re-downloading corrupt md5sums file'
+                download(self.BASE_URL + 'md5sums', self.home('md5sums'))
+        try:
+            checkmd5md5()
+        except IOError:
+            download(self.BASE_URL + 'md5sums', self.home('md5sums'))
+            checkmd5md5()
 
-        for line in open(self.home('md5sums')):
-            md5hash, filename = line.strip().split()
-            filename = filename[1:]
-            if 'HEADER' in filename:
-                continue
+        meta = self._get_meta()
+        for ii, item in enumerate(meta):
+            if self.n_item_limit is None:
+                required = True
+            else:
+                required = ii < self.n_item_limit
             try:
-                data = open(self.home(filename), 'rb').read()
-                if hashlib.md5(data).hexdigest() != md5hash:
-                    print 'Re-downloading incorrect file', filename
-                    download(BASE_URL + filename,
-                             self.home(filename),
-                             md5=md5hash)
+                data = open(self.home(item['basename']), 'rb').read()
+                if hashlib.md5(data).hexdigest() != item['md5']:
+                    # -- ignore 'required' flag for incorrect files
+                    print 'Re-downloading incorrect file', item['basename']
+                    download(self.BASE_URL + item['basename'],
+                             self.home(item['basename']),
+                             md5=item['md5'])
                     # TODO: catch ctrl-C, check md5,
                     # and remove partial download
             except IOError:
-                download(BASE_URL + filename, self.home(filename), md5=md5hash)
+                if required:
+                    download(self.BASE_URL + item['basename'],
+                             self.home(item['basename']),
+                             md5=item['md5'])
 
-    def read_image(self, ind, calibrated=False):
-        """
-        Read one image from the Van Hateren natural image dataset.
+    def read_image(self, item):
+        """Return one image from the Van Hateren image dataset
 
         Returns a (1024, 1536) in the original uint16 dtype
         """
-        
-        basename = 'imk%0.5d.%s' % (ind, ('.imc' if calibrated else '.iml'))
-        filename = os.path.join(self.home(basename))
+        assert item['image_dtype'] == 'uint16'
+
+        filename = os.path.join(self.home(item['basename']))
         s = open(filename, 'rb').read()
-        img = np.fromstring(s, dtype='uint16').byteswap()
-        img = img.reshape(self.imshape)
+        assert hashlib.md5(s).hexdigest() == item['md5']
+        img = np.fromstring(s, dtype=item['image_dtype']).byteswap()
+        img = img.reshape(item['image_shape'])
         return img
 
+    def raw_patches(self, rshape, rng=None, items=None):
+        """Return random patches drawn randomly from natural images
+
+        Parameters
+        ----------
+        rshape - tuple (N, rows, cols)
+            The shape of the returned ndarray
+
+        rng - np.RandomState
+            RandomState
+
+        items - None or items from self.meta
+            A list of images from which to draw patches
+
+        """
+        if rng is None:
+            rng = np.random
+        if items is None:
+            items = self.meta
+        N, prows, pcols = rshape
+
+        images = np.asarray(map(self.read_image, items))
+
+        rval4 = random_patches(images[:, :, :, None], N, prows, pcols, rng)
+        return rval4[:, :, :, 0]
 
