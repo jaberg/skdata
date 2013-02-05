@@ -1,12 +1,27 @@
 import sys
+import numpy as np
 import dataset
 
 def fetch():
     vh = dataset.Calibrated()
     vh.fetch()
 
-
 def show():
+    from skdata.utils.glviewer import glumpy_viewer
+    vh = dataset.Calibrated(10)
+    items = vh.meta[:10]
+    images = np.asarray(map(vh.read_image, items))
+
+    images = images.astype('float32')
+    images /= images.reshape(10, 1024 * 1536).max(axis=1)[:, None, None]
+    images = 1.0 - images
+
+    glumpy_viewer(
+            img_array=images,
+            arrays_to_print=[items],
+            window_shape=vh.meta[0]['image_shape'])
+
+def show_patches():
     N = 100
     S = 128
     from skdata.utils.glviewer import glumpy_viewer
