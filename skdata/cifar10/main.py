@@ -6,7 +6,6 @@ import sys
 import logging
 
 from skdata.cifar10.dataset import CIFAR10
-from skdata.utils.glviewer import glumpy_viewer, glumpy
 
 usage = """
 Usage: main.py {fetch, show, clean_up}
@@ -24,6 +23,7 @@ def main_show():
     """
     Use glumpy to launch a data set viewer.
     """
+    from skdata.utils.glviewer import glumpy_viewer
     self = CIFAR10()
     Y = [m['label'] for m in self.meta]
     glumpy_viewer(
