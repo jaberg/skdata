@@ -1,3 +1,21 @@
+"""
+Commands related to the van Hateren data set:
+
+    python main.py fetch - download the data set (ctrl-C midway if you don't
+        need the whole thing)
+
+    python main.py show - show images from the data set using glumpy. Use 'j'
+        and 'k' to move between images. For dependencies, type
+        
+        pip install glumpy && pip install pyopengl
+
+    python main.py show_patches - show image patches from the data set using
+        glumpy.  Use 'j' and 'k' to move between images. For dependencies, type
+        
+        pip install glumpy && pip install pyopengl
+    
+"""
+
 import sys
 import numpy as np
 import dataset
