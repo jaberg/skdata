@@ -66,5 +66,5 @@ References
 from dataset import Iris
 
 # enable syntax iris.KfoldClassification
-from views import KfoldClassification
+from view import KfoldClassification
 

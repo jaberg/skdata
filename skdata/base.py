@@ -163,7 +163,36 @@ class SklearnClassifier(SemanticsDelegator):
             'loss': [],
         }
 
+    def best_model_vector_classification(self, train, valid):
+        # TODO: use validation set if not-None
+        model = self.new_model()
+        model.fit(train.x, train.y)
+        model.trained_on = train.name
+        self.results['best_model'].append(
+            {
+                'train_name': train.name,
+                'valid_name': valid.name if valid else None,
+                'model': model,
+            })
+        return model
+
+    def loss_vector_classification(self, model, task):
+        p = model.predict(task.x)
+        err_rate = np.mean(p != task.y)
+
+        self.results['loss'].append(
+            {
+                'model_trained_on': model.trained_on,
+                'predictions': p,
+                'err_rate': err_rate,
+                'n': len(p),
+                'task_name': task.name,
+            })
+
+        return err_rate
+
     def best_model_indexed_image_classification(self, train, valid):
+        # TODO: use validation set if not-None
         model = self.new_model()
         X = train.all_images[train.idxs]
         y = train.all_labels[train.idxs]
