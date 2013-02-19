@@ -2,6 +2,8 @@
 Base classes serving as design documentation.
 """
 
+import numpy as np
+
 
 class Task(object):
     """
@@ -140,4 +142,66 @@ class LearningAlgo(object):
         be crucial to keeping memory use under control.
         """
         pass
+
+
+class SemanticsDelegator(LearningAlgo):
+
+    def best_model(self, train, valid=None):
+        if valid:
+            assert train.semantics == valid.semantics
+        return getattr(self, 'best_model_' + train.semantics)(train, valid)
+
+    def loss(self, model, task):
+        return getattr(self, 'loss_' + task.semantics)(model, task)
+
+
+class SklearnClassifier(SemanticsDelegator):
+    def __init__(self, new_model):
+        self.new_model = new_model
+        self.results = {
+            'best_model': [],
+            'loss': [],
+        }
+
+    def best_model_indexed_image_classification(self, train, valid):
+        model = self.new_model()
+        X = train.all_images[train.idxs]
+        y = train.all_labels[train.idxs]
+        if 'int' in str(X.dtype):
+            X = X.astype('float64') / 255
+        else:
+            X = X.astype('float64')
+        Xmat = X.reshape(len(X), -1)
+        model.fit(Xmat, y)
+        model.trained_on = train.name
+        self.results['best_model'].append(
+            {
+                'train_name': train.name,
+                'valid_name': valid.name if valid else None,
+                'model': model,
+            })
+        return model
+
+    def loss_indexed_image_classification(self, model, task):
+        X = task.all_images[task.idxs]
+        y = task.all_labels[task.idxs]
+        if 'int' in str(X.dtype):
+            X = X.astype('float64') / 255
+        else:
+            X = X.astype('float64')
+        Xmat = X.reshape(len(X), -1)
+        p = model.predict(Xmat)
+        err_rate = np.mean(p != y)
+
+        self.results['loss'].append(
+            {
+                'model_trained_on': model.trained_on,
+                'predictions': p,
+                'err_rate': err_rate,
+                'n': len(p),
+                'task_name': task.name,
+            })
+
+        return err_rate
+
 
