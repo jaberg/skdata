@@ -64,8 +64,10 @@ class PubFig(object):
 
         home = self.home()
 
-        if not download_if_missing:
-            if not os.path.exists(home):
+        if not os.path.exists(home):
+            if download_if_missing:
+                raise NotImplementedError()
+            else:
                 raise IOError("'%s' does not exists!" % home)
 
         for filename, url in urls.items():
