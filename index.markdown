@@ -22,7 +22,7 @@ Machine (e.g. [scikit-learn](http://scikit-learn.org)'s
 [LinearSVC](http://scikit-learn.org/stable/modules/svm.html)) as a classification model for the
 UCI "[Iris](http://archive.ics.uci.edu/ml/datasets/Iris)" data set:
 
-<! pygmentize -f index_demo.py>
+<!-- pygmentize -f index_demo.py -->
 <div class="highlight"><pre><span class="c"># Create a suitable view of the Iris data set.</span>
 <span class="c"># (For larger data sets, this can trigger a download the first time)</span>
 <span class="kn">from</span> <span class="nn">skdata.iris.view</span> <span class="kn">import</span> <span class="n">KfoldClassification</span>
@@ -62,7 +62,7 @@ use `pip` if you have it).
 
 If you want to stay up to date with the development tip then use git:
 
-<! pygmentize -f index_git.sh>
+<!-- pygmentize -f index_git.sh -->
 <div class="highlight"><pre>git clone https://github.com/jaberg/skdata <span class="se">\</span>
 <span class="o">&amp;&amp;</span> <span class="o">(</span> <span class="nb">cd </span>skdata python <span class="o">&amp;&amp;</span> setup.py develop <span class="o">)</span>
 </pre></div>
