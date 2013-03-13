@@ -18,10 +18,9 @@ The modules of `skdata`
 ## Installation
 
 The recommended installation method is to install via pypi with either
-easy_install or pip:
+`easy_install` or `pip`:
 
-<pre><code>easy_install skdata</code></pre>
-```
+```bash
 easy_install skdata
 ```
 
@@ -30,14 +29,11 @@ easy_install skdata
 ```bash
 pip install skdata
 ```
-<pre><code>pip install skdata</code></pre>
 
 If you want to stay up to date with the development tip then use git:
 
 ```bash
-git clone https://github.com/jaberg/skdata
-cd skdata
-python setup.py develop
+git clone https://github.com/jaberg/skdata && ( cd skdata && python setup.py develop )
 ```
 
 
