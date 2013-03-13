@@ -11,9 +11,11 @@ section: home
 
 _skdata_ is a Python library of standard data sets for machine learning experiments.
 The modules of `skdata`
-1. download data sets,
-2. load them as directly as possible as Python data structures, and
-3. provide convenient views for standard machine learning protocols.
+1. _download_ data sets,
+2. _load_ them as directly as possible as Python data structures, and
+3. _provide protocols_ for machine learning tasks via convenient views.
+
+
 
 ## Installation
 
@@ -23,11 +25,10 @@ use `pip` if you have it).
 
 If you want to stay up to date with the development tip then use git:
 
-```bash
+::bash
 
   git clone https://github.com/jaberg/skdata
   ( cd skdata && python setup.py develop )
-```
 
 
 ## Goal
