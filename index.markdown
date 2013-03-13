@@ -10,17 +10,35 @@ section: home
 : (v.) round up, herd, or take charge of (e.g. livestock or just-downloaded data sets)
 
 _skdata_ is a Python library of standard data sets for machine learning experiments.
-The modules of `skdata` download data sets, load them as directly as possible
-as Python data structures, and provide convenient views for standard machine learning problems.
+The modules of `skdata`
+1. download data sets,
+2. load them as directly as possible as Python data structures, and
+3. provide convenient views for standard machine learning protocols.
 
 ## Installation
 
-The recommended installation method is to clone the master branch and
-install the development head:
+The recommended installation method is to install via pypi with either
+easy_install or pip:
 
-<pre><code>$ git clone https://github.com/jaberg/skdata
-$ cd skdata
-$ python setup.py develop</code></pre>
+<pre><code>easy_install skdata</code></pre>
+```
+easy_install skdata
+```
+
+-or-
+
+```bash
+pip install skdata
+```
+<pre><code>pip install skdata</code></pre>
+
+If you want to stay up to date with the development tip then use git:
+
+```bash
+git clone https://github.com/jaberg/skdata
+cd skdata
+python setup.py develop
+```
 
 
 ## Goal
