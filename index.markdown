@@ -17,10 +17,12 @@ The modules of `skdata`
 
 ## Gist
 
-To demonstrate the full system, here's how you would evaluate a Support Vector
-Machine (scikit-learn's LinearSVC) as a classification model for the UCI
-"Iris" data set:
+To demonstrate the full system, here's how you could evaluate a Support Vector
+Machine (e.g. [scikit-learn](http://scikit-learn.org)'s
+[LinearSVC](http://scikit-learn.org/stable/modules/svm.html)) as a classification model for the
+UCI "[Iris](http://archive.ics.uci.edu/ml/datasets/Iris)" data set:
 
+<! pygmentize -f index_demo.py>
 <div class="highlight"><pre><span class="c"># Create a suitable view of the Iris data set.</span>
 <span class="c"># (For larger data sets, this can trigger a download the first time)</span>
 <span class="kn">from</span> <span class="nn">skdata.iris.view</span> <span class="kn">import</span> <span class="n">KfoldClassification</span>
@@ -51,6 +53,7 @@ un-standardized access to the Iris data set via Python objects.  This is the
 pattern used throughout `skdata`: dataset submodules give raw access,
 and view submodules implement standardized views.
 
+
 ## Installation
 
 The recommended installation method is to install via pypi with either
@@ -59,9 +62,15 @@ use `pip` if you have it).
 
 If you want to stay up to date with the development tip then use git:
 
+<! pygmentize -f index_git.sh>
 <div class="highlight"><pre>git clone https://github.com/jaberg/skdata <span class="se">\</span>
 <span class="o">&amp;&amp;</span> <span class="o">(</span> <span class="nb">cd </span>skdata python <span class="o">&amp;&amp;</span> setup.py develop <span class="o">)</span>
 </pre></div>
+
+
+## Documentation
+
+Documentation is maintained on the [skdata wiki](https://github.com/jaberg/skdata/wiki/).
 
 
 ## Goal
@@ -77,11 +86,7 @@ such as
 ## Status
 
 The code of the library is currently usable (and frequently used), but the API
-should be considered to be unstable.
-
-The data set modules are not currently implemented in a standard way, but they
-are being re-factored to match the "View API"
-([docs](https://github.com/jaberg/skdata/wiki/View-API),
-[code](https://github.com/jaberg/skdata/blob/master/skdata/base.py)),
-and [add more data set modules](https://github.com/jaberg/skdata/wiki/How-to-Create-a-New-Dataset-Module).
+should be considered to be unstable. There is an ongoing effort to
+forward-port older data set modules to use the newer "dataset.py / view.py"
+code layout.
 
