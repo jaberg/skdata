@@ -9,11 +9,11 @@ section: home
 **wran·gle**
 : (v.) round up, herd, or take charge of (e.g. livestock or just-downloaded data sets)
 
-_skdata_ is a Python library of standard data sets for machine learning experiments.
+**_skdata_** is a Python library of standard data sets for machine learning experiments.
 The modules of `skdata`
-1. _download_ data sets,
-2. _load_ them as directly as possible as Python data structures, and
-3. _provide protocols_ for machine learning tasks via convenient views.
+1. **download** data sets,
+2. **load** them as directly as possible as Python data structures, and
+3. **provide protocols** for machine learning tasks via convenient views.
 
 ## Gist
 
