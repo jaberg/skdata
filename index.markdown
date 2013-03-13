@@ -21,7 +21,8 @@ To demonstrate the full system, here's how you would evaluate a Support Vector
 Machine (scikit-learn's LinearSVC) as a classification model for the UCI
 "Iris" data set:
 
-<pre class="brush: python;"># Create a suitable view of the Iris data set.
+<pre class="brush: python">
+# Create a suitable view of the Iris data set.
 # (For larger data sets, this can trigger a download the first time)
 from skdata.iris.view import KfoldClassification
 iris_view = KfoldClassification(5)
@@ -59,7 +60,8 @@ use `pip` if you have it).
 
 If you want to stay up to date with the development tip then use git:
 
-<pre class="brush: bash;">git clone https://github.com/jaberg/skdata
+<pre class="brush: bash">
+git clone https://github.com/jaberg/skdata
 ( cd skdata && python setup.py develop )
 </pre>
 
