@@ -25,7 +25,9 @@ use `pip` if you have it).
 If you want to stay up to date with the development tip then use git:
 
 ```bash
-git clone https://github.com/jaberg/skdata && ( cd skdata && python setup.py develop )
+
+  git clone https://github.com/jaberg/skdata
+  ( cd skdata && python setup.py develop )
 ```
 
 
