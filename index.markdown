@@ -62,7 +62,8 @@ If you want to stay up to date with the development tip then use git:
 
 <pre class="brush: bash">
 git clone https://github.com/jaberg/skdata
-( cd skdata && python setup.py develop )
+cd skdata
+python setup.py develop
 </pre>
 
 
