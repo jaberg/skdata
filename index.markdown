@@ -73,20 +73,4 @@ If you want to stay up to date with the development tip then use git:
 Documentation is maintained on the [skdata wiki](https://github.com/jaberg/skdata/wiki/).
 
 
-## Goal
-
-The goal with skdata is to standardize the representation
-of community benchmark data sets (including large and awkward ones),
-and facilitate the development of broadly applicable machine learning algorithm implementations.
-Skdata is meant to interoperate with other Python machine learning software
-such as
-[sklearn](http://scikit-learn.org/stable/) and [pandas](http://pandas.pydata.org/).
-
-
-## Status
-
-The code of the library is currently usable (and frequently used), but the API
-should be considered to be unstable. There is an ongoing effort to
-forward-port older data set modules to use the newer "dataset.py / view.py"
-code layout.
 
