@@ -20,7 +20,6 @@ The modules of `skdata`
 The recommended installation method is to install via pypi with either
 `pip install skdata` or `easy_install skdata` (you probably want to
 use `pip` if you have it).
-```
 
 If you want to stay up to date with the development tip then use git:
 
