@@ -21,30 +21,31 @@ To demonstrate the full system, here's how you would evaluate a Support Vector
 Machine (scikit-learn's LinearSVC) as a classification model for the UCI
 "Iris" data set:
 
-    # Create a suitable view of the Iris data set
-    # (for other data sets, this can trigger a download)
-    from skdata.iris.view import KfoldClassification
-    iris_view = KfoldClassification(5)
+<pre><code class="brush: Python;"># Create a suitable view of the Iris data set.
+# (For larger data sets, this can trigger a download the first time)
+from skdata.iris.view import KfoldClassification
+iris_view = KfoldClassification(5)
 
-    # Create a learning algorithm based on scikit-learn's LinearSVC
-    # that will be driven by commands the `iris_view` object.
-    from sklearn.svm import LinearSVC
-    from skdata.base import SklearnClassifier
-    learning_algo = SklearnClassifier(LinearSVC)
+# Create a learning algorithm based on scikit-learn's LinearSVC
+# that will be driven by commands the `iris_view` object.
+from sklearn.svm import LinearSVC
+from skdata.base import SklearnClassifier
+learning_algo = SklearnClassifier(LinearSVC)
 
-    # The data set view object drives the learning algorithm
-    # (An iterator interface should generally also be available,
-    # so you don't have to give up control flow completely.)
-    iris_view.protocol(learning_algo)
+# Drive the learning algorithm from the data set view object.
+# (An iterator interface is sometimes also be available,
+#  so you don't have to give up control flow completely.)
+iris_view.protocol(learning_algo)
 
-    # The learning algorithm keeps track of what it did when under
-    # control of the iris_view object. Use a custom learning algorithm
-    # to track and save the statistics you need.
-    for loss_report in algo.results['loss']:
-        print loss_report['task_name'] + \
-            (": err = %0.3f" % (loss_report['err_rate']))
+# The learning algorithm keeps track of what it did when under
+# control of the iris_view object. This base example is useful for
+# internal testing and demonstration. Use a custom learning algorithm
+# to track and save the statistics you need.
+for loss_report in algo.results['loss']:
+    print loss_report['task_name'] + \
+        (": err = %0.3f" % (loss_report['err_rate']))</code></pre>
 
-Note that you could also access `skdata.iris.dataset` to get raw
+Note that you can also use the `skdata.iris.dataset` module to get raw
 un-standardized access to the Iris data set via Python objects.  This is the
 pattern used throughout `skdata`: dataset submodules give raw access,
 and view submodules implement standardized views.
@@ -57,8 +58,8 @@ use `pip` if you have it).
 
 If you want to stay up to date with the development tip then use git:
 
-    git clone https://github.com/jaberg/skdata
-    ( cd skdata && python setup.py develop )
+<pre><code class="brush: Bash;">git clone https://github.com/jaberg/skdata
+( cd skdata && python setup.py develop )</pre></code>
 
 
 ## Goal
