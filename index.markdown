@@ -15,7 +15,37 @@ The modules of `skdata`
 2. _load_ them as directly as possible as Python data structures, and
 3. _provide protocols_ for machine learning tasks via convenient views.
 
+To demonstrate the full system: here's how you would evaluate a Support Vector
+Machine (scikit-learn's LinearSVC) as a classification model for the UCI
+"Iris" data set:
 
+    # Create a suitable view of the Iris data set
+    # (for other data sets, this can trigger a download)
+    from skdata.iris.view import KfoldClassification
+    iris_view = KfoldClassification(5)
+
+    # Create a learning algorithm based on scikit-learn's LinearSVC
+    # that will be driven by commands the `iris_view` object.
+    from sklearn.svm import LinearSVC
+    from skdata.base import SklearnClassifier
+    learning_algo = SklearnClassifier(LinearSVC)
+
+    # The data set view object drives the learning algorithm
+    # (An iterator interface should generally also be available,
+    # so you don't have to give up control flow completely.)
+    iris_view.protocol(learning_algo)
+
+    # The learning algorithm keeps track of what it did when under
+    # control of the iris_view object. Use a custom learning algorithm
+    # to track and save the statistics you need.
+    for loss_report in algo.results['loss']:
+        print loss_report['task_name'] + \
+            (": err = %0.3f" % (loss_report['err_rate']))
+
+Note that you could also access `skdata.iris.dataset` to get raw
+un-standardized access to the Iris data set via Python objects.  This is the
+pattern used throughout `skdata`: dataset submodules give raw access,
+and view submodules implement standardized views.
 
 ## Installation
 
