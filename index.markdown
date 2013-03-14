@@ -48,14 +48,14 @@ UCI "[Iris](http://archive.ics.uci.edu/ml/datasets/Iris)" data set:
 </pre></div>
 
 Note that you can also use the `skdata.iris.dataset` module to get raw
-un-standardized access to the Iris data set via Python objects.  This is the
-pattern used throughout `skdata`: dataset submodules give raw access,
-and view submodules implement standardized views.
+un-standardized access to the Iris data set via Python objects.
+This is an skdata convention: `dataset` submodules give raw access,
+and `view` submodules implement standardized views and protocols.
 
 
 ## Installation
 
-The recommended installation method is to install via pypi with either
+The recommended installation method is via pypi with either
 `pip install skdata` or `easy_install skdata` (you probably want to
 use `pip` if you have it).
 
