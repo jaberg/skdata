@@ -48,6 +48,7 @@ class Split(object):
     This class is used in cross-validation to select / learn parameters
     based on the `train` task, and then to evaluate them on the `valid` task.
     """
+    # XXX This class is no longer necessary in the View API
 
     def __init__(self, train, test):
         self.train = train
@@ -56,22 +57,36 @@ class Split(object):
 
 class View(object):
     """
-    A View is a set of splits as in K-fold for measuring a cross-validation
-    error.
+    A View is an interpretation of a data set as a standard learning problem.
     """
 
-    def __init__(self, splits, dataset=None):
+    def __init__(self, dataset=None):
         """
-        splits: list of Split objects, not generally independent of one
-                another.
-
         dataset: a reference to a low-level object that offers access to the
                  raw data. It is not standardized in any way, and the
                  reference itself is optional.
 
         """
-        self.splits = splits
         self.dataset = dataset
+
+    def protocol(self, algo):
+        """
+        Return a list of instructions for a learning algorithm.
+
+        An instruction is a 3-tuple of (attr, args, kwargs) such that
+        algo.<attr>(*args, **kwargs) can be interpreted by the learning algo
+        as a sensible operation, like train a model from some data, or test a
+        previously trained model.
+
+        See `LearningAlgo` below for a list of standard instructions that a
+        learning algorithm implementation should support, but the protocol is
+        left open deliberately so that new View objects can call any method
+        necessary on a LearningAlgo, even if it means calling a relatively
+        unique method that only particular LearningAlgo implementations
+        support.
+
+        """
+        raise NotImplementedError()
 
 
 class LearningAlgo(object):
@@ -85,6 +100,8 @@ class LearningAlgo(object):
     """
 
     def task(self, *args, **kwargs):
+        # XXX This is a typo right? Surely there is no reason for a
+        # LearningAlgo to have a self.task method...
         return Task(*args, **kwargs)
 
     def best_model(self, train, valid=None, return_promising=False):
