@@ -1,4 +1,3 @@
-
 import numpy as np
 
 from .dataset import MNIST
@@ -63,7 +62,6 @@ class OfficialImageClassification(object):
 
 
 class OfficialVectorClassification(OfficialImageClassification):
-
     def __init__(self, *args, **kwargs):
         OfficialImageClassification.__init__(self, *args, **kwargs)
         self.all_vectors = self.all_images.reshape(len(self.all_images), -1)

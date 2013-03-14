@@ -145,7 +145,6 @@ class LearningAlgo(object):
 
 
 class SemanticsDelegator(LearningAlgo):
-
     def best_model(self, train, valid=None):
         if valid:
             assert train.semantics == valid.semantics
@@ -191,6 +190,22 @@ class SklearnClassifier(SemanticsDelegator):
 
         return err_rate
 
+    def best_model_indexed_vector_classification(self, train, valid):
+        # TODO: use validation set if not-None
+        # TODO: refactor with best_model_indexed_image_classification
+        model = self.new_model()
+        X = train.all_vectors[train.idxs]
+        y = train.all_labels[train.idxs]
+        model.fit(X, y)
+        model.trained_on = train.name
+        self.results['best_model'].append(
+            {
+                'train_name': train.name,
+                'valid_name': valid.name if valid else None,
+                'model': model,
+            })
+        return model
+
     def best_model_indexed_image_classification(self, train, valid):
         # TODO: use validation set if not-None
         model = self.new_model()
@@ -210,6 +225,23 @@ class SklearnClassifier(SemanticsDelegator):
                 'model': model,
             })
         return model
+
+    def loss_indexed_vector_classification(self, model, task):
+        X = task.all_vectors[task.idxs]
+        y = task.all_labels[task.idxs]
+        p = model.predict(X)
+        err_rate = np.mean(p != y)
+
+        self.results['loss'].append(
+            {
+                'model_trained_on': model.trained_on,
+                'predictions': p,
+                'err_rate': err_rate,
+                'n': len(p),
+                'task_name': task.name,
+            })
+
+        return err_rate
 
     def loss_indexed_image_classification(self, model, task):
         X = task.all_images[task.idxs]
