@@ -17,9 +17,8 @@ The modules of `skdata`
 
 ## Gist
 
-To demonstrate the full system, here's how you could evaluate a Support Vector
-Machine (e.g. [scikit-learn](http://scikit-learn.org)'s
-[LinearSVC](http://scikit-learn.org/stable/modules/svm.html)) as a classification model for the
+Here's how skdata helps you evaluate an SVM (e.g. [scikit-learn](http://scikit-learn.org)'s
+[LinearSVC](http://scikit-learn.org/stable/modules/svm.html)) as a classifier for the
 UCI "[Iris](http://archive.ics.uci.edu/ml/datasets/Iris)" data set:
 
 <!-- pygmentize -f index_demo.py -->
