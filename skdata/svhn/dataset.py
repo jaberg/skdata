@@ -72,9 +72,10 @@ class CroppedDigits(object):
         extra=('extra_32x32.mat', 'd7d93fbeec3a7cf69236a18015d56c7794ef7744'),
         )
 
-    def __init__(self):
+    def __init__(self, need_extra=True):
 
         self.name = self.__class__.__name__
+        self.need_extra=need_extra
 
         try:
             from joblib import Memory
@@ -107,7 +108,8 @@ class CroppedDigits(object):
                     return
                 if not path.exists(home):
                     os.makedirs(home)
-                download(url, archive_filename, sha1=sha1)
+                if ('extra' not in url) or self.need_extra:
+                    download(url, archive_filename, sha1=sha1)
 
     # ------------------------------------------------------------------------
     # -- Dataset Interface: meta
