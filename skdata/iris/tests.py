@@ -1,20 +1,23 @@
 
-from .views import KfoldClassification
-
-def test_view_kfc():
-    kfc = KfoldClassification(4)
-    assert len(kfc.splits) == 4
-
-    # fail if the following symbols are undefined
-    kfc.splits[0].train.x
-    kfc.splits[0].train.y
-    kfc.splits[3].test.x
-    kfc.splits[3].test.y
-
-    assert isinstance(kfc.splits[2].test.y[0], str)
+from sklearn.svm import LinearSVC
+from skdata.iris.view import KfoldClassification
+from skdata.base import SklearnClassifier
 
 
-def test_view_kfc_intlabels():
-    kfc = KfoldClassification(2, y_as_int=True)
-    assert isinstance(kfc.splits[0].train.y[-1], int)
+def test_protocol(cls=LinearSVC, N=1, show=True, net=None):
+    ### run on 36 subjects
+    algo = SklearnClassifier(cls)
+
+    pk = KfoldClassification(4)
+    mean_test_error = pk.protocol(algo)
+
+    assert len(algo.results['loss']) == 4
+    assert len(algo.results['best_model']) == 4
+
+    print cls
+    for loss_report in algo.results['loss']:
+        print loss_report['task_name'] + \
+            (": err = %0.3f" % (loss_report['err_rate']))
+
+    assert mean_test_error < 0.1
 

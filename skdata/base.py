@@ -2,6 +2,8 @@
 Base classes serving as design documentation.
 """
 
+import numpy as np
+
 
 class Task(object):
     """
@@ -46,6 +48,7 @@ class Split(object):
     This class is used in cross-validation to select / learn parameters
     based on the `train` task, and then to evaluate them on the `valid` task.
     """
+    # XXX This class is no longer necessary in the View API
 
     def __init__(self, train, test):
         self.train = train
@@ -54,22 +57,36 @@ class Split(object):
 
 class View(object):
     """
-    A View is a set of splits as in K-fold for measuring a cross-validation
-    error.
+    A View is an interpretation of a data set as a standard learning problem.
     """
 
-    def __init__(self, splits, dataset=None):
+    def __init__(self, dataset=None):
         """
-        splits: list of Split objects, not generally independent of one
-                another.
-
         dataset: a reference to a low-level object that offers access to the
                  raw data. It is not standardized in any way, and the
                  reference itself is optional.
 
         """
-        self.splits = splits
         self.dataset = dataset
+
+    def protocol(self, algo):
+        """
+        Return a list of instructions for a learning algorithm.
+
+        An instruction is a 3-tuple of (attr, args, kwargs) such that
+        algo.<attr>(*args, **kwargs) can be interpreted by the learning algo
+        as a sensible operation, like train a model from some data, or test a
+        previously trained model.
+
+        See `LearningAlgo` below for a list of standard instructions that a
+        learning algorithm implementation should support, but the protocol is
+        left open deliberately so that new View objects can call any method
+        necessary on a LearningAlgo, even if it means calling a relatively
+        unique method that only particular LearningAlgo implementations
+        support.
+
+        """
+        raise NotImplementedError()
 
 
 class LearningAlgo(object):
@@ -83,6 +100,8 @@ class LearningAlgo(object):
     """
 
     def task(self, *args, **kwargs):
+        # XXX This is a typo right? Surely there is no reason for a
+        # LearningAlgo to have a self.task method...
         return Task(*args, **kwargs)
 
     def best_model(self, train, valid=None, return_promising=False):
@@ -140,4 +159,127 @@ class LearningAlgo(object):
         be crucial to keeping memory use under control.
         """
         pass
+
+
+class SemanticsDelegator(LearningAlgo):
+    def best_model(self, train, valid=None):
+        if valid:
+            assert train.semantics == valid.semantics
+        return getattr(self, 'best_model_' + train.semantics)(train, valid)
+
+    def loss(self, model, task):
+        return getattr(self, 'loss_' + task.semantics)(model, task)
+
+
+class SklearnClassifier(SemanticsDelegator):
+    def __init__(self, new_model):
+        self.new_model = new_model
+        self.results = {
+            'best_model': [],
+            'loss': [],
+        }
+
+    def best_model_vector_classification(self, train, valid):
+        # TODO: use validation set if not-None
+        model = self.new_model()
+        model.fit(train.x, train.y)
+        model.trained_on = train.name
+        self.results['best_model'].append(
+            {
+                'train_name': train.name,
+                'valid_name': valid.name if valid else None,
+                'model': model,
+            })
+        return model
+
+    def loss_vector_classification(self, model, task):
+        p = model.predict(task.x)
+        err_rate = np.mean(p != task.y)
+
+        self.results['loss'].append(
+            {
+                'model_trained_on': model.trained_on,
+                'predictions': p,
+                'err_rate': err_rate,
+                'n': len(p),
+                'task_name': task.name,
+            })
+
+        return err_rate
+
+    def best_model_indexed_vector_classification(self, train, valid):
+        # TODO: use validation set if not-None
+        # TODO: refactor with best_model_indexed_image_classification
+        model = self.new_model()
+        X = train.all_vectors[train.idxs]
+        y = train.all_labels[train.idxs]
+        model.fit(X, y)
+        model.trained_on = train.name
+        self.results['best_model'].append(
+            {
+                'train_name': train.name,
+                'valid_name': valid.name if valid else None,
+                'model': model,
+            })
+        return model
+
+    def best_model_indexed_image_classification(self, train, valid):
+        # TODO: use validation set if not-None
+        model = self.new_model()
+        X = train.all_images[train.idxs]
+        y = train.all_labels[train.idxs]
+        if 'int' in str(X.dtype):
+            X = X.astype('float64') / 255
+        else:
+            X = X.astype('float64')
+        Xmat = X.reshape(len(X), -1)
+        model.fit(Xmat, y)
+        model.trained_on = train.name
+        self.results['best_model'].append(
+            {
+                'train_name': train.name,
+                'valid_name': valid.name if valid else None,
+                'model': model,
+            })
+        return model
+
+    def loss_indexed_vector_classification(self, model, task):
+        X = task.all_vectors[task.idxs]
+        y = task.all_labels[task.idxs]
+        p = model.predict(X)
+        err_rate = np.mean(p != y)
+
+        self.results['loss'].append(
+            {
+                'model_trained_on': model.trained_on,
+                'predictions': p,
+                'err_rate': err_rate,
+                'n': len(p),
+                'task_name': task.name,
+            })
+
+        return err_rate
+
+    def loss_indexed_image_classification(self, model, task):
+        X = task.all_images[task.idxs]
+        y = task.all_labels[task.idxs]
+        if 'int' in str(X.dtype):
+            X = X.astype('float64') / 255
+        else:
+            X = X.astype('float64')
+        Xmat = X.reshape(len(X), -1)
+        p = model.predict(Xmat)
+        err_rate = np.mean(p != y)
+
+        self.results['loss'].append(
+            {
+                'model_trained_on': model.trained_on,
+                'predictions': p,
+                'err_rate': err_rate,
+                'n': len(p),
+                'task_name': task.name,
+            })
+
+        return err_rate
+
 

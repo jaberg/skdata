@@ -1,8 +1,25 @@
 """
-MNIST hand-drawn digit dataset.
+MNIST hand-drawn digit dataset
 
-Data available from and described at:
+The data set consists of 70 000 greyscale images (28x28 pixels) of handwritten
+digits, and their labels (0-9). It is customary to train classifiers on the
+first 50K images, to use the next 10K images for model selection, and the last
+10K images for testing.  Steady progress over the last fifteen years has
+culminated in the best convolutional classification models achieving < 1%
+error.  An extensive collection of published results is available from the
+official website.
+
+
+Official web site:
+
 http://yann.lecun.com/exdb/mnist/
+
+
+Reference:
+
+Y. LeCun, L. Bottou, Y. Bengio, and P. Haffner.
+"Gradient-based learning applied to document recognition."
+Proceedings of the IEEE, 86(11):2278-2324, November 1998.
 
 """
 

@@ -507,3 +507,59 @@ def random_spd_matrix(n_dim, random_state=None):
 
     return X
 
+
+def random_patches(images, N, rows, cols, rng, channel_major=False):
+    """Return a stack of N image patches
+
+    Parameters
+    ----------
+    images: array of shape (n_images, n_channels, img_rows, img_cols)
+            if channel_major else
+            array of shape (n_images, img_rows, img_cols, n_channels)
+    N: int
+        number of patches to draw
+
+    rows: int
+        pixel rows per patch
+
+    cols: int
+        pixel cols per patch
+
+    rng: numpy.RandomState
+        patch source locations are drawn uniformly
+
+    channel_major: bool
+        interpretation of `images` shape
+
+
+    Returns
+    -------
+        array of shape (N, n_channels, rows, cols)
+        if channel_major else
+        array of shape (N, rows, cols, n_channels)
+
+        A tensor of patches drawn uniformly and at random from the `images`
+    
+    """
+
+    if channel_major:
+        n_imgs, iF, iR, iC = images.shape
+        rval = np.empty((N, iF, rows, cols), dtype=images.dtype)
+    else:
+        n_imgs, iR, iC, iF = images.shape
+        rval = np.empty((N, rows, cols, iF), dtype=images.dtype)
+
+    srcs = rng.randint(n_imgs, size=N)
+
+    if rows > iR or cols > iC:
+        raise ValueError('cannot extract patches', (R, C))
+
+    roffsets = rng.randint(iR - rows + 1, size=N)
+    coffsets = rng.randint(iC - cols + 1, size=N)
+    # TODO: this can be done with one advanced index right?
+    for rv_i, src_i, ro, co in zip(rval, srcs, roffsets, coffsets):
+        if channel_major:
+            rv_i[:] = images[src_i, :, ro: ro + rows, co : co + cols]
+        else:
+            rv_i[:] = images[src_i, ro: ro + rows, co : co + cols]
+    return rval

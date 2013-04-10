@@ -5,7 +5,7 @@ several times.
 
 By default the data dir is set to a folder named '.scikit-data'
 in the user home folder.  This directory can be specified prior to importing
-this module via the SCIKIT_DATA environment variable.
+this module via the SKDATA_ROOT environment variable.
 
 After importing the module that environment variable is no longer consulted,
 and a module-level variable called DATA_HOME becomes the new point of reference.
@@ -22,7 +22,7 @@ import shutil
 
 DATA_HOME = os.path.expanduser(
         os.environ.get(
-            'SCIKIT_DATA',
+            'SKDATA_ROOT',
             os.path.join('~', '.skdata')))
 
 def get_data_home():
