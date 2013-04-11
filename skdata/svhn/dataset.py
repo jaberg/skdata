@@ -109,15 +109,17 @@ class CroppedDigits(object):
             for fkey, (fname, sha1) in self.FILES.iteritems():
                 url = path.join(BASE_URL, fname)
                 basename = path.basename(url)
-                archive_filename = path.join(home, basename)
+                archive_filename = self.home(basename)
+                marker = self.home(basename + '.marker')
                 
-                if not path.exists(archive_filename):
-                    if not download_if_missing:
-                        return
-                    if not path.exists(home):
-                        os.makedirs(home)
-                    if ('extra' not in url) or self.need_extra:
+                if ('extra' not in url) or self.need_extra:
+                    if not path.exists(marker):
+                        if not download_if_missing:
+                            return
+                        if not path.exists(home):
+                            os.makedirs(home)
                         download(url, archive_filename, sha1=sha1)
+                        open(marker, 'w').close()
 
     # ------------------------------------------------------------------------
     # -- Dataset Interface: meta
