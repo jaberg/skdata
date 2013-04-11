@@ -42,9 +42,11 @@ streetviewhousenumbers@gmail.com
 
 # Copyright (C) 2012
 # Authors: Nicolas Pinto <pinto@rowland.harvard.edu>
+#          James Bergstra
 
 # License: Simplified BSD
 
+import logging
 import os
 from os import path
 import shutil
@@ -54,7 +56,7 @@ import lockfile
 from skdata.data_home import get_data_home
 from skdata.utils import download
 
-
+log = logging.getLogger(__name__)
 BASE_URL = "http://ufldl.stanford.edu/housenumbers/"
 
 
