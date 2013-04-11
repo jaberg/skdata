@@ -49,6 +49,8 @@ import os
 from os import path
 import shutil
 
+import lockfile
+
 from skdata.data_home import get_data_home
 from skdata.utils import download
 
@@ -99,17 +101,23 @@ class CroppedDigits(object):
         if not download_if_missing:
             raise IOError("'%s' exists!" % home)
 
-        for fkey, (fname, sha1) in self.FILES.iteritems():
-            url = path.join(BASE_URL, fname)
-            basename = path.basename(url)
-            archive_filename = path.join(home, basename)
-            if not path.exists(archive_filename):
-                if not download_if_missing:
-                    return
-                if not path.exists(home):
-                    os.makedirs(home)
-                if ('extra' not in url) or self.need_extra:
-                    download(url, archive_filename, sha1=sha1)
+        lock = lockfile.FileLock(home)
+        if lock.is_locked():
+            log.warn('%s is locked, waiting for release' % home)
+
+        with lock:
+            for fkey, (fname, sha1) in self.FILES.iteritems():
+                url = path.join(BASE_URL, fname)
+                basename = path.basename(url)
+                archive_filename = path.join(home, basename)
+                
+                if not path.exists(archive_filename):
+                    if not download_if_missing:
+                        return
+                    if not path.exists(home):
+                        os.makedirs(home)
+                    if ('extra' not in url) or self.need_extra:
+                        download(url, archive_filename, sha1=sha1)
 
     # ------------------------------------------------------------------------
     # -- Dataset Interface: meta
