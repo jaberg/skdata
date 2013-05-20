@@ -4,6 +4,12 @@ Base classes serving as design documentation.
 
 import numpy as np
 
+class DatasetNotDownloadable(Exception):
+    pass
+
+class DatasetNotPresent(Exception):
+    pass
+
 
 class Task(object):
     """
