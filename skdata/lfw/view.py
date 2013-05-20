@@ -158,7 +158,7 @@ class FullProtocol(object):
     def protocol_iter(self, algo):
 
         def task(obj, name):
-            return algo.task('image_match_indexed',
+            return algo.task(semantics='image_match_indexed',
                     lidx=obj['lpathidx'],
                     ridx=obj['rpathidx'],
                     y=obj['label'],
@@ -180,7 +180,7 @@ class FullProtocol(object):
 
         for i, v2i_tst in enumerate(self.view2):
             v2i_tst = task(self.view2[i], 'view2_test_%i' % i)
-            v2i_trn = algo.task('image_match_indexed',
+            v2i_trn = algo.task(semantics='image_match_indexed',
                     lidx=np.concatenate([self.view2[j]['lpathidx']
                         for j in range(10) if j != i]),
                     ridx=np.concatenate([self.view2[j]['rpathidx']
