@@ -10,8 +10,9 @@ from dataset import KaggleFacialExpression
 
 
 class ContestCrossValid(object):
-    max_n_train = 21532
-    max_n_test = 14355
+    max_n_train = KaggleFacialExpression.N_TRAIN
+    max_n_test = KaggleFacialExpression.N_TEST
+
     def __init__(self, x_dtype=np.float32,
                  n_train=max_n_train,
                  n_valid=0,

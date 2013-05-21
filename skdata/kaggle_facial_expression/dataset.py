@@ -51,6 +51,9 @@ FILES_SHA1s = [
     ('example_submission.csv', '14fac7ef24e3ab6d9fcaa9edd273fe08abfa5c51')]
 
 class KaggleFacialExpression(object):
+    N_TRAIN = 28709
+    N_TEST = 7178
+
     def __init__(self):
         self.name = 'kaggle_facial_expression'
 

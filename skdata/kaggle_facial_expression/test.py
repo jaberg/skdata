@@ -29,12 +29,12 @@ class TestKFE(TestCase):
     def test_len_train(self):
         n = len([mi for mi in ds.meta
             if mi['file'] == 'train.csv'])
-        assert n == 28709, n
+        assert n == KaggleFacialExpression.N_TRAIN, n
 
     def test_len_test(self):
         n = len([mi for mi in ds.meta
             if mi['file'] == 'test.csv'])
-        assert n == 7178, n
+        assert n == KaggleFacialExpression.N_TEST, n
 
 
 class TestContestXV(TestCase):
