@@ -46,8 +46,8 @@ from skdata.utils import download
 from skdata.utils.download_and_extract import verify_sha1
 
 FILES_SHA1s = [
-    ('test.csv', '6e348f8cbbfe9c4337c98283a9636940392770a4'),
-    ('train.csv', '503d22307d44670eb7aeac5751d3bb3ba6dd14a2'),
+    ('test.csv', '3f9199ae6e9a40137e72cb63264490e622d9c798'),
+    ('train.csv', '97651a1fffc7e0af22ebdd5de36700b0e7e0c12c'),
     ('example_submission.csv', '14fac7ef24e3ab6d9fcaa9edd273fe08abfa5c51')]
 
 class KaggleFacialExpression(object):
@@ -89,25 +89,22 @@ class KaggleFacialExpression(object):
             outfile.close()
         return meta
 
-    _build_meta_version = '1'
+    _build_meta_version = '2'
     def _build_meta(self):
         meta = []
 
         # -- load train.csv
-        roles = set()
         for ii, line in enumerate(open(self.home('train.csv'))):
             if ii == 0:
                 continue
-            label, partition, pixels = line.split(',')
+            label, pixels = line.split(',')
             assert int(label) < 7
-            roles.add(partition)
             assert pixels[-3] == '"'
             assert pixels[0] == '"'
             pixels = np.asarray(map(int, pixels[1:-3].split(' ')), dtype=np.uint8)
             meta.append({
                 'file': 'train.csv',
                 'label': int(label),
-                'partition': partition,
                 'pixels': pixels.reshape(48, 48),
                 })
 
@@ -115,15 +112,13 @@ class KaggleFacialExpression(object):
         for ii, line in enumerate(open(self.home('test.csv'))):
             if ii == 0:
                 continue
-            partition, pixels = line.split(',')
-            roles.add(partition)
+            pixels, = line.split(',')
             assert pixels[-3] == '"'
             assert pixels[0] == '"'
             pixels = np.asarray(map(int, pixels[1:-3].split(' ')), dtype=np.uint8)
             meta.append({
                 'file': 'test.csv',
                 'label': 'unknown',
-                'partition': partition,
                 'pixels': pixels.reshape(48, 48),
                 })
 

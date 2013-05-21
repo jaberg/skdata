@@ -29,27 +29,12 @@ class TestKFE(TestCase):
     def test_len_train(self):
         n = len([mi for mi in ds.meta
             if mi['file'] == 'train.csv'])
-        assert n == 21532, n
+        assert n == 28709, n
 
     def test_len_test(self):
         n = len([mi for mi in ds.meta
             if mi['file'] == 'test.csv'])
-        assert n == 14355, n
-
-    def test_partition_training(self):
-        n = len([mi for mi in ds.meta
-            if mi['partition'] == 'Training'])
-        assert n == 28709, n
-
-    def test_partition_publictest(self):
-        n = len([mi for mi in ds.meta
-            if mi['partition'] == 'PublicTest'])
-        assert n == 3589, n
-
-    def test_partition_privatetest(self):
-        n = len([mi for mi in ds.meta
-            if mi['partition'] == 'PrivateTest'])
-        assert n == 3589, n
+        assert n == 7178, n
 
 
 class TestContestXV(TestCase):
