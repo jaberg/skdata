@@ -172,6 +172,27 @@ class SemanticsDelegator(LearningAlgo):
 
 
 class SklearnClassifier(SemanticsDelegator):
+    """
+    Implement a LearningAlgo as much as possible in terms of an sklearn
+    classifier.
+
+    This class is meant to illustrate how to create an adapter between an
+    existing implementation of a machine learning algorithm, and the various
+    data sets defined in the skdata library.
+
+    Researchers are encouraged to implement their own Adapter classes
+    following the example of this class (i.e. cut & paste this class)
+    to measure the statistics they care about when handling the various
+    methods (e.g. best_model_vector_classification) and to save those
+    statistics to a convenient place. The practice of appending a summary
+    dictionary to the lists in self.results has proved to be useful for me,
+    but I don't see why it should in general be the right thing for others.
+
+
+    This class is also used for internal unit testing of Protocol interfaces,
+    so it should be free of bit rot.
+
+    """
     def __init__(self, new_model):
         self.new_model = new_model
         self.results = {

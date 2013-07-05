@@ -36,7 +36,7 @@ class KfoldClassification(object):
                     split_idx=split_idx,
                    )
 
-    def protocol(self, algo):
+    def protocol(self, algo, stop_after=None):
         x_all = np.asarray([
                 [
                     m['sepal_length'],
