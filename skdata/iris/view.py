@@ -53,6 +53,8 @@ class KfoldClassification(object):
         losses = []
 
         for i, (train_idxs, test_idxs) in enumerate(kf):
+            if stop_after is not None and i >= stop_after:
+                break
             train = self.task(
                 'train_%i' % i,
                 x=x_all[idxmap[train_idxs]],
@@ -66,3 +68,16 @@ class KfoldClassification(object):
             losses.append(algo.loss(model, test))
 
         return np.mean(losses)
+
+
+class SimpleCrossValidation(object):
+    """ Simple demo version of KfoldClassification that stops
+    after a single fold for brevity.
+    """
+    def __init__(self):
+        self.kfold = KfoldClassification(5)
+
+    def protocol(self, algo):
+        return self.kfold.protocol(algo, stop_after=1)
+
+
