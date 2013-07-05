@@ -43,8 +43,8 @@ import numpy as np
 
 import lockfile
 
-from data_home import get_data_home
-import utils
+from ..data_home import get_data_home
+from .. import utils
 
 import logging
 logger = logging.getLogger(__name__)
