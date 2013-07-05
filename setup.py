@@ -22,11 +22,11 @@ Thanks
 This work was supported in part by the National Science Foundation (IIS-0963668).
 """
 MAINTAINER = 'James Bergstra'
-MAINTAINER_EMAIL = 'james.bergstra@gmail.com'
+MAINTAINER_EMAIL = 'anon@anon.com'
 URL = 'http://jaberg.github.com/skdata/'
-LICENSE = 'new BSD'
+LICENSE = 'BSD License'
 DOWNLOAD_URL = 'https://github.com/jaberg/skdata/tarball/master'
-VERSION = '0.0.3'
+VERSION = '0.0.4'
 
 import setuptools  # we are using a setuptools namespace
 from numpy.distutils.core import setup
@@ -83,7 +83,7 @@ if __name__ == "__main__":
           classifiers=[
               'Intended Audience :: Science/Research',
               'Intended Audience :: Developers',
-              'License :: OSI Approved',
+              'License :: OSI Approved :: BSD License',
               #'Programming Language :: C',
               'Programming Language :: Python',
               'Topic :: Software Development',
