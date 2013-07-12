@@ -37,7 +37,7 @@ In Proc. of International Conference on Machine Learning (2007).
 
 import array  # XXX why is this used not numpy?
 import os
-import sys
+import shutil
 
 import numpy as np
 
@@ -220,7 +220,9 @@ class BaseL2007(object):
         return self.home(self.AMAT + '_train.amat')
 
     def fetch(self, download_if_missing):
-        with lockfile.FileLock(self.home()) as lock:
+        if not os.path.isdir(self.home()):
+            os.makedirs(self.home())
+        with lockfile.FileLock(self.home()):
             try:
                 open(self.home(self.NAME + '_inputs.npy')).close()
                 open(self.home(self.NAME + '_labels.npy')).close()
@@ -312,7 +314,7 @@ class BaseL2007(object):
     # ------------------------------------------------------------------------
 
     def clean_up(self):
-        if path.isdir(self.home()):
+        if os.path.isdir(self.home()):
             shutil.rmtree(self.home())
 
     # ------------------------------------------------------------------------
