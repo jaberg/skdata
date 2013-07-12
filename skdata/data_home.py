@@ -20,13 +20,14 @@ exists, and is readable.
 import os
 import shutil
 
-DATA_HOME = os.path.expanduser(
+DATA_HOME = os.path.abspath(
+    os.path.expanduser(
         os.environ.get(
             'SKDATA_ROOT',
-            os.path.join('~', '.skdata')))
+            os.path.join('~', '.skdata'))))
 
 def get_data_home():
-    if not os.path.exists(DATA_HOME):
+    if not os.path.isdir(DATA_HOME):
         os.makedirs(DATA_HOME)
     # XXX: ensure it is dir and readable
     return DATA_HOME
