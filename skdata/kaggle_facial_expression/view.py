@@ -1,15 +1,24 @@
+"""
+Specific learning problems for the kaggle_facial_expression dataset.
+
+"""
 import numpy as np
 
 from sklearn.cross_validation import StratifiedShuffleSplit
 
-from ..utils import dotdict
-from ..larray import lmap
 from ..dslang import Task
 
 from dataset import KaggleFacialExpression
 
 
 class ContestCrossValid(object):
+    """
+    This View implements the official contest evaluation protocol.
+    
+    https://www.kaggle.com/c/challenges-in-representation-learning-facial
+    -expression-recognition-challenge
+
+    """
     max_n_train = KaggleFacialExpression.N_TRAIN
     max_n_test = KaggleFacialExpression.N_TEST
 
@@ -35,13 +44,8 @@ class ContestCrossValid(object):
 
         # examples x rows x cols
         all_pixels = np.asarray([mi['pixels'] for mi in ds.meta])
-
-        def ilabel(mi):
-            if mi['label'] == 'unknown':
-                return -1
-            else:
-                return mi['label']
-        all_labels = np.asarray(map(ilabel, ds.meta))
+        all_labels = np.asarray([mi['label'] for mi in ds.meta],
+                                dtype='int32')
 
         assert len(all_pixels) == self.max_n_test + self.max_n_train
 
@@ -54,7 +58,7 @@ class ContestCrossValid(object):
             all_images /= 255
 
         for ii in xrange(self.max_n_train):
-            assert ds.meta[ii]['file'] == 'train.csv'
+            assert ds.meta[ii]['usage'] == 'Training'
 
         if n_train < self.max_n_train:
             ((fit_idxs, val_idxs),) = StratifiedShuffleSplit(
