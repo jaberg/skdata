@@ -49,7 +49,7 @@ def extract(archive_filename, output_dirname='./', verbose=True):
     Unpack the tar or zip file at the specified `archive_filename` to the
     directory specified by `output_dirname`.
     """
-    Archive(archive_filename).extract(output_dirname)
+    Archive(archive_filename).extract(output_dirname, verbose=verbose)
 
 
 class Archive(object):
@@ -81,8 +81,8 @@ class Archive(object):
                 "Path not a recognized archive format: %s" % filename)
         return cls
 
-    def extract(self, output_dirname=''):
-        self._archive.extract(output_dirname)
+    def extract(self, output_dirname='', verbose=True):
+        self._archive.extract(output_dirname, verbose=verbose)
 
     def list(self):
         self._archive.list()
