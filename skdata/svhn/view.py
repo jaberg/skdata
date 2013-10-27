@@ -21,7 +21,7 @@ class CroppedDigitsStratifiedKFoldView1(object):
 
         from sklearn.cross_validation import StratifiedKFold
 
-        ds = CroppedDigits()
+        ds = CroppedDigits(need_extra=False)
 
         mat = io.loadmat(ds.meta['train']['filename'])
         x = np.rollaxis(mat['X'], -1)
