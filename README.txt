@@ -1,10 +1,9 @@
 skdata (scikit-data)
 ====================
 
-Skdata is a library of datasets for empirical computer science. Lots of
-disciplines such as machine learning, natural language processing, and computer
-vision have data sets.  This module makes the most popular and standard datasets
-(even the big awkward ones) easy to access from Python programs.
+Skdata is a library of data sets for machine learning and statistics. This
+module provides standardized Python access to toy problems as well
+as popular computer vision and natural language processing data sets.
 
 The project is hosted at github:
 http://jaberg.github.com/skdata
