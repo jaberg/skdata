@@ -4,7 +4,7 @@
 """ distribute- and pip-enabled setup.py """
 
 import logging
-nimport os
+import os
 import shutil
 import glob
 import sys
