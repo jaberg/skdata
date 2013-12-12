@@ -4,7 +4,7 @@
 """ distribute- and pip-enabled setup.py """
 
 import logging
-import os
+nimport os
 import shutil
 import glob
 import sys
@@ -72,7 +72,8 @@ if __name__ == "__main__":
           maintainer=MAINTAINER,
           packages=setuptools.find_packages(),
           include_package_data=True,
-          package_data={'skdata': ['data/*', 'descr/*']},
+          package_data={'skdata': ['data/*', 'descr/*', 'images/*.jpg',
+                                   'iris/*.csv', 'tests/*.xml']},
           maintainer_email=MAINTAINER_EMAIL,
           description=DESCRIPTION,
           license=LICENSE,
