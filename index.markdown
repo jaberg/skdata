@@ -14,7 +14,7 @@ section: home
 2. **load** them as directly as possible as Python data structures, and
 3. **provide protocols** for machine learning tasks via convenient views.
 
-What data sets does it provide?  [Browse the list of data sets](https://github.com/jaberg/skdata/wiki/Data-Set-Modules).
+What data sets does it provide?  [Browse the list of data sets.](https://github.com/jaberg/skdata/wiki/Data-Set-Modules)
 
 ## Gist
 
