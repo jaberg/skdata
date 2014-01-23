@@ -15,6 +15,8 @@ The modules of `skdata`
 2. **load** them as directly as possible as Python data structures, and
 3. **provide protocols** for machine learning tasks via convenient views.
 
+Here's a [list of data sets](https://github.com/jaberg/skdata/wiki/Data-Set-Modules) that skdata provides.
+
 ## Gist
 
 Here's how skdata helps you evaluate an SVM (e.g. [scikit-learn](http://scikit-learn.org)'s
