@@ -11,6 +11,6 @@ http://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf
 """
 
 from . import dataset
-from . import views
-view = views
+from . import view
+views = view
 
