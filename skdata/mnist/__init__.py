@@ -1,3 +1,2 @@
-
-import dataset
-import view
+from . import dataset
+from . import view
