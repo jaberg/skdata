@@ -50,6 +50,8 @@ if __name__ == "__main__":
             shutil.rmtree(local_path)
         print("Copying source tree into build/py3k for 2to3 transformation"
               "...")
+        shutil.copytree(os.curdir, local_path,
+                        ignore=shutil.ignore_patterns('build', '.git'))
 
         import lib2to3.main
         from io import StringIO

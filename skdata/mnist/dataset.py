@@ -202,8 +202,9 @@ class MNIST(object):
         assert len(arrays['test_images']) == len(arrays['test_labels'])
         meta = [dict(id=i, split='train', label=l)
                 for i,l in enumerate(arrays['train_labels'])]
+        i = len(meta)
         meta.extend([dict(id=i + j + 1, split='test', label=l)
                 for j, l in enumerate(arrays['test_labels'])])
-        assert i + j + 2 == 70000, (i, j)
+        assert len(meta) == 70000, (i, len(meta))
         return meta
 
