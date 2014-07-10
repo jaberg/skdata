@@ -71,7 +71,7 @@ class CIFAR10(object):
     def home(self, *names):
         return os.path.join(get_data_home(), 'cifar10', *names)
 
-    def fetch(self, download_if_missing):
+    def fetch(self, download_if_missing, verbose=True):
         if os.path.isdir(self.home('cifar-10-batches-py')):
             return
 
@@ -81,7 +81,7 @@ class CIFAR10(object):
             else:
                 raise IOError(self.home())
 
-        download_and_extract(URL, self.home())
+        download_and_extract(URL, self.home(), verbose=verbose)
 
     def clean_up(self):
         logger.info('recursively erasing %s' % self.home())
