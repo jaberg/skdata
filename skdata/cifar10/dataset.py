@@ -14,7 +14,7 @@ http://www.cs.toronto.edu/~kriz/learning-features-2009-TR.pdf
 # License: BSD 3 clause
 
 import os
-import cPickle
+import pickle
 import logging
 import shutil
 
@@ -127,8 +127,8 @@ class CIFAR10(object):
     def unpickle(self, basename):
         fname = self.home('cifar-10-batches-py', basename)
         logger.info('loading file %s' % fname)
-        fo = open(fname, 'rb')
-        data = cPickle.load(fo)
-        fo.close()
-        return data
-
+        with open(fname, 'rb') as fo:
+            try:
+                return pickle.load(fo, encoding='latin1')
+            except:
+                return pickle.load(fo)
