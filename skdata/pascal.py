@@ -371,12 +371,12 @@ class BasePASCAL(object):
 class VOC2007(BasePASCAL):
     ARCHIVES = {
         'trainval': {
-            'url': ('http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2007/'
+            'url': ('http://host.robots.ox.ac.uk/pascal/VOC/voc2007/'
                     'VOCtrainval_06-Nov-2007.tar'),
             'sha1': '34ed68851bce2a36e2a223fa52c661d592c66b3c',
         },
         'test': {
-            'url': ('http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2007/'
+            'url': ('http://host.robots.ox.ac.uk/pascal/VOC/voc2007/'
                     'VOCtest_06-Nov-2007.tar'),
             'sha1': '41a8d6e12baa5ab18ee7f8f8029b9e11805b4ef1',
         },
@@ -386,7 +386,7 @@ class VOC2007(BasePASCAL):
 class VOC2008(BasePASCAL):
     ARCHIVES = {
         'trainval': {
-            'url': ('http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2008/'
+            'url': ('http://host.robots.ox.ac.uk/pascal/VOC/voc2008/'
                     'VOCtrainval_14-Jul-2008.tar'),
             'sha1': 'fc87d2477a1ae78c6748dc25b88c052eb8b06d75',
         },
@@ -401,7 +401,7 @@ class VOC2008(BasePASCAL):
 class VOC2009(BasePASCAL):
     ARCHIVES = {
         'trainval': {
-            'url': ('http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2009/'
+            'url': ('http://host.robots.ox.ac.uk/pascal/VOC/voc2009/'
                     'VOCtrainval_11-May-2009.tar'),
             'sha1': '0bc2be22b76a9bcb744c0458c535f3a84f054bbc',
         },
@@ -416,7 +416,7 @@ class VOC2009(BasePASCAL):
 class VOC2010(BasePASCAL):
     ARCHIVES = {
         'trainval': {
-            'url': ('http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2010/'
+            'url': ('http://host.robots.ox.ac.uk/pascal/VOC/voc2010/'
                     'VOCtrainval_03-May-2010.tar'),
             'sha1': 'bf9985e9f2b064752bf6bd654d89f017c76c395a',
         },
@@ -431,7 +431,7 @@ class VOC2010(BasePASCAL):
 class VOC2011(BasePASCAL):
     ARCHIVES = {
         'trainval': {
-            'url': ('http://pascallin.ecs.soton.ac.uk/challenges/VOC/voc2011/'
+            'url': ('http://host.robots.ox.ac.uk/pascal/VOC/voc2011/'
                     'VOCtrainval_25-May-2011.tar'),
             'sha1': '71ceda5bc8ce4a6486f7996b0924eee265133895',
             # the following will fix the fact that a prefix dir has been added
@@ -443,6 +443,20 @@ class VOC2011(BasePASCAL):
             'url': ('https://s3.amazonaws.com/scikit-data/pascal/'
                     'VOC2011test.tar.gz'),
             'sha1': 'e988fa911f2199309f76a6f44691e9471a011c45',
+        }
+    }
+
+
+class VOC2012(BasePASCAL):
+    ARCHIVES = {
+        'trainval': {
+            'url': ('http://host.robots.ox.ac.uk/pascal/VOC/voc2012/'
+                    'VOCtrainval_11-May-2012.tar'),
+            'sha1': '4e443f8a2eca6b1dac8a6c57641b67dd40621a49',
+            # the following will fix the fact that a prefix dir has been added
+            # to the archive
+            #'moves': [{'source': 'TrainVal/VOCdevkit',
+            #           'destination': 'VOCdevkit'}],
         }
     }
 
