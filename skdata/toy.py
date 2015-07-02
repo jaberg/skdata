@@ -7,8 +7,8 @@ import os
 
 import numpy as np
 
-import utils
-import utils.image
+from utils import image
+
 
 class BuildOnInit(object):
     """Base class that calls build_meta and build_all
@@ -147,6 +147,5 @@ class SampleImages(BuildOnInit):
                 {})
 
     def images(self):
-        return map(
-                utils.image.load_rgb_f32,
-                map( lambda m: self.fullpath(m['filename']), self.meta))
+        return map(image.load_rgb_f32,
+                   map(lambda m: self.fullpath(m['filename']), self.meta))
