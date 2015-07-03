@@ -60,7 +60,7 @@ if __name__ == "__main__":
         try:
             sys.stdout = StringIO()  # supress noisy output
             res = lib2to3.main.main("lib2to3.fixes",
-                                    ['-x', 'import', '-w', local_path])
+                                    ['-w', local_path])
         finally:
             sys.stdout = _old_stdout
 
