@@ -8,7 +8,7 @@ from urllib2 import urlopen
 from os import path
 import hashlib
 
-import archive
+from . import archive
 
 
 def verify_sha1(filename, sha1):
